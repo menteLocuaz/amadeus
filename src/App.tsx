@@ -1,43 +1,50 @@
-import React, { useState } from "react";
-import reactLogo from "./assets/react.svg";
-import { MyRoutes } from "./routes/routes";
-import styled from "styled-components";
+import { useState, useMemo } from "react";
 import { BrowserRouter } from "react-router-dom";
+import styled, { ThemeProvider } from "styled-components";
+import { MyRoutes } from "./routes/routes";
 import { Sidebar } from "./components/Sidebar";
 import { Light, Dark } from "./styles/Themes";
-import { ThemeProvider } from "styled-components";
-export const ThemeContext = React.createContext(null);
+import { ThemeContext } from "./context/ThemeContext";
+
 function App() {
   const [theme, setTheme] = useState("light");
-  const themeStyle = theme === "light" ? Light : Dark;
-
   const [sidebarOpen, setSidebarOpen] = useState(true);
+
+  // Memorizamos el estilo del tema para evitar cálculos innecesarios en cada render
+  const themeStyle = useMemo(() => (theme === "light" ? Light : Dark), [theme]);
+
   return (
-    <>
-      <ThemeContext.Provider value={{ setTheme, theme }}>
-        <ThemeProvider theme={themeStyle}>
-          <BrowserRouter>
-            <Container className={sidebarOpen ? "sidebarState active" : ""}>
-              <Sidebar
-                sidebarOpen={sidebarOpen}
-                setSidebarOpen={setSidebarOpen}
-              />
+    <ThemeContext.Provider value={{ theme, setTheme }}>
+      <ThemeProvider theme={themeStyle}>
+        <BrowserRouter>
+          <Container $sidebarOpen={sidebarOpen}>
+            <Sidebar
+              sidebarOpen={sidebarOpen}
+              setSidebarOpen={setSidebarOpen}
+            />
+            <ContentArea>
               <MyRoutes />
-            </Container>
-          </BrowserRouter>
-        </ThemeProvider>
-      </ThemeContext.Provider>
-    </>
+            </ContentArea>
+          </Container>
+        </BrowserRouter>
+      </ThemeProvider>
+    </ThemeContext.Provider>
   );
 }
-const Container = styled.div`
+
+// Styled Components con props transitorias ($) para evitar que lleguen al DOM
+const Container = styled.div<{ $sidebarOpen: boolean }>`
   display: grid;
-  grid-template-columns: 90px auto;
+  grid-template-columns: ${({ $sidebarOpen }) => ($sidebarOpen ? "300px" : "90px")} auto;
   background: ${({ theme }) => theme.bgtotal};
-  transition:all 0.3s ;
-  &.active {
-    grid-template-columns: 300px auto;
-  }
-  color:${({theme})=>theme.text};
+  color: ${({ theme }) => theme.text};
+  transition: grid-template-columns 0.3s ease;
+  min-height: 100vh;
 `;
+
+const ContentArea = styled.main`
+  padding: 20px;
+  overflow-y: auto;
+`;
+
 export default App;

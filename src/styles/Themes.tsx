@@ -25,7 +25,6 @@ export const Light = {
     bgtgderecha: "#fff",
     barrascroll: "#a8a7a7",
 
-
     gray900: "#000000",
     gray800: "#1f1f1f",
     gray700: "#2e2e2e",
@@ -44,12 +43,16 @@ export const Light = {
     textprimary: "#2a2828",
     textsecondary: "#f1f1f1",
     texttertiary: "#969593",
-    //toggle
+    text1: "rgb(45,45,45)", // Copiado de textFont de Light o un valor similar
+
+    // Theme toggles
     lightbackground: "linear-gradient(-225deg, #E3FDF5 0%, #FFE6FA 100%)",
-    lightcheckbox: "#fce100"
+    lightcheckbox: "#fce100",
+    darkbackground: "none",
+    darkcheckbox: "none"
 }
+
 export const Dark = {
-    bgtgderecha: "#21252B",
     body: "#202020",
     text: "#fff",
     bodyRgba: "32,32,32",
@@ -69,10 +72,11 @@ export const Dark = {
     bgAlpha: "rgba(0,0,0,.3)",
     bg2: "rgb(30,30,30)",
     bg3: "rgb(50,50,50)",
-    text1: "rgb(210,210,210)",
+    textFont: "rgb(210,210,210)", // Sincronizado con text1 de Dark original
     primary: "rgb(52, 131, 235)",
     bg4: "#9247FC",
     bgtotal: "#21252B",
+    bgtgderecha: "#21252B",
     barrascroll: "#A18AFF",
 
     gray900: "#000000",
@@ -93,7 +97,11 @@ export const Dark = {
     textprimary: "#ffffff",
     textsecondary: "#f1f1f1",
     texttertiary: "#969593",
-    //toggle
+    text1: "rgb(210,210,210)",
+
+    // Theme toggles
+    lightbackground: "none",
+    lightcheckbox: "none",
     darkbackground: "linear-gradient(to bottom, rgba(255,255,255,0.15) 0%, rgba(0,0,0,0.15) 100%), radial-gradient(at top center, rgba(255,255,255,0.40) 0%, rgba(0,0,0,0.40) 120%) #989898",
     darkcheckbox: "#757575"
 }

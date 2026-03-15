@@ -1,294 +1,239 @@
+import React, { useContext, useCallback } from "react";
 import styled from "styled-components";
-import logo from "../assets/react.svg";
-import { v } from "../styles/Variables";
-import {
-  AiOutlineLeft,
-  AiOutlineHome,
-  AiOutlineApartment,
-  AiOutlineSetting,
+import { NavLink } from "react-router-dom";
+import { 
+  AiOutlineLeft, 
+  AiOutlineHome, 
+  AiOutlineApartment, 
+  AiOutlineSetting 
 } from "react-icons/ai";
 import { MdOutlineAnalytics, MdLogout } from "react-icons/md";
-import { NavLink } from "react-router-dom";
-import { useContext } from "react";
-import { ThemeContext } from "../App";
-export function Sidebar({ sidebarOpen, setSidebarOpen }) {
-  const ModSidebaropen = () => {
-    setSidebarOpen(!sidebarOpen);
-  };
-  const { setTheme, theme } = useContext(ThemeContext);
-  const CambiarTheme = () => {
-    setTheme((theme) => (theme === "light" ? "dark" : "light"));
-  };
+import { ThemeContext } from "../context/ThemeContext";
+import { v } from "../styles/Variables";
+import logo from "../assets/react.svg";
+
+// --- Interfaces ---
+interface NavLinkItem {
+  label: string;
+  icon: React.ReactNode;
+  to: string;
+}
+
+interface SidebarProps {
+  sidebarOpen: boolean;
+  setSidebarOpen: (open: boolean) => void;
+}
+
+// --- Componente Principal ---
+export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
+  const context = useContext(ThemeContext);
+  
+  const toggleSidebar = useCallback(() => setSidebarOpen(!sidebarOpen), [sidebarOpen, setSidebarOpen]);
+  
+  const toggleTheme = useCallback(() => {
+    if (context) {
+      context.setTheme((curr) => (curr === "light" ? "dark" : "light"));
+    }
+  }, [context]);
+
+  // Manejo seguro del contexto (después de los hooks)
+  if (!context) return null;
+  const { theme } = context;
 
   return (
-    <Container isOpen={sidebarOpen} themeUse={theme}>
-      <button className="Sidebarbutton" onClick={ModSidebaropen}>
+    <Container $isOpen={sidebarOpen}>
+      {/* Botón de colapso */}
+      <CollapseButton onClick={toggleSidebar} $isOpen={sidebarOpen}>
         <AiOutlineLeft />
-      </button>
-      <div className="Logocontent">
-        <div className="imgcontent">
-          <img src={logo} />
+      </CollapseButton>
+
+      {/* Header / Logo */}
+      <LogoSection $isOpen={sidebarOpen}>
+        <div className="img-content">
+          <img src={logo} alt="Logo" />
         </div>
-        <h2>codigo369</h2>
-      </div>
-      {linksArray.map(({ icon, label, to }) => (
-        <div className="LinkContainer" key={label}>
-          <NavLink
-            to={to}
-            className={({ isActive }) => `Links${isActive ? ` active` : ``}`}
-          >
-            <div className="Linkicon">{icon}</div>
-            {sidebarOpen && <span>{label}</span>}
-          </NavLink>
-        </div>
-      ))}
+        {sidebarOpen && <h2>Groot-Type</h2>}
+      </LogoSection>
+
+      {/* Secciones de Navegación */}
+      <NavSection links={primaryLinks} sidebarOpen={sidebarOpen} />
       <Divider />
-      {secondarylinksArray.map(({ icon, label, to }) => (
-        <div className="LinkContainer" key={label}>
-          <NavLink
-            to={to}
-            className={({ isActive }) => `Links${isActive ? ` active` : ``}`}
-          >
-            <div className="Linkicon">{icon}</div>
-            {sidebarOpen && <span>{label}</span>}
-          </NavLink>
-        </div>
-      ))}
+      <NavSection links={secondaryLinks} sidebarOpen={sidebarOpen} />
       <Divider />
-      <div className="Themecontent">
-        {sidebarOpen && <span className="titletheme">Dark mode</span>}
-        <div className="Togglecontent">
-          <div className="grid theme-container">
-            <div className="content">
-              <div className="demo">
-                <label className="switch" istheme={theme}>
-                  <input
-                    istheme={theme}
-                    type="checkbox"
-                    className="theme-swither"
-                    onClick={CambiarTheme}
-                  ></input>
-                  <span istheme={theme} className="slider round"></span>
-                </label>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
+
+      {/* Control de Tema */}
+      <ThemeToggle $isOpen={sidebarOpen}>
+        {sidebarOpen && <span className="title">Dark Mode</span>}
+        <ToggleWrapper>
+          <label className="switch">
+            <input 
+              type="checkbox" 
+              checked={theme === "dark"} 
+              onChange={toggleTheme} 
+            />
+            <span className="slider round"></span>
+          </label>
+        </ToggleWrapper>
+      </ThemeToggle>
     </Container>
   );
-}
-//#region Data links
-const linksArray = [
-  {
-    label: "Home",
-    icon: <AiOutlineHome />,
-    to: "/",
-  },
-  {
-    label: "Estadisticas",
-    icon: <MdOutlineAnalytics />,
-    to: "/estadisticas",
-  },
-  {
-    label: "Productos",
-    icon: <AiOutlineApartment />,
-    to: "/productos",
-  },
-  {
-    label: "Diagramas",
-    icon: <MdOutlineAnalytics />,
-    to: "/diagramas",
-  },
-  {
-    label: "Reportes",
-    icon: <MdOutlineAnalytics />,
-    to: "/reportes",
-  },
-];
-const secondarylinksArray = [
-  {
-    label: "Configuración",
-    icon: <AiOutlineSetting />,
-    to: "/null",
-  },
-  {
-    label: "Salir",
-    icon: <MdLogout />,
-    to: "/null",
-  },
-];
-//#endregion
+};
 
-//#region STYLED COMPONENTS
-const Container = styled.div`
-  color: ${(props) => props.theme.text};
-  background: ${(props) => props.theme.bg};
+// --- Subcomponente de Navegación ---
+const NavSection = ({ links, sidebarOpen }: { links: NavLinkItem[], sidebarOpen: boolean }) => (
+  <LinksWrapper>
+    {links.map(({ label, icon, to }) => (
+      <div className="link-container" key={label}>
+        <NavLink 
+          to={to} 
+          className={({ isActive }) => `link-item ${isActive ? "active" : ""}`}
+        >
+          <div className="icon-box">{icon}</div>
+          {sidebarOpen && <span>{label}</span>}
+        </NavLink>
+      </div>
+    ))}
+  </LinksWrapper>
+);
+
+// --- Datos de Configuración ---
+const primaryLinks: NavLinkItem[] = [
+  { label: "Home", icon: <AiOutlineHome />, to: "/" },
+  { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: "/estadisticas" },
+  { label: "Productos", icon: <AiOutlineApartment />, to: "/productos" },
+  { label: "Diagramas", icon: <MdOutlineAnalytics />, to: "/diagramas" },
+  { label: "Reportes", icon: <MdOutlineAnalytics />, to: "/reportes" },
+];
+
+const secondaryLinks: NavLinkItem[] = [
+  { label: "Configuración", icon: <AiOutlineSetting />, to: "/config" },
+  { label: "Salir", icon: <MdLogout />, to: "/logout" },
+];
+
+// --- Estilos ---
+const Container = styled.div<{ $isOpen: boolean }>`
+  background: ${({ theme }) => theme.bg};
+  color: ${({ theme }) => theme.text};
   position: sticky;
-  padding-top: 20px;
-  .Sidebarbutton {
-    position: absolute;
-    top: ${v.xxlSpacing};
-    right: -18px;
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    background: ${(props) => props.theme.bgtgderecha};
-    box-shadow: 0 0 4px ${(props) => props.theme.bg3},
-      0 0 7px ${(props) => props.theme.bg};
+  top: 0;
+  height: 100vh;
+  padding: 20px 0;
+  transition: all 0.3s ease;
+  z-index: 1000;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+`;
+
+const CollapseButton = styled.button<{ $isOpen: boolean }>`
+  position: absolute;
+  top: ${v.xxlSpacing};
+  right: -16px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: ${({ theme }) => theme.bgtgderecha};
+  color: inherit;
+  border: 1px solid ${({ theme }) => theme.bg3};
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform: ${({ $isOpen }) => ($isOpen ? "rotate(0deg)" : "rotate(180deg)")};
+  transition: all 0.3s ease;
+  &:hover { background: ${({ theme }) => theme.bg3}; }
+`;
+
+const LogoSection = styled.div<{ $isOpen: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 0 20px 30px;
+  
+  .img-content {
+    img { width: 40px; }
+    transform: ${({ $isOpen }) => ($isOpen ? "scale(1)" : "scale(1.3)")};
+    transition: transform 0.3s ease;
+  }
+  
+  h2 { font-size: 1.2rem; margin: 0; }
+`;
+
+const LinksWrapper = styled.div`
+  .link-container {
+    padding: 0 10px;
+    margin: 4px 0;
+  }
+
+  .link-item {
     display: flex;
     align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: all 0.3s;
-    transform: ${({ isOpen }) => (isOpen ? `initial` : `rotate(180deg)`)};
-    border: none;
-    letter-spacing: inherit;
+    padding: 12px 15px;
+    text-decoration: none;
     color: inherit;
-    font-size: inherit;
-    text-align: inherit;
-    padding: 0;
-    font-family: inherit;
-    outline: none;
-  }
-  .Logocontent {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    border-radius: 8px;
+    transition: background 0.2s;
+    white-space: nowrap;
 
-    padding-bottom: ${v.lgSpacing};
-    .imgcontent {
+    &:hover { background: ${({ theme }) => theme.bg3}; }
+    &.active {
+      color: ${({ theme }) => theme.bg4};
+      background: ${({ theme }) => theme.bg2};
+      font-weight: 600;
+    }
+
+    .icon-box {
+      min-width: 40px;
       display: flex;
-      img {
-        max-width: 100%;
-        height: auto;
-      }
-      cursor: pointer;
-      transition: all 0.3s;
-      transform: ${({ isOpen }) => (isOpen ? `scale(0.7)` : `scale(1.5)`)};
-    }
-    h2 {
-      display: ${({ isOpen }) => (isOpen ? `block` : `none`)};
-    }
-  }
-  .LinkContainer {
-    margin: 8px 0;
-   
-    padding: 0 15%;
-    :hover {
-      background: ${(props) => props.theme.bg3};
-    }
-    .Links {
-      display: flex;
-      align-items: center;
-      text-decoration: none;
-      padding: calc(${v.smSpacing}-2px) 0;
-      color: ${(props) => props.theme.text};
-      height:50px;
-      .Linkicon {
-        padding: ${v.smSpacing} ${v.mdSpacing};
-        display: flex;
-
-        svg {
-          font-size: 25px;
-        }
-      }
-      &.active {
-        .Linkicon {
-          svg {
-            color: ${(props) => props.theme.bg4};
-          }
-        }
-      }
-    }
-  }
-  .Themecontent {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    .titletheme {
-      display: block;
-      padding: 10px;
-      font-weight: 700;
-      opacity: ${({ isOpen }) => (isOpen ? `1` : `0`)};
-      transition: all 0.3s;
-      white-space: nowrap;
-      overflow: hidden;
-    }
-    .Togglecontent {
-      margin: ${({ isOpen }) => (isOpen ? `auto 40px` : `auto 15px`)};
-      width: 36px;
-      height: 20px;
-      border-radius: 10px;
-      transition: all 0.3s;
-      position: relative;
-      .theme-container {
-        background-blend-mode: multiply, multiply;
-        transition: 0.4s;
-        .grid {
-          display: grid;
-          justify-items: center;
-          align-content: center;
-          height: 100vh;
-          width: 100vw;
-          font-family: "Lato", sans-serif;
-        }
-        .demo {
-          font-size: 32px;
-          .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-            .theme-swither {
-              opacity: 0;
-              width: 0;
-              height: 0;
-              &:checked + .slider:before {
-                left: 4px;
-                content: "🌑";
-                transform: translateX(26px);
-              }
-            }
-            .slider {
-              position: absolute;
-              cursor: pointer;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: ${({ themeUse }) =>
-                themeUse === "light" ? v.lightcheckbox : v.checkbox};
-
-              transition: 0.4s;
-              &::before {
-                position: absolute;
-                content: "☀️";
-                height: 0px;
-                width: 0px;
-                left: -10px;
-                top: 16px;
-                line-height: 0px;
-                transition: 0.4s;
-              }
-              &.round {
-                border-radius: 34px;
-
-                &::before {
-                  border-radius: 50%;
-                }
-              }
-            }
-          }
-        }
-      }
+      font-size: 24px;
     }
   }
 `;
-const Divider = styled.div`
+
+const Divider = styled.hr`
+  border: none;
   height: 1px;
-  width: 100%;
-  background: ${(props) => props.theme.bg3};
-  margin: ${v.lgSpacing} 0;
+  background: ${({ theme }) => theme.bg3};
+  margin: 15px 20px;
 `;
-//#endregion
+
+const ThemeToggle = styled.div<{ $isOpen: boolean }>`
+  display: flex;
+  align-items: center;
+  justify-content: ${({ $isOpen }) => ($isOpen ? "space-between" : "center")};
+  padding: 10px 20px;
+  
+  .title { font-weight: 600; font-size: 0.9rem; }
+`;
+
+const ToggleWrapper = styled.div`
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 46px;
+    height: 24px;
+    
+    input { opacity: 0; width: 0; height: 0; }
+    
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+
+      &:before {
+        position: absolute;
+        content: "";
+        height: 18px; width: 18px;
+        left: 3px; bottom: 3px;
+        background-color: white;
+        transition: .4s;
+        border-radius: 50%;
+      }
+    }
+
+    input:checked + .slider { background-color: #2196F3; }
+    input:checked + .slider:before { transform: translateX(22px); }
+  }
+`;
