@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import { Product, ProductService } from '../services/ProductService';
+import { type Product, ProductService } from '../services/ProductService';
 
 // PATRÓN OBSERVER: Zustand notifica automáticamente a los componentes cuando el estado cambia
 interface ProductState {
