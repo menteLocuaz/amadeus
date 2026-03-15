@@ -1,114 +1,134 @@
 import React, { useContext, useCallback } from "react";
 import styled from "styled-components";
-import { NavLink } from "react-router-dom";
-import { 
-  AiOutlineLeft, 
-  AiOutlineHome, 
-  AiOutlineApartment, 
-  AiOutlineSetting 
+import { NavLink, useNavigate } from "react-router-dom";
+import {
+    AiOutlineLeft,
+    AiOutlineHome,
+    AiOutlineApartment,
+    AiOutlineSetting,
 } from "react-icons/ai";
-import { MdOutlineAnalytics, MdLogout } from "react-icons/md";
+import { MdOutlineAnalytics, MdLogout, MdPointOfSale } from "react-icons/md";
 import { ThemeContext } from "../context/ThemeContext";
+import { useAuthStore } from "../store/useAuthStore";
 import { v } from "../styles/Variables";
 import logo from "../assets/react.svg";
 
 // --- Interfaces ---
 interface NavLinkItem {
-  label: string;
-  icon: React.ReactNode;
-  to: string;
+    label: string;
+    icon: React.ReactNode;
+    to: string;
+    onClick?: () => void;
 }
 
 interface SidebarProps {
-  sidebarOpen: boolean;
-  setSidebarOpen: (open: boolean) => void;
+    sidebarOpen: boolean;
+    setSidebarOpen: (open: boolean) => void;
 }
 
 // --- Componente Principal ---
 export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
-  const context = useContext(ThemeContext);
-  
-  const toggleSidebar = useCallback(() => setSidebarOpen(!sidebarOpen), [sidebarOpen, setSidebarOpen]);
-  
-  const toggleTheme = useCallback(() => {
-    if (context) {
-      context.setTheme((curr) => (curr === "light" ? "dark" : "light"));
-    }
-  }, [context]);
+    const context = useContext(ThemeContext);
+    const { logout } = useAuthStore();
+    const navigate = useNavigate();
 
-  // Manejo seguro del contexto (después de los hooks)
-  if (!context) return null;
-  const { theme } = context;
+    const toggleSidebar = useCallback(() => setSidebarOpen(!sidebarOpen), [sidebarOpen, setSidebarOpen]);
 
-  return (
-    <Container $isOpen={sidebarOpen}>
-      {/* Botón de colapso */}
-      <CollapseButton onClick={toggleSidebar} $isOpen={sidebarOpen}>
-        <AiOutlineLeft />
-      </CollapseButton>
+    const toggleTheme = useCallback(() => {
+        if (context) {
+            context.setTheme((curr) => (curr === "light" ? "dark" : "light"));
+        }
+    }, [context]);
 
-      {/* Header / Logo */}
-      <LogoSection $isOpen={sidebarOpen}>
-        <div className="img-content">
-          <img src={logo} alt="Logo" />
-        </div>
-        {sidebarOpen && <h2>Groot-Type</h2>}
-      </LogoSection>
+    const handleLogout = useCallback(() => {
+        logout();
+        navigate("/");
+    }, [logout, navigate]);
 
-      {/* Secciones de Navegación */}
-      <NavSection links={primaryLinks} sidebarOpen={sidebarOpen} />
-      <Divider />
-      <NavSection links={secondaryLinks} sidebarOpen={sidebarOpen} />
-      <Divider />
+    // Manejo seguro del contexto (después de los hooks)
+    if (!context) return null;
+    const { theme } = context;
 
-      {/* Control de Tema */}
-      <ThemeToggle $isOpen={sidebarOpen}>
-        {sidebarOpen && <span className="title">Dark Mode</span>}
-        <ToggleWrapper>
-          <label className="switch">
-            <input 
-              type="checkbox" 
-              checked={theme === "dark"} 
-              onChange={toggleTheme} 
-            />
-            <span className="slider round"></span>
-          </label>
-        </ToggleWrapper>
-      </ThemeToggle>
-    </Container>
-  );
+    // Datos de Configuración
+    const primaryLinks: NavLinkItem[] = [
+        { label: "Home", icon: <AiOutlineHome />, to: "/home" },
+        { label: "Caja (POS)", icon: <MdPointOfSale />, to: "/pos" },
+        { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: "/estadisticas" },
+        { label: "Productos", icon: <AiOutlineApartment />, to: "/productos" },
+        { label: "Diagramas", icon: <MdOutlineAnalytics />, to: "/diagramas" },
+        { label: "Reportes", icon: <MdOutlineAnalytics />, to: "/reportes" }
+    ];
+
+    const secondaryLinks: NavLinkItem[] = [
+        { label: "Configuración", icon: <AiOutlineSetting />, to: "/config" },
+        { label: "Salir", icon: <MdLogout />, to: "/", onClick: handleLogout },
+    ];
+
+    return (
+        <Container $isOpen={sidebarOpen}>
+            {/* Botón de colapso */}
+            <CollapseButton onClick={toggleSidebar} $isOpen={sidebarOpen}>
+                <AiOutlineLeft />
+            </CollapseButton>
+
+            {/* Header / Logo */}
+            <LogoSection $isOpen={sidebarOpen}>
+                <div className="img-content">
+                    <img src={logo} alt="Logo" />
+                </div>
+                {sidebarOpen && <h2>Groot-Type</h2>}
+            </LogoSection>
+
+            {/* Secciones de Navegación */}
+            <NavSection links={primaryLinks} sidebarOpen={sidebarOpen} />
+            <Divider />
+            <NavSection links={secondaryLinks} sidebarOpen={sidebarOpen} />
+            <Divider />
+
+            {/* Control de Tema */}
+            <ThemeToggle $isOpen={sidebarOpen}>
+                {sidebarOpen && <span className="title">Dark Mode</span>}
+                <ToggleWrapper>
+                    <label className="switch">
+                        <input
+                            type="checkbox"
+                            checked={theme === "dark"}
+                            onChange={toggleTheme}
+                        />
+                        <span className="slider round"></span>
+                    </label>
+                </ToggleWrapper>
+            </ThemeToggle>
+        </Container>
+    );
 };
 
 // --- Subcomponente de Navegación ---
 const NavSection = ({ links, sidebarOpen }: { links: NavLinkItem[], sidebarOpen: boolean }) => (
-  <LinksWrapper>
-    {links.map(({ label, icon, to }) => (
-      <div className="link-container" key={label}>
-        <NavLink 
-          to={to} 
-          className={({ isActive }) => `link-item ${isActive ? "active" : ""}`}
-        >
-          <div className="icon-box">{icon}</div>
-          {sidebarOpen && <span>{label}</span>}
-        </NavLink>
-      </div>
-    ))}
-  </LinksWrapper>
+    <LinksWrapper>
+        {links.map(({ label, icon, to, onClick }) => (
+            <div className="link-container" key={label}>
+                {onClick ? (
+                    <button className="link-item" onClick={(e) => {
+                        e.preventDefault();
+                        onClick();
+                    }}>
+                        <div className="icon-box">{icon}</div>
+                        {sidebarOpen && <span>{label}</span>}
+                    </button>
+                ) : (
+                    <NavLink
+                        to={to}
+                        className={({ isActive }) => `link-item ${isActive ? "active" : ""}`}
+                    >
+                        <div className="icon-box">{icon}</div>
+                        {sidebarOpen && <span>{label}</span>}
+                    </NavLink>
+                )}
+            </div>
+        ))}
+    </LinksWrapper>
 );
-
-// --- Datos de Configuración ---
-const primaryLinks: NavLinkItem[] = [
-  { label: "Home", icon: <AiOutlineHome />, to: "/" },
-  { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: "/estadisticas" },
-  { label: "Productos", icon: <AiOutlineApartment />, to: "/productos" },
-  { label: "Diagramas", icon: <MdOutlineAnalytics />, to: "/diagramas" },
-  { label: "Reportes", icon: <MdOutlineAnalytics />, to: "/reportes" },
-];
-
-const secondaryLinks: NavLinkItem[] = [
-  { label: "Configuración", icon: <AiOutlineSetting />, to: "/config" },
-  { label: "Salir", icon: <MdLogout />, to: "/logout" },
-];
 
 // --- Estilos ---
 const Container = styled.div<{ $isOpen: boolean }>`
@@ -167,12 +187,19 @@ const LinksWrapper = styled.div`
   .link-item {
     display: flex;
     align-items: center;
+    width: 100%;
     padding: 12px 15px;
     text-decoration: none;
     color: inherit;
     border-radius: 8px;
     transition: background 0.2s;
     white-space: nowrap;
+    background: none;
+    border: none;
+    font-family: inherit;
+    font-size: inherit;
+    cursor: pointer;
+    text-align: left;
 
     &:hover { background: ${({ theme }) => theme.bg3}; }
     &.active {
