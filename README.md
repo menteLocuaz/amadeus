@@ -1,73 +1,74 @@
-# React + TypeScript + Vite
+# Groot-Type Dashboard
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Una aplicación de dashboard moderna construida con **React 19**, **TypeScript** y **Vite**, enfocada en la escalabilidad y el uso de patrones de diseño profesionales.
 
-Currently, two official plugins are available:
+## 🚀 Características
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **Theming Dinámico:** Soporte completo para modo Claro (Light) y Oscuro (Dark) mediante `styled-components`.
+- **Navegación Fluida:** Enrutamiento del lado del cliente con **React Router 7**.
+- **Arquitectura Robusta:** Implementación de patrones de diseño para el manejo de datos.
+- **Estado Global:** Gestión de estado eficiente con **Zustand**.
+- **Consumo de API:** Cliente de API centralizado con **Axios**.
+- **UI Responsiva:** Sidebar interactivo y layouts optimizados.
 
-## React Compiler
+## 🛠️ Stack Tecnológico
 
-The React Compiler is currently not compatible with SWC. See [this issue](https://github.com/vitejs/vite-plugin-react/issues/428) for tracking the progress.
+- **Frontend:** React 19 + TypeScript
+- **Estilos:** styled-components
+- **Estado:** Zustand
+- **HTTP:** Axios
+- **Iconos:** react-icons
+- **Build Tool:** Vite
 
-## Expanding the ESLint configuration
+## 🧩 Patrones de Diseño Implementados
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+Para garantizar un código limpio y mantenible, el proyecto utiliza:
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+1.  **Singleton (Axios Client):** Centraliza la configuración de la API en `src/api/axiosClient.ts`, asegurando una única instancia de comunicación.
+2.  **Factory / Service Layer:** Los servicios en `src/services/` encapsulan la lógica de las peticiones, separando la infraestructura de la UI.
+3.  **Observer (Zustand):** Los componentes se suscriben a los stores en `src/store/`, reaccionando automáticamente a los cambios de datos.
 
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
+## 📁 Estructura del Proyecto
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```text
+src/
+├── api/            # Instancia de Axios (Singleton)
+├── components/     # Componentes de UI reutilizables
+├── context/        # Contextos de React (Tema)
+├── pages/          # Vistas principales de la aplicación
+├── routes/         # Configuración de rutas
+├── services/       # Capa de servicios (Lógica de API)
+├── store/          # Gestión de estado global (Zustand)
+├── styles/         # Temas y variables globales
+└── styled.d.ts     # Definiciones de tipos para styled-components
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ⚙️ Instalación y Uso
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+1.  **Clonar el repositorio:**
+    ```bash
+    git clone [url-del-repo]
+    ```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+2.  **Instalar dependencias:**
+    ```bash
+    npm install
+    ```
+
+3.  **Ejecutar en desarrollo:**
+    ```bash
+    npm run dev
+    ```
+
+4.  **Construir para producción:**
+    ```bash
+    npm run build
+    ```
+
+5.  **Linting:**
+    ```bash
+    npm run lint
+    ```
+
+---
+Desarrollado con ❤️ para el proyecto Groot-Type.
