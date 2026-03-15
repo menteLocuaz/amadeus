@@ -5,6 +5,7 @@ import { MyRoutes } from "./routes/routes";
 import { Sidebar } from "./shared/layout/Sidebar";
 import { Light, Dark } from "./core/styles/Themes";
 import { ThemeContext } from "./core/context/ThemeContext";
+import { ROUTES } from "./core/constants/routes";
 
 function AppContent() {
   const [theme, setTheme] = useState("light");
@@ -14,7 +15,7 @@ function AppContent() {
   const themeStyle = useMemo(() => (theme === "light" ? Light : Dark), [theme]);
   
   // No mostrar sidebar en login ni registro
-  const isPublicPage = location.pathname === "/" || location.pathname === "/register";
+  const isPublicPage = location.pathname === ROUTES.LOGIN || location.pathname === ROUTES.REGISTER;
 
   return (
     <ThemeContext.Provider value={{ theme, setTheme }}>

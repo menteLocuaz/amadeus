@@ -13,6 +13,7 @@ export const ROUTES = {
     DIAGRAMAS: "/diagramas",
     REPORTES: "/reportes",
     CONFIG: "/config",
+    ROLES: "/roles",
 } as const;
 
 // Tipo opcional para usar ROUTES como tipo si fuera necesario

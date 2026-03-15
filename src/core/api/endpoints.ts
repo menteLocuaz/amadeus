@@ -5,8 +5,17 @@ export const ENDPOINTS = {
     logout: '/auth/logout',
   },
   usuarios: '/usuarios',
-  roles: '/roles',
+  roles: {
+    base: '/roles',
+    byId: (id: string) => `/roles/${id}`,
+  },
   sucursales: '/sucursales',
+  estatus: {
+    base: '/estatus',
+    catalogo: '/estatus/catalogo',
+    porTipo: (tipo: string) => `/estatus/tipo/${tipo}`,
+    porModulo: (id: number) => `/estatus/modulo/${id}`,
+  },
   productos: {
     base: '/productos',
     byId: (id: string) => `/productos/${id}`,

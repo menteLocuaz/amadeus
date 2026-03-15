@@ -172,6 +172,7 @@ export const Configuración: React.FC = () => {
     { id: "suppliers", title: "Proveedores", description: "Gestión de compras y abastecimiento", Icon: FiTruck, onClick: () => alert("Configurando Proveedores...") },
     { id: "payments", title: "Métodos de pago", description: "Configura cajas y formas de cobro", Icon: FiCreditCard, onClick: () => alert("Configurando Pagos...") },
     { id: "branches", title: "Sucursales", description: "Administra múltiples puntos de venta", Icon: RiStore2Line, onClick: () => alert("Configurando Sucursales...") },
+    { id: "roles", title: "Roles", description: "Configura perfiles y permisos de acceso", Icon: FiUsers, path: "/roles" },
     { id: "users", title: "Usuarios", description: "Control de accesos y perfiles", Icon: FiUser, path: "/register" },
     { id: "warehouse", title: "Almacén", description: "Movimientos de stock y bodegas", Icon: FiMapPin, onClick: () => alert("Configurando Almacén...") },
     { id: "tickets", title: "Tickets", description: "Diseño de comprobantes y cupones", Icon: GiTicket, onClick: () => alert("Configurando Tickets...") },
