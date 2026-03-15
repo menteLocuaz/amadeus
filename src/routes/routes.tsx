@@ -8,6 +8,7 @@ import LoginPage from "../features/auth/pages/LoginPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import { PosPage } from "../features/pos/pages/PosPage";
 import { Configuración } from "../features/stats/pages/Configuración";
+import RolesPage from "../features/auth/pages/RolesPage";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import NotFoundPage from "../shared/components/NotFoundPage";
 import { ROUTES } from "../core/constants/routes";
@@ -28,6 +29,7 @@ export function MyRoutes() {
                 <Route path={ROUTES.DIAGRAMAS} element={<Diagramas />} />
                 <Route path={ROUTES.REPORTES} element={<Reportes />} />
                 <Route path={ROUTES.CONFIG} element={<Configuración />} />
+                <Route path={ROUTES.ROLES} element={<RolesPage />} />
             </Route>
 
             {/* Error 404 - Página no encontrada */}

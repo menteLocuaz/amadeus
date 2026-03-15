@@ -3,14 +3,14 @@ import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface RolItem {
   id_rol: string;
-  rol_nombre: string;
+  nombre_rol: string;
   descripcion: string;
 }
 
 export interface SucursalItem {
   id_sucursal: string;
   id_empresa: string;
-  nombre: string;
+  nombre_sucursal: string;
   direccion: string;
   telefono: string;
   codigo: string;
@@ -46,11 +46,14 @@ export interface LoginResponse {
 }
 
 export interface CreateUserDTO {
-  nombre: string;
+  usu_nombre: string;
   email: string;
+  usu_dni: string;
+  usu_telefono: string;
   password: string;
   id_rol: string;
   id_sucursal: string;
+  id_status: string;
 }
 
 export const AuthService = {
@@ -88,13 +91,27 @@ export const AuthService = {
   },
 
   getRoles: async (): Promise<{ data: RolItem[] }> => {
-    const { data } = await axiosClient.get(ENDPOINTS.roles);
+    const { data } = await axiosClient.get(ENDPOINTS.roles.base);
     return data;
   },
 
   getSucursales: async (): Promise<{ data: SucursalItem[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.sucursales);
     return data;
+  },
+
+  createRol: async (rolData: { nombre_rol: string; id_sucursal: string; id_status: string }) => {
+    const { data } = await axiosClient.post(ENDPOINTS.roles.base, rolData);
+    return data;
+  },
+
+  updateRol: async (id: string, rolData: Partial<{ nombre_rol: string; id_sucursal: string; id_status: string }>) => {
+    const { data } = await axiosClient.put(ENDPOINTS.roles.byId(id), rolData);
+    return data;
+  },
+
+  deleteRol: async (id: string) => {
+    await axiosClient.delete(ENDPOINTS.roles.byId(id));
   },
 
   logout: async () => {

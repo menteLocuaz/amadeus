@@ -10,8 +10,13 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   
-  const { login, isLoading, error } = useAuthStore();
+  const { login, logout, isLoading, error } = useAuthStore();
   const navigate = useNavigate();
+
+  // Limpiar sesión al entrar al login
+  React.useEffect(() => {
+    logout();
+  }, [logout]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -82,10 +87,6 @@ const LoginPage: React.FC = () => {
               {isLoading ? "Validando..." : "Iniciar Sesión"}
             </LoginButton>
           </form>
-
-          <FooterLink>
-            ¿No tienes cuenta? <a href="#" onClick={() => navigate("/register")}>Regístrate aquí</a>
-          </FooterLink>
         </FormSide>
 
         <ImageSide />
@@ -271,19 +272,6 @@ const LoginButton = styled.button`
   }
 
   &:active { transform: translateY(0); }
-`;
-
-const FooterLink = styled.p`
-  text-align: center;
-  font-size: 0.9rem;
-  color: ${({ theme }) => theme.textsecondary};
-
-  a {
-    color: ${({ theme }) => theme.bg4};
-    text-decoration: none;
-    font-weight: 600;
-    &:hover { text-decoration: underline; }
-  }
 `;
 
 export default LoginPage;
