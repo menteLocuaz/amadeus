@@ -2,9 +2,9 @@ import { useState, useMemo } from "react";
 import { BrowserRouter, useLocation } from "react-router-dom";
 import styled, { ThemeProvider } from "styled-components";
 import { MyRoutes } from "./routes/routes";
-import { Sidebar } from "./components/Sidebar";
-import { Light, Dark } from "./styles/Themes";
-import { ThemeContext } from "./context/ThemeContext";
+import { Sidebar } from "./shared/layout/Sidebar";
+import { Light, Dark } from "./core/styles/Themes";
+import { ThemeContext } from "./core/context/ThemeContext";
 
 function AppContent() {
   const [theme, setTheme] = useState("light");

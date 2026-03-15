@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { useAuthStore } from '../store/useAuthStore';
+import { useAuthStore } from '../../features/auth/store/useAuthStore';
 
 // PATRÓN SINGLETON: Instancia única para la API PRUNUS
 const axiosClient = axios.create({

@@ -8,10 +8,11 @@ import {
     AiOutlineSetting,
 } from "react-icons/ai";
 import { MdOutlineAnalytics, MdLogout, MdPointOfSale } from "react-icons/md";
-import { ThemeContext } from "../context/ThemeContext";
-import { useAuthStore } from "../store/useAuthStore";
-import { v } from "../styles/Variables";
-import logo from "../assets/react.svg";
+import { ThemeContext } from "../../core/context/ThemeContext";
+import { useAuthStore } from "../../features/auth/store/useAuthStore";
+import { v } from "../../core/styles/Variables";
+import { ROUTES } from "../../core/constants/routes";
+import logo from "../../assets/react.svg";
 
 // --- Interfaces ---
 interface NavLinkItem {
@@ -40,9 +41,9 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
         }
     }, [context]);
 
-    const handleLogout = useCallback(() => {
-        logout();
-        navigate("/");
+    const handleLogout = useCallback(async () => {
+        await logout();
+        navigate(ROUTES.LOGIN);
     }, [logout, navigate]);
 
     // Manejo seguro del contexto (después de los hooks)
@@ -51,17 +52,17 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
 
     // Datos de Configuración
     const primaryLinks: NavLinkItem[] = [
-        { label: "Home", icon: <AiOutlineHome />, to: "/home" },
-        { label: "Caja (POS)", icon: <MdPointOfSale />, to: "/pos" },
-        { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: "/estadisticas" },
-        { label: "Productos", icon: <AiOutlineApartment />, to: "/productos" },
-        { label: "Diagramas", icon: <MdOutlineAnalytics />, to: "/diagramas" },
-        { label: "Reportes", icon: <MdOutlineAnalytics />, to: "/reportes" }
+        { label: "Home", icon: <AiOutlineHome />, to: ROUTES.HOME },
+        { label: "Caja (POS)", icon: <MdPointOfSale />, to: ROUTES.POS },
+        { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: ROUTES.ESTADISTICAS },
+        { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },
+        { label: "Diagramas", icon: <MdOutlineAnalytics />, to: ROUTES.DIAGRAMAS },
+        { label: "Reportes", icon: <MdOutlineAnalytics />, to: ROUTES.REPORTES }
     ];
 
     const secondaryLinks: NavLinkItem[] = [
-        { label: "Configuración", icon: <AiOutlineSetting />, to: "/config" },
-        { label: "Salir", icon: <MdLogout />, to: "/", onClick: handleLogout },
+        { label: "Configuración", icon: <AiOutlineSetting />, to: ROUTES.CONFIG },
+        { label: "Salir", icon: <MdLogout />, to: ROUTES.LOGIN, onClick: handleLogout },
     ];
 
     return (

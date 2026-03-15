@@ -7,7 +7,7 @@ interface AuthState {
   error: string | null;
   login: (email: string, pass: string) => Promise<boolean>;
   fetchMe: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -41,8 +41,12 @@ export const useAuthStore = create<AuthState>((set) => ({
     }
   },
 
-  logout: () => {
-    localStorage.removeItem('token');
-    set({ user: null });
+  logout: async () => {
+    try {
+      await AuthService.logout();
+    } finally {
+      localStorage.removeItem('token');
+      set({ user: null });
+    }
   }
 }));

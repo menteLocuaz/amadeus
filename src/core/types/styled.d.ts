@@ -1,5 +1,5 @@
 import 'styled-components';
-import { Light, Dark } from './styles/Themes';
+import { Light, Dark } from '../styles/Themes';
 
 type LightThemeType = typeof Light;
 type DarkThemeType = typeof Dark;

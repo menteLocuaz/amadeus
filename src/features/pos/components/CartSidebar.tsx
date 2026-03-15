@@ -1,6 +1,6 @@
 import React from "react";
 import styled from "styled-components";
-import { usePosStore } from "../../../store/usePosStore";
+import { usePosStore } from "../store/usePosStore";
 
 export const CartSidebar: React.FC = () => {
   const { cart, updateQuantity, removeFromCart, getTotal, clearCart } = usePosStore();

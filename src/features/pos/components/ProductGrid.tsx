@@ -1,7 +1,7 @@
 import React from "react";
 import styled from "styled-components";
-import { Product } from "../../../services/ProductService";
-import { usePosStore } from "../../../store/usePosStore";
+import { type Product } from "../../products/services/ProductService";
+import { usePosStore } from "../store/usePosStore";
 
 interface ProductGridProps {
   products: Product[];
