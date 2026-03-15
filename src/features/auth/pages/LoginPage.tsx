@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import FontLogin from "../assets/login.jpg";
+import FontLogin from "../../../assets/login.jpg";
 import { useAuthStore } from "../store/useAuthStore";
 import { ClimbingBoxLoader } from "react-spinners";
 

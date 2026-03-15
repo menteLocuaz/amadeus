@@ -1,7 +1,7 @@
 import { useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
-import { useAuthStore } from "../store/useAuthStore";
+import { useAuthStore } from "../../auth/store/useAuthStore";
 
 export function Home() {
   const { user, isLoading, error, fetchMe } = useAuthStore();

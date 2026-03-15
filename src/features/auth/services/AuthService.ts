@@ -1,5 +1,5 @@
-import axiosClient from '../api/axiosClient';
-import { ENDPOINTS } from '../api/endpoints';
+import axiosClient from '../../../core/api/axiosClient';
+import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface RolItem {
   id_rol: string;
@@ -95,5 +95,13 @@ export const AuthService = {
   getSucursales: async (): Promise<{ data: SucursalItem[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.sucursales);
     return data;
+  },
+
+  logout: async () => {
+    try {
+      await axiosClient.post(ENDPOINTS.auth.logout);
+    } catch (error: unknown) {
+      console.error('Error al cerrar sesión:', error);
+    }
   }
 };

@@ -1,33 +1,37 @@
 import { Routes, Route, Navigate } from "react-router-dom";
-import { Home } from "../pages/Home";
-import { Estadisticas } from "../pages/Estadistica";
-import { Productos } from "../pages/Producto";
-import { Diagramas } from "../pages/Diagramas";
-import { Reportes } from "../pages/Reportes";
-import LoginPage from "../pages/LoginPage";
-import RegisterPage from "../pages/RegisterPage";
-import { PosPage } from "../pages/Pos/PosPage";
-import ProtectedRoute from "../components/ProtectedRoute";
+import { Home } from "../features/stats/pages/Home";
+import { Estadisticas } from "../features/stats/pages/Estadistica";
+import { Productos } from "../features/products/pages/Producto";
+import { Diagramas } from "../features/stats/pages/Diagramas";
+import { Reportes } from "../features/stats/pages/Reportes";
+import LoginPage from "../features/auth/pages/LoginPage";
+import RegisterPage from "../features/auth/pages/RegisterPage";
+import { PosPage } from "../features/pos/pages/PosPage";
+import { Configuración } from "../features/stats/pages/Configuración";
+import ProtectedRoute from "../shared/components/ProtectedRoute";
+import NotFoundPage from "../shared/components/NotFoundPage";
+import { ROUTES } from "../core/constants/routes";
 
 export function MyRoutes() {
     return (
         <Routes>
             {/* Rutas Públicas */}
-            <Route path="/" element={<LoginPage />} />
+            <Route path={ROUTES.LOGIN} element={<LoginPage />} />
             
             {/* Rutas Protegidas (Dashboard & Gestión) */}
             <Route element={<ProtectedRoute />}>
-                <Route path="/home" element={<Home />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/productos" element={<Productos />} />
-                <Route path="/pos" element={<PosPage />} />
-                <Route path="/estadisticas" element={<Estadisticas />} />
-                <Route path="/diagramas" element={<Diagramas />} />
-                <Route path="/reportes" element={<Reportes />} />
+                <Route path={ROUTES.HOME} element={<Home />} />
+                <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+                <Route path={ROUTES.PRODUCTOS} element={<Productos />} />
+                <Route path={ROUTES.POS} element={<PosPage />} />
+                <Route path={ROUTES.ESTADISTICAS} element={<Estadisticas />} />
+                <Route path={ROUTES.DIAGRAMAS} element={<Diagramas />} />
+                <Route path={ROUTES.REPORTES} element={<Reportes />} />
+                <Route path={ROUTES.CONFIG} element={<Configuración />} />
             </Route>
 
-            {/* Redirección por defecto */}
-            <Route path="*" element={<Navigate to="/" replace />} />
+            {/* Error 404 - Página no encontrada */}
+            <Route path="*" element={<NotFoundPage />} />
         </Routes>
     );
 }

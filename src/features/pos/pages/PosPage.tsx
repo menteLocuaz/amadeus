@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
-import { ProductGrid } from "./components/ProductGrid";
-import { CartSidebar } from "./components/CartSidebar";
-import { useProductStore } from "../../store/useProductStore";
+import { ProductGrid } from "../components/ProductGrid";
+import { CartSidebar } from "../components/CartSidebar";
+import { useProductStore } from "../../products/store/useProductStore";
 
 export const PosPage: React.FC = () => {
   const { products, isLoading, fetchProducts } = useProductStore();
