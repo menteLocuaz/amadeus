@@ -1,45 +1,52 @@
+import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
-import { Home } from "../features/stats/pages/Home";
-import { Estadisticas } from "../features/stats/pages/Estadistica";
-import Productos from "../features/products/pages/Productos";
-import { Diagramas } from "../features/stats/pages/Diagramas";
-import { Reportes } from "../features/stats/pages/Reportes";
-import LoginPage from "../features/auth/pages/LoginPage";
-import RegisterPage from "../features/auth/pages/RegisterPage";
-import { PosPage } from "../features/pos/pages/PosPage";
-import { Configuración } from "../features/stats/pages/Configuración";
-import RolesPage from "../features/auth/pages/RolesPage";
-import Categoria from "../features/stats/pages/Categoria";
-import Medidas from "../features/stats/pages/Medidas";
-import Monedas from "../features/stats/pages/Moneda";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import NotFoundPage from "../shared/components/NotFoundPage";
 import { ROUTES } from "../core/constants/routes";
 
-export function MyRoutes() {
-    return (
-        <Routes>
-            {/* Rutas Públicas */}
-            <Route path={ROUTES.LOGIN} element={<LoginPage />} />
-            
-            {/* Rutas Protegidas (Dashboard & Gestión) */}
-            <Route element={<ProtectedRoute />}>
-                <Route path={ROUTES.HOME} element={<Home />} />
-                <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
-                <Route path={ROUTES.PRODUCTOS} element={<Productos />} />
-                <Route path={ROUTES.POS} element={<PosPage />} />
-                <Route path={ROUTES.ESTADISTICAS} element={<Estadisticas />} />
-                <Route path={ROUTES.DIAGRAMAS} element={<Diagramas />} />
-                <Route path={ROUTES.REPORTES} element={<Reportes />} />
-                <Route path={ROUTES.CONFIG} element={<Configuración />} />
-                <Route path={ROUTES.ROLES} element={<RolesPage />} />
-                <Route path={ROUTES.CATEGORIAS} element={<Categoria />} />
-                <Route path={ROUTES.MEDIDAS} element={<Medidas />} />
-                <Route path={ROUTES.MONEDAS} element={<Monedas />} />
-            </Route>
+// Lazy load de páginas
+const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
+const RegisterPage = lazy(() => import("../features/auth/pages/RegisterPage"));
+const Home = lazy(() => import("../features/stats/pages/Home"));
+const Estadisticas = lazy(() => import("../features/stats/pages/Estadistica"));
+const Productos = lazy(() => import("../features/products/pages/Productos"));
+const PosPage = lazy(() => import("../features/pos/pages/PosPage"));
+const Diagramas = lazy(() => import("../features/stats/pages/Diagramas"));
+const Reportes = lazy(() => import("../features/stats/pages/Reportes"));
+const Configuración = lazy(() => import("../features/stats/pages/Configuración"));
+const RolesPage = lazy(() => import("../features/auth/pages/RolesPage"));
+const Categoria = lazy(() => import("../features/stats/pages/Categoria"));
+const Medidas = lazy(() => import("../features/stats/pages/Medidas"));
+const Monedas = lazy(() => import("../features/stats/pages/Moneda"));
+const Inventario = lazy(()=> import("../features/products/pages/Inventario"));
 
-            {/* Error 404 - Página no encontrada */}
-            <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-    );
+export function MyRoutes() {
+  return (
+    <Suspense fallback={<div>Cargando...</div>}>
+      <Routes>
+        {/* Rutas Públicas */}
+        <Route path={ROUTES.LOGIN} element={<LoginPage />} />
+
+        {/* Rutas Protegidas (Dashboard & Gestión) */}
+        <Route element={<ProtectedRoute />}>
+          <Route path={ROUTES.HOME} element={<Home />} />
+          <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
+          <Route path={ROUTES.PRODUCTOS} element={<Productos />} />
+          <Route path={ROUTES.POS} element={<PosPage />} />
+          <Route path={ROUTES.ESTADISTICAS} element={<Estadisticas />} />
+          <Route path={ROUTES.DIAGRAMAS} element={<Diagramas />} />
+          <Route path={ROUTES.REPORTES} element={<Reportes />} />
+          <Route path={ROUTES.CONFIG} element={<Configuración />} />
+          <Route path={ROUTES.ROLES} element={<RolesPage />} />
+          <Route path={ROUTES.CATEGORIAS} element={<Categoria />} />
+          <Route path={ROUTES.MEDIDAS} element={<Medidas />} />
+          <Route path={ROUTES.MONEDAS} element={<Monedas />} />
+          <Route path={ROUTES.INVENTARIO} element={<Inventario />} />
+        </Route>
+
+        {/* Error 404 - Página no encontrada */}
+        <Route path="*" element={<NotFoundPage />} />
+      </Routes>
+    </Suspense>
+  );
 }

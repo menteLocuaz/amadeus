@@ -1,19 +1,26 @@
-import React, { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import styled from "styled-components";
 import type { IconType } from "react-icons";
-import { 
-  FiPrinter, FiShoppingCart, FiBox, FiUsers, 
-  FiTruck, FiCreditCard, FiMapPin, FiUser, 
-  FiTag, FiSettings, FiSearch, FiSliders, FiDollarSign 
+import {
+  FiPrinter,
+  FiShoppingCart,
+  FiBox,
+  FiUsers,
+  FiTruck,
+  FiCreditCard,
+  FiMapPin,
+  FiUser,
+  FiTag,
+  FiSettings,
+  FiSearch,
+  FiSliders,
+  FiDollarSign,
+  FiLayers, // agregado para Inventario
 } from "react-icons/fi";
 import { RiStore2Line } from "react-icons/ri";
 import { GiTicket } from "react-icons/gi";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../core/constants/routes";
-
-/**
- * Página de Configuración — Adaptada al ecosistema Groot-Type
- */
 
 /* -------------------------------- Types --------------------------------- */
 type ConfigItem = {
@@ -50,7 +57,7 @@ const TitleSection = styled.div`
     margin: 0;
     font-size: 2rem;
     font-weight: 800;
-    color: ${({ theme }) => theme.bg4}; // Acento dorado
+    color: ${({ theme }) => theme.bg4};
   }
   span {
     font-size: 0.95rem;
@@ -164,23 +171,27 @@ export const Configuración: React.FC = () => {
   const [query, setQuery] = useState("");
   const navigate = useNavigate();
 
-  const items: ConfigItem[] = useMemo(() => [
-    { id: "printers", title: "Impresoras", description: "Gestiona tus comprobantes de pago", Icon: FiPrinter, onClick: () => alert("Configurando Impresoras...") },
-    { id: "medidas", title: "Unidades de Medida", description: "Gestiona las unidades (Kilo, Metro, etc.)", Icon: FiSliders, path: ROUTES.MEDIDAS },
-    { id: "company", title: "Empresa", description: "Configura la información de tu negocio", Icon: FiShoppingCart, onClick: () => alert("Configurando Empresa...") },
-    { id: "categories", title: "Categorías", description: "Organiza tus productos por grupos", Icon: FiTag, path: ROUTES.CATEGORIAS },
-    { id: "currencies", title: "Monedas", description: "Configura divisas y tipos de cambio", Icon: FiDollarSign, path: ROUTES.MONEDAS },
-    { id: "products", title: "Productos", description: "Registro y control de inventario", Icon: FiBox, path: ROUTES.PRODUCTOS || "/productos" },
-    { id: "clients", title: "Clientes", description: "Directorio y estados de cuenta", Icon: FiUsers, onClick: () => alert("Configurando Clientes...") },
-    { id: "suppliers", title: "Proveedores", description: "Gestión de compras y abastecimiento", Icon: FiTruck, onClick: () => alert("Configurando Proveedores...") },
-    { id: "payments", title: "Métodos de pago", description: "Configura cajas y formas de cobro", Icon: FiCreditCard, onClick: () => alert("Configurando Pagos...") },
-    { id: "branches", title: "Sucursales", description: "Administra múltiples puntos de venta", Icon: RiStore2Line, onClick: () => alert("Configurando Sucursales...") },
-    { id: "roles", title: "Roles", description: "Configura perfiles y permisos de acceso", Icon: FiUsers, path: "/roles" },
-    { id: "users", title: "Usuarios", description: "Control de accesos y perfiles", Icon: FiUser, path: "/register" },
-    { id: "warehouse", title: "Almacén", description: "Movimientos de stock y bodegas", Icon: FiMapPin, onClick: () => alert("Configurando Almacén...") },
-    { id: "tickets", title: "Tickets", description: "Diseño de comprobantes y cupones", Icon: GiTicket, onClick: () => alert("Configurando Tickets...") },
-    { id: "invoices", title: "Facturación", description: "Parámetros fiscales y comprobantes", Icon: FiSettings, onClick: () => alert("Configurando Facturación...") },
-  ], []);
+  const items: ConfigItem[] = useMemo(
+    () => [
+      { id: "printers", title: "Impresoras", description: "Gestiona tus comprobantes de pago", Icon: FiPrinter, onClick: () => alert("Configurando Impresoras...") },
+      { id: "medidas", title: "Unidades de Medida", description: "Gestiona las unidades (Kilo, Metro, etc.)", Icon: FiSliders, path: ROUTES.MEDIDAS },
+      { id: "company", title: "Empresa", description: "Configura la información de tu negocio", Icon: FiShoppingCart, onClick: () => alert("Configurando Empresa...") },
+      { id: "categories", title: "Categorías", description: "Organiza tus productos por grupos", Icon: FiTag, path: ROUTES.CATEGORIAS },
+      { id: "currencies", title: "Monedas", description: "Configura divisas y tipos de cambio", Icon: FiDollarSign, path: ROUTES.MONEDAS },
+      { id: "products", title: "Productos", description: "Registro y control de inventario", Icon: FiBox, path: ROUTES.PRODUCTOS || "/productos" },
+      { id: "inventario", title: "Inventario", description: "Consulta rápida de stock y precios", Icon: FiLayers, path: ROUTES.INVENTARIO }, // agregado
+      { id: "clients", title: "Clientes", description: "Directorio y estados de cuenta", Icon: FiUsers, onClick: () => alert("Configurando Clientes...") },
+      { id: "suppliers", title: "Proveedores", description: "Gestión de compras y abastecimiento", Icon: FiTruck, onClick: () => alert("Configurando Proveedores...") },
+      { id: "payments", title: "Métodos de pago", description: "Configura cajas y formas de cobro", Icon: FiCreditCard, onClick: () => alert("Configurando Pagos...") },
+      { id: "branches", title: "Sucursales", description: "Administra múltiples puntos de venta", Icon: RiStore2Line, onClick: () => alert("Configurando Sucursales...") },
+      { id: "roles", title: "Roles", description: "Configura perfiles y permisos de acceso", Icon: FiUsers, path: ROUTES.ROLES || "/roles" },
+      { id: "users", title: "Usuarios", description: "Control de accesos y perfiles", Icon: FiUser, path: ROUTES.REGISTER || "/register" },
+      { id: "warehouse", title: "Almacén", description: "Movimientos de stock y bodegas", Icon: FiMapPin, onClick: () => alert("Configurando Almacén...") },
+      { id: "tickets", title: "Tickets", description: "Diseño de comprobantes y cupones", Icon: GiTicket, onClick: () => alert("Configurando Tickets...") },
+      { id: "invoices", title: "Facturación", description: "Parámetros fiscales y comprobantes", Icon: FiSettings, onClick: () => alert("Configurando Facturación...") },
+    ],
+    []
+  );
 
   const filtered = useMemo(
     () => items.filter(i => (i.title + i.description).toLowerCase().includes(query.trim().toLowerCase())),
