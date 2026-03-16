@@ -1,7 +1,12 @@
-import { useEffect } from "react";
+import  { useEffect } from "react";
 import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { useAuthStore } from "../../auth/store/useAuthStore";
+
+import {
+  PageContainer,
+  TableCard,
+} from "../../../shared/components/UI";
 
 export function Home() {
   const { user, isLoading, error, fetchMe } = useAuthStore();
@@ -25,7 +30,7 @@ export function Home() {
   if (isLoading) return <Loading>Cargando perfil de usuario...</Loading>;
 
   return (
-    <Container>
+    <PageContainer>
       <HeaderSection>
         <h1>Panel de Control PRUNUS</h1>
         {user ? (
@@ -44,11 +49,7 @@ export function Home() {
         <StatCard>
           <div className="icon">👤</div>
           <div className="label">Tu Email</div>
-          {/* truncamos y mostramos el valor completo en title */}
-          <div
-            className="value truncate"
-            title={user?.email ?? "---"}
-          >
+          <div className="value truncate" title={user?.email ?? "---"}>
             {user?.email || "---"}
           </div>
         </StatCard>
@@ -56,11 +57,7 @@ export function Home() {
         <StatCard>
           <div className="icon">🏢</div>
           <div className="label">Sucursal</div>
-          {/* también truncamos la sucursal (si prefieres wrap, usa className="value wrap") */}
-          <div
-            className="value truncate"
-            title={user?.sucursal?.nombre_sucursal ?? "---"}
-          >
+          <div className="value truncate" title={user?.sucursal?.nombre_sucursal ?? "---"}>
             {user?.sucursal?.nombre_sucursal || "---"}
           </div>
         </StatCard>
@@ -73,15 +70,11 @@ export function Home() {
           </div>
         </StatCard>
       </DashboardStats>
-    </Container>
+    </PageContainer>
   );
 }
 
 /* ---------- estilos ---------- */
-
-const Container = styled.div`
-  padding: 40px;
-`;
 
 const HeaderSection = styled.div`
   margin-bottom: 40px;
@@ -97,16 +90,12 @@ const WelcomeMessage = styled.p`
 
 const DashboardStats = styled.div`
   display: grid;
-  /* ajustar el minmax para evitar columnas demasiado estrechas que provoquen overflow */
   grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
 `;
 
-const StatCard = styled.div`
-  background: ${({ theme }) => theme.bg};
-  border: 1px solid ${({ theme }) => theme.bg3}33;
+const StatCard = styled(TableCard)`
   padding: 25px;
-  border-radius: 15px;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -115,12 +104,10 @@ const StatCard = styled.div`
   .icon { font-size: 2rem; }
   .label { font-size: 0.9rem; color: ${({ theme }) => theme.textsecondary}; text-transform: uppercase; }
 
-  /* valor principal con manejo de overflow */
   .value {
     font-size: 1.2rem;
     font-weight: 700;
     color: ${({ theme }) => theme.text};
-    /* por defecto truncamos si es muy largo */
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -128,14 +115,12 @@ const StatCard = styled.div`
     display: block;
   }
 
-  /* variante para permitir wrapping (si la quieres usar, aplica className="value wrap") */
   .value.wrap {
     white-space: normal;
     overflow: visible;
     word-break: break-word;
   }
 
-  /* responsive: en pantallas muy pequeñas permitimos wrap para evitar truncado excesivo */
   @media (max-width: 420px) {
     .value {
       white-space: normal;

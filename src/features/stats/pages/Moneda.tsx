@@ -1,192 +1,95 @@
 import React, { useEffect, useState, useMemo } from "react";
-import styled from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiDollarSign } from "react-icons/fi";
 import { MonedaService, type Moneda } from "../../products/services/MonedaService";
 import { EstatusService } from "../../auth/services/EstatusService";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 
-// --- Estilos ---
-const PageContainer = styled.div`
-  padding: 28px;
-  max-width: 1000px;
-  margin: 0 auto;
-`;
+/* Componentes UI compartidos */
+import {
+  PageContainer,
+  TableCard,
+  Table,
+  ActionBtn,
+  FormGroup,
+  ModalOverlay,
+  ModalContent,
+  Badge,
+} from "../../../shared/components/UI";
 
-const Header = styled.div`
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
-  gap: 20px;
-`;
+const Header = ({ children }: { children: React.ReactNode }) => (
+  <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30, flexWrap: "wrap", gap: 20 }}>
+    {children}
+  </div>
+);
 
-const TitleSection = styled.div`
-  h1 {
-    margin: 0;
-    font-size: 2rem;
-    font-weight: 800;
-    color: ${({ theme }) => theme.bg4};
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  p {
-    font-size: 0.95rem;
-    color: ${({ theme }) => theme.texttertiary};
-    margin-top: 5px;
-  }
-`;
+const TitleSection = ({ title, subtitle }: { title: string; subtitle?: string }) => (
+  <div>
+    <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 800, display: "flex", alignItems: "center", gap: 12 }}>
+      <FiDollarSign /> {title}
+    </h1>
+    {subtitle && <p style={{ fontSize: "0.95rem", color: "var(--text-tertiary, #9CA3AF)", marginTop: 5 }}>{subtitle}</p>}
+  </div>
+);
 
-const AddButton = styled.button`
-  background: ${({ theme }) => theme.bg4};
-  color: #000;
-  border: none;
-  padding: 12px 24px;
-  border-radius: 12px;
-  font-weight: 700;
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  cursor: pointer;
-  transition: all 0.2s;
-  &:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 16px rgba(252, 163, 17, 0.2);
-  }
-  &:disabled { opacity: 0.5; cursor: not-allowed; }
-`;
+const AddButton = ({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) => (
+  <button
+    onClick={onClick}
+    disabled={disabled}
+    style={{
+      background: "var(--accent, #FCA311)",
+      color: "#000",
+      border: "none",
+      padding: "12px 24px",
+      borderRadius: 12,
+      fontWeight: 700,
+      display: "flex",
+      alignItems: "center",
+      gap: 10,
+      cursor: disabled ? "not-allowed" : "pointer",
+      opacity: disabled ? 0.6 : 1,
+      transition: "all 0.12s",
+    }}
+  >
+    <FiPlus size={18} /> Nueva Moneda
+  </button>
+);
 
-const SearchBar = styled.div`
-  background: ${({ theme }) => theme.bg};
-  border: 1px solid ${({ theme }) => theme.bg3}33;
-  padding: 12px 18px;
-  border-radius: 14px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-  max-width: 400px;
-  margin-bottom: 25px;
-  transition: all 0.2s;
+const SearchBar = ({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) => (
+  <div style={{
+      background: "var(--bg, #fff)",
+      border: "1px solid rgba(0,0,0,0.06)",
+      padding: "12px 18px",
+      borderRadius: 14,
+      display: "flex",
+      alignItems: "center",
+      gap: 12,
+      width: "100%",
+      maxWidth: 400,
+      marginBottom: 25,
+  }}>
+    <FiSearch style={{ color: "var(--accent, #FCA311)" }} />
+    <input
+      placeholder="Buscar moneda..."
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      disabled={disabled}
+      style={{ border: "none", outline: "none", background: "transparent", width: "100%", fontSize: 16, opacity: disabled ? 0.6 : 1 }}
+    />
+  </div>
+);
 
-  &:focus-within {
-    border-color: ${({ theme }) => theme.bg4};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.bg4}22;
-  }
-
-  input {
-    border: none;
-    outline: none;
-    background: transparent;
-    color: ${({ theme }) => theme.text};
-    width: 100%;
-    font-size: 1rem;
-    &::placeholder { color: ${({ theme }) => theme.texttertiary}; opacity: 0.5; }
-  }
-  svg { color: ${({ theme }) => theme.bg4}; }
-`;
-
-const TableCard = styled.div`
-  background: ${({ theme }) => theme.bg};
-  border-radius: 20px;
-  border: 1px solid ${({ theme }) => theme.bg3}22;
-  overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
-`;
-
-const Table = styled.table`
-  width: 100%;
-  border-collapse: collapse;
-  th {
-    background: ${({ theme }) => theme.bg2};
-    padding: 18px;
-    text-align: left;
-    font-size: 0.85rem;
-    color: ${({ theme }) => theme.bg4};
-    text-transform: uppercase;
-    letter-spacing: 1px;
-    font-weight: 700;
-  }
-  td {
-    padding: 18px;
-    border-bottom: 1px solid ${({ theme }) => theme.bg3}11;
-    color: ${({ theme }) => theme.text};
-  }
-`;
-
-const ActionBtn = styled.button<{ $variant?: "edit" | "delete" }>`
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  padding: 8px;
-  border-radius: 8px;
-  color: ${({ $variant, theme }) => ($variant === "delete" ? "#ff4d4d" : theme.bg4)};
-  transition: all 0.2s;
-  font-size: 1.2rem;
-  &:hover {
-    background: ${({ $variant }) => ($variant === "delete" ? "rgba(255, 77, 77, 0.1)" : "rgba(252, 163, 17, 0.1)")};
-  }
-`;
-
-const Overlay = styled.div`
-  position: fixed;
-  top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,0.6);
-  backdrop-filter: blur(4px);
-  display: flex; align-items: center; justify-content: center;
-  z-index: 2000;
-`;
-
-const Modal = styled.div`
-  background: ${({ theme }) => theme.bg};
-  width: 100%;
-  max-width: 450px;
-  border-radius: 24px;
-  padding: 35px;
-  box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
-  border: 1px solid ${({ theme }) => theme.bg3}33;
-`;
-
-const ModalHeader = styled.div`
-  display: flex; justify-content: space-between; align-items: center;
-  margin-bottom: 25px;
-  h2 { font-size: 1.5rem; margin: 0; color: ${({ theme }) => theme.text}; }
-`;
-
-const FormGroup = styled.div`
-  margin-bottom: 20px;
-  label { display: block; font-size: 0.9rem; font-weight: 700; margin-bottom: 10px; color: ${({ theme }) => theme.bg4}; }
-  input, select {
-    width: 100%; padding: 14px; border: 1px solid ${({ theme }) => theme.bg3}33; border-radius: 12px;
-    background: ${({ theme }) => theme.bg2}; color: ${({ theme }) => theme.text}; outline: none;
-    &:focus { border-color: ${({ theme }) => theme.bg4}; }
-  }
-`;
-
-const ModalFooter = styled.div`
-  display: flex; gap: 15px; margin-top: 30px;
-  button { flex: 1; padding: 14px; border-radius: 12px; font-weight: 700; cursor: pointer; border: none; transition: all 0.2s; }
-`;
-
-const Badge = styled.span<{ $active: boolean }>`
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  background: ${({ $active }) => ($active ? "rgba(34, 197, 94, 0.1)" : "rgba(239, 68, 68, 0.1)")};
-  color: ${({ $active }) => ($active ? "#22C55E" : "#EF4444")};
-`;
-
-// --- Componente Principal ---
 const Monedas: React.FC = () => {
   const [monedas, setMonedas] = useState<Moneda[]>([]);
   const [estatusList, setEstatusList] = useState<{ id_status: string; std_descripcion: string }[]>([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMoneda, setEditingMoneda] = useState<Moneda | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+
+  const [isLoading, setIsLoading] = useState(false); // carga inicial / refresh
+  const [isSaving, setIsSaving] = useState(false);   // create/update
+  const [isDeletingId, setIsDeletingId] = useState<string | null>(null); // id en eliminación
+
   const { user } = useAuthStore();
 
   const [formData, setFormData] = useState({ nombre: "", id_status: "" });
@@ -194,6 +97,7 @@ const Monedas: React.FC = () => {
   useEffect(() => {
     loadData();
     loadEstatus();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const loadData = async () => {
@@ -216,7 +120,6 @@ const Monedas: React.FC = () => {
     try {
       const res = await EstatusService.getCatalogo();
       if (res.success) {
-        // Usar módulo 1 (General) o 3 (Roles/Users) como referencia si no hay uno específico
         const list = res.data["1"]?.items || res.data["3"]?.items || [];
         setEstatusList(list);
       }
@@ -225,21 +128,20 @@ const Monedas: React.FC = () => {
     }
   };
 
-  const filteredMonedas = useMemo(() => 
-    monedas.filter(m => m.nombre.toLowerCase().includes(search.toLowerCase())),
+  const filteredMonedas = useMemo(() =>
+    monedas.filter(m => m.nombre?.toLowerCase().includes(search.toLowerCase())),
     [monedas, search]
   );
 
   const openModal = (moneda?: Moneda) => {
     if (moneda) {
       setEditingMoneda(moneda);
-      setFormData({ 
-        nombre: moneda.nombre, 
-        id_status: moneda.id_status 
+      setFormData({
+        nombre: moneda.nombre || "",
+        id_status: moneda.id_status || ""
       });
     } else {
       setEditingMoneda(null);
-      // Para creación, id_status se puede pre-seleccionar si hay uno "Activo"
       const defaultStatus = estatusList.find(e => e.std_descripcion.toLowerCase().includes("activ"))?.id_status || "";
       setFormData({ nombre: "", id_status: defaultStatus });
     }
@@ -252,16 +154,16 @@ const Monedas: React.FC = () => {
     if (!user?.id_sucursal) return alert("Error: No se identificó la sucursal");
     if (!formData.id_status) return alert("El estado es obligatorio");
 
-    setIsLoading(true);
+    setIsSaving(true);
     try {
-      const payload = { 
+      const payload = {
         nombre: trimmedNombre,
         id_sucursal: user.id_sucursal.trim(),
         id_status: formData.id_status
       };
 
       if (editingMoneda) {
-        const idParaActualizar = editingMoneda.id_moneda?.trim();
+        const idParaActualizar = String(editingMoneda.id_moneda || editingMoneda.id_moneda || "");
         if (!idParaActualizar) throw new Error("ID de moneda no encontrado");
         await MonedaService.update(idParaActualizar, payload);
         alert("¡Moneda actualizada con éxito!");
@@ -276,24 +178,24 @@ const Monedas: React.FC = () => {
       const apiMessage = error.response?.data?.message || error.message;
       alert(`Error: ${apiMessage}`);
     } finally {
-      setIsLoading(false);
+      setIsSaving(false);
     }
   };
 
   const handleDelete = async (id: string | undefined) => {
     if (!id) return;
-    if (window.confirm("¿Estás seguro de eliminar esta moneda?")) {
-      setIsLoading(true);
-      try {
-        await MonedaService.delete(id);
-        await loadData();
-        alert("Moneda eliminada");
-      } catch (error) {
-        console.error("Error al eliminar moneda:", error);
-        alert("Error al eliminar");
-      } finally {
-        setIsLoading(false);
-      }
+    if (!window.confirm("¿Estás seguro de eliminar esta moneda?")) return;
+
+    setIsDeletingId(id);
+    try {
+      await MonedaService.delete(id);
+      await loadData();
+      alert("Moneda eliminada");
+    } catch (error) {
+      console.error("Error al eliminar moneda:", error);
+      alert("Error al eliminar");
+    } finally {
+      setIsDeletingId(null);
     }
   };
 
@@ -302,31 +204,23 @@ const Monedas: React.FC = () => {
     return status?.std_descripcion || "Desconocido";
   };
 
+  const getBadgeColor = (id_status?: string) => {
+    const desc = getStatusDescription(id_status || "");
+    return desc.toLowerCase().includes("activ") ? "rgba(34,197,94,0.12)" : "rgba(239,68,68,0.12)";
+  };
+
   return (
     <PageContainer>
       <Header>
-        <TitleSection>
-          <h1><FiDollarSign /> Monedas</h1>
-          <p>Configure las divisas aceptadas en su sucursal</p>
-        </TitleSection>
-        <AddButton onClick={() => openModal()} disabled={isLoading}>
-          <FiPlus size={20} /> Nueva Moneda
-        </AddButton>
+        <TitleSection title="Monedas" subtitle="Configure las divisas aceptadas en su sucursal" />
+        <AddButton onClick={() => openModal()} disabled={isSaving || isDeletingId !== null || isLoading} />
       </Header>
 
-      <SearchBar>
-        <FiSearch />
-        <input 
-          placeholder="Buscar moneda..." 
-          value={search}
-          onChange={e => setSearch(e.target.value)}
-          disabled={isLoading}
-        />
-      </SearchBar>
+      <SearchBar value={search} onChange={setSearch} disabled={isSaving || isDeletingId !== null || isLoading} />
 
       {isLoading && monedas.length === 0 ? (
         <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-          <ClimbingBoxLoader color="#FCA311" size={20} />
+          <ClimbingBoxLoader color="#FCA311" size={25} />
         </div>
       ) : (
         <TableCard>
@@ -347,19 +241,29 @@ const Monedas: React.FC = () => {
                 </tr>
               ) : (
                 filteredMonedas.map(moneda => (
-                  <tr key={moneda.id_moneda}>
+                  <tr key={String(moneda.id_moneda)}>
                     <td style={{ fontWeight: 600 }}>{moneda.nombre}</td>
                     <td>
-                      <Badge $active={getStatusDescription(moneda.id_status).toLowerCase().includes("activ")}>
-                        {getStatusDescription(moneda.id_status)}
-                      </Badge>
+                      <Badge $color={getBadgeColor(moneda.id_status)}>{getStatusDescription(moneda.id_status)}</Badge>
                     </td>
                     <td style={{ textAlign: "right" }}>
-                      <ActionBtn onClick={() => openModal(moneda)} title="Editar" disabled={isLoading}>
+                      <ActionBtn onClick={() => openModal(moneda)} title="Editar" disabled={isSaving || isDeletingId !== null}>
                         <FiEdit2 size={18} />
                       </ActionBtn>
-                      <ActionBtn $variant="delete" onClick={() => handleDelete(moneda.id_moneda)} title="Eliminar" disabled={isLoading}>
-                        <FiTrash2 size={18} />
+
+                      <ActionBtn
+                        $variant="delete"
+                        onClick={() => handleDelete(String(moneda.id_moneda))}
+                        title="Eliminar"
+                        disabled={isSaving || isDeletingId !== null}
+                      >
+                        {isDeletingId === String(moneda.id_moneda) ? (
+                          <div style={{ display: "inline-flex", alignItems: "center", justifyContent: "center", width: 20 }}>
+                            <ClimbingBoxLoader color="#ff4d4d" size={12} />
+                          </div>
+                        ) : (
+                          <FiTrash2 size={18} />
+                        )}
                       </ActionBtn>
                     </td>
                   </tr>
@@ -370,32 +274,33 @@ const Monedas: React.FC = () => {
         </TableCard>
       )}
 
-      {/* Modal */}
       {isModalOpen && (
-        <Overlay>
-          <Modal>
-            <ModalHeader>
-              <h2>{editingMoneda ? "Editar Moneda" : "Nueva Moneda"}</h2>
-              <ActionBtn onClick={() => setIsModalOpen(false)}><FiX size={24} /></ActionBtn>
-            </ModalHeader>
+        <ModalOverlay>
+          <ModalContent>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+              <h2 style={{ margin: 0 }}>{editingMoneda ? "Editar Moneda" : "Nueva Moneda"}</h2>
+              <ActionBtn $variant="close" onClick={() => setIsModalOpen(false)} disabled={isSaving || isDeletingId !== null}>
+                <FiX size={20} />
+              </ActionBtn>
+            </div>
 
             <FormGroup>
               <label>Nombre de la Moneda</label>
-              <input 
-                placeholder="Ej: Peso Mexicano, Dólar..." 
+              <input
+                placeholder="Ej: Peso Mexicano, Dólar..."
                 value={formData.nombre}
                 onChange={e => setFormData({ ...formData, nombre: e.target.value })}
-                disabled={isLoading}
+                disabled={isSaving || isDeletingId !== null}
                 required
               />
             </FormGroup>
 
             <FormGroup>
               <label>Estado</label>
-              <select 
+              <select
                 value={formData.id_status}
                 onChange={e => setFormData({ ...formData, id_status: e.target.value })}
-                disabled={isLoading}
+                disabled={isSaving || isDeletingId !== null}
                 required
               >
                 <option value="">Seleccione Estado</option>
@@ -407,24 +312,25 @@ const Monedas: React.FC = () => {
               </select>
             </FormGroup>
 
-            <ModalFooter>
-              <button 
-                style={{ background: "rgba(255,255,255,0.05)", color: "inherit" }}
+            <div style={{ display: "flex", gap: 15, marginTop: 20 }}>
+              <button
+                style={{ flex: 1, padding: 12, borderRadius: 12, fontWeight: 700, border: "none", background: "rgba(255,255,255,0.05)" }}
                 onClick={() => setIsModalOpen(false)}
-                disabled={isLoading}
+                disabled={isSaving || isDeletingId !== null}
               >
                 Cancelar
               </button>
-              <button 
-                style={{ background: "#FCA311", color: "#000" }}
+
+              <button
+                style={{ flex: 1, padding: 12, borderRadius: 12, fontWeight: 700, border: "none", background: "var(--accent, #FCA311)", color: "#000" }}
                 onClick={handleSave}
-                disabled={isLoading}
+                disabled={isSaving || isDeletingId !== null}
               >
-                {isLoading ? "Guardando..." : (editingMoneda ? "Guardar Cambios" : "Crear Moneda")}
+                {isSaving ? "Guardando..." : (editingMoneda ? "Guardar Cambios" : "Crear Moneda")}
               </button>
-            </ModalFooter>
-          </Modal>
-        </Overlay>
+            </div>
+          </ModalContent>
+        </ModalOverlay>
       )}
     </PageContainer>
   );
