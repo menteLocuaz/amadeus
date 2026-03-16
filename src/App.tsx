@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { BrowserRouter, useLocation } from "react-router-dom";
 import styled, { ThemeProvider } from "styled-components";
 import { MyRoutes } from "./routes/routes";
@@ -6,11 +6,21 @@ import { Sidebar } from "./shared/layout/Sidebar";
 import { Light, Dark } from "./core/styles/Themes";
 import { ThemeContext } from "./core/context/ThemeContext";
 import { ROUTES } from "./core/constants/routes";
+import { useAuthStore } from "./features/auth/store/useAuthStore";
 
 function AppContent() {
   const [theme, setTheme] = useState("light");
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const location = useLocation();
+  const { user, fetchMe } = useAuthStore();
+
+  // Restaurar sesión si hay token pero no usuario en el store (ej: refresh)
+  useEffect(() => {
+    const token = localStorage.getItem("token");
+    if (token && !user) {
+      fetchMe();
+    }
+  }, [user, fetchMe]);
 
   const themeStyle = useMemo(() => (theme === "light" ? Light : Dark), [theme]);
   

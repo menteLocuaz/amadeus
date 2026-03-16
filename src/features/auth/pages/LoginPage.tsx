@@ -10,13 +10,16 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   
-  const { login, logout, isLoading, error } = useAuthStore();
+  const { login, clearSession, isLoading, error } = useAuthStore();
   const navigate = useNavigate();
 
-  // Limpiar sesión al entrar al login
+  // Limpiar sesión al entrar al login solo si hay un token (evita bucles infinitos)
   React.useEffect(() => {
-    logout();
-  }, [logout]);
+    const token = localStorage.getItem("token");
+    if (token) {
+      clearSession();
+    }
+  }, [clearSession]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

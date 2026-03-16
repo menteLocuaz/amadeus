@@ -44,24 +44,40 @@ export function Home() {
         <StatCard>
           <div className="icon">👤</div>
           <div className="label">Tu Email</div>
-          <div className="value">{user?.email || "---"}</div>
+          {/* truncamos y mostramos el valor completo en title */}
+          <div
+            className="value truncate"
+            title={user?.email ?? "---"}
+          >
+            {user?.email || "---"}
+          </div>
         </StatCard>
         
         <StatCard>
           <div className="icon">🏢</div>
           <div className="label">Sucursal</div>
-          <div className="value">{user?.sucursal.nombre_sucursal || "---"}</div>
+          {/* también truncamos la sucursal (si prefieres wrap, usa className="value wrap") */}
+          <div
+            className="value truncate"
+            title={user?.sucursal?.nombre_sucursal ?? "---"}
+          >
+            {user?.sucursal?.nombre_sucursal || "---"}
+          </div>
         </StatCard>
         
         <StatCard>
           <div className="icon">🛡️</div>
           <div className="label">Rol de Acceso</div>
-          <div className="value">{user?.rol.nombre_rol || "---"}</div>
+          <div className="value truncate" title={user?.rol?.nombre_rol ?? "---"}>
+            {user?.rol?.nombre_rol || "---"}
+          </div>
         </StatCard>
       </DashboardStats>
     </Container>
   );
 }
+
+/* ---------- estilos ---------- */
 
 const Container = styled.div`
   padding: 40px;
@@ -81,7 +97,8 @@ const WelcomeMessage = styled.p`
 
 const DashboardStats = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  /* ajustar el minmax para evitar columnas demasiado estrechas que provoquen overflow */
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
   gap: 20px;
 `;
 
@@ -93,10 +110,38 @@ const StatCard = styled.div`
   display: flex;
   flex-direction: column;
   gap: 10px;
+  min-height: 120px;
 
   .icon { font-size: 2rem; }
   .label { font-size: 0.9rem; color: ${({ theme }) => theme.textsecondary}; text-transform: uppercase; }
-  .value { font-size: 1.2rem; font-weight: 700; color: ${({ theme }) => theme.text}; }
+
+  /* valor principal con manejo de overflow */
+  .value {
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: ${({ theme }) => theme.text};
+    /* por defecto truncamos si es muy largo */
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  /* variante para permitir wrapping (si la quieres usar, aplica className="value wrap") */
+  .value.wrap {
+    white-space: normal;
+    overflow: visible;
+    word-break: break-word;
+  }
+
+  /* responsive: en pantallas muy pequeñas permitimos wrap para evitar truncado excesivo */
+  @media (max-width: 420px) {
+    .value {
+      white-space: normal;
+      word-break: break-word;
+    }
+  }
 `;
 
 const Loading = styled.div`
