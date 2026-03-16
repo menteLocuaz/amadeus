@@ -1,3 +1,4 @@
+import { memo } from "react";
 import styled, { css } from "styled-components";
 
 /* ---------- Theme helpers (usa tus variables de theme) ---------- */
@@ -80,7 +81,7 @@ export const ProductGrid = styled.div`
 `;
 
 /* Product card */
-export const ProductCard = styled.button`
+export const ProductCard = memo(styled.button`
   background: ${cardBg};
   border-radius: 16px;
   padding: 16px;
@@ -101,7 +102,7 @@ export const ProductCard = styled.button`
 
   .name { font-weight: 700; font-size: 0.95rem; color: ${text}; }
   .price { color: ${p => p.theme?.green500 || "#22C55E"}; font-weight: 800; font-size: 1.1rem; }
-`;
+`);
 
 /* Product thumbnail (image) */
 export const ProductImage = styled.img`

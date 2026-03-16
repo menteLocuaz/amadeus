@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
-import { FiPlus, FiMinus, FiTrash2, FiSearch, FiCornerUpLeft, FiTag } from "react-icons/fi";
+import { FiSearch, FiTag } from "react-icons/fi";
 import { useCart } from "../hooks/useCart";
 import { ProductService, type Product } from "../../products/services/ProductService";
 import {
-  ProductGrid, ProductCard, ProductImage, Card,
-  CartItemRow, QtyControls, Button, IconButton, Divider, Input
+  ProductGrid, ProductCard, ProductImage
 } from "../../../shared/components/UI/atoms";
+import CartSidebar from "../components/CartSidebar";
 
 const PosContainer = styled.div`
   display: flex;
@@ -70,8 +70,10 @@ const PosPage: React.FC = () => {
   const [filtered, setFiltered] = useState<Product[]>([]);
   const [loading, setLoading] = useState(false);
   const [query, setQuery] = useState("");
+  const [debouncedQuery, setDebouncedQuery] = useState("");
   const cart = useCart();
 
+  // Load products
   useEffect(() => {
     const load = async () => {
       setLoading(true);
@@ -92,14 +94,23 @@ const PosPage: React.FC = () => {
     load();
   }, []);
 
+  // Debounce search query
   useEffect(() => {
-    const q = query.trim().toLowerCase();
+    const timer = setTimeout(() => {
+      setDebouncedQuery(query);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [query]);
+
+  // Filter products based on debounced query
+  useEffect(() => {
+    const q = debouncedQuery.trim().toLowerCase();
     if (!q) { setFiltered(products); return; }
     setFiltered(products.filter(p => 
       (p.nombre || "").toLowerCase().includes(q) || 
       String(p.id_producto || p.id).includes(q)
     ));
-  }, [query, products]);
+  }, [debouncedQuery, products]);
 
   const onClear = () => {
     if (cart.items.length > 0 && window.confirm("¿Limpiar carrito?")) cart.clear();
@@ -135,7 +146,7 @@ const PosPage: React.FC = () => {
           ) : (
             <ProductGrid>
               {filtered.map((p) => (
-                <ProductCard key={p.id_producto} onClick={() => cart.add(p)}>
+                <ProductCard key={p.id_producto || p.id} onClick={() => cart.add(p)}>
                   <ProductImage src={p.imagen || "https://placehold.co/100"} alt={p.nombre} />
                   <div className="name">{p.nombre}</div>
                   <div className="price">
@@ -149,96 +160,7 @@ const PosPage: React.FC = () => {
       </LeftSide>
 
       <RightSide>
-        <Card style={{ display: "flex", flexDirection: "column", height: "100%", padding: "24px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-            <h2 style={{ margin: 0, fontSize: "1.25rem", fontWeight: 800 }}>Orden Actual</h2>
-            <IconButton onClick={onClear} title="Limpiar Carrito">
-              <FiCornerUpLeft />
-            </IconButton>
-          </div>
-          
-          <Divider />
-
-          <div style={{ flex: 1, overflowY: "auto", paddingRight: 8, margin: "10px 0" }}>
-            {cart.items.length === 0 ? (
-              <div style={{ textAlign: "center", padding: "40px", opacity: 0.5, fontWeight: 600 }}>Carrito vacío</div>
-            ) : (
-              cart.items.map((it) => {
-                const pid = String(it.product.id_producto ?? (it.product as any).id);
-                return (
-                  <CartItemRow key={pid} style={{ marginBottom: 12 }}>
-                    <div className="meta">
-                      <div className="name">{it.product.nombre}</div>
-                      <div className="muted">
-                        {it.product.moneda?.nombre ?? "$"} {(it.product.precio_venta ?? 0)} x {it.qty}
-                      </div>
-                    </div>
-                    <div style={{ textAlign: "right" }}>
-                      <div style={{ fontWeight: 800, marginBottom: 8 }}>
-                        {(Number(it.product.precio_venta ?? 0) * it.qty).toFixed(2)}
-                      </div>
-                      <QtyControls>
-                        <IconButton 
-                          onClick={() => cart.changeQty(pid, it.qty - 1)} 
-                          style={{ width: 28, height: 28, minWidth: 28 }}
-                        >
-                           {it.qty === 1 ? <FiTrash2 size={13} color="#ff4d4d" /> : <FiMinus size={13} />}
-                        </IconButton>
-                        <span style={{ fontSize: "0.95rem", fontWeight: 700, width: 24, textAlign: "center" }}>
-                          {it.qty}
-                        </span>
-                        <IconButton 
-                          onClick={() => cart.changeQty(pid, it.qty + 1)} 
-                          style={{ width: 28, height: 28, minWidth: 28 }}
-                        >
-                           <FiPlus size={13} />
-                        </IconButton>
-                      </QtyControls>
-                    </div>
-                  </CartItemRow>
-                );
-              })
-            )}
-          </div>
-
-          <div style={{ background: "rgba(0,0,0,0.03)", padding: 20, borderRadius: 16 }}>
-            <div style={{ marginBottom: 16 }}>
-              <label style={{ fontSize: "0.85rem", fontWeight: 700, display: "block", marginBottom: 8 }}>
-                Nota de pedido
-              </label>
-              <Input 
-                placeholder="Ej: Sin cebolla..." 
-                value={cart.note} 
-                onChange={(e) => cart.setNote(e.target.value)}
-              />
-            </div>
-            
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: "0.95rem" }}>
-              <span style={{ opacity: 0.7, fontWeight: 600 }}>Subtotal</span>
-              <span style={{ fontWeight: 700 }}>{cart.subtotal.toFixed(2)}</span>
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, fontSize: "0.95rem" }}>
-              <span style={{ opacity: 0.7, fontWeight: 600 }}>Impuestos (19.0%)</span>
-              <span style={{ fontWeight: 700 }}>{cart.tax.toFixed(2)}</span>
-            </div>
-            
-            <Divider />
-            
-            <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.4rem", fontWeight: 900, margin: "16px 0 24px 0" }}>
-              <span>Total</span>
-              <span style={{ color: "#FCA311" }}>${cart.total.toFixed(2)}</span>
-            </div>
-
-            <div style={{ display: "flex", gap: 12 }}>
-              <Button $variant="secondary" onClick={onClear} style={{ color: "#EF4444", flex: 1, padding: "14px 0" }}>
-                Cancelar
-              </Button>
-              <Button $variant="primary" onClick={() => alert("Procesando...")} style={{ flex: 1, padding: "14px 0", fontSize: "1.05rem" }}>
-                Cobrar
-              </Button>
-            </div>
-          </div>
-        </Card>
+        <CartSidebar cart={cart} onClear={onClear} />
       </RightSide>
     </PosContainer>
   );
