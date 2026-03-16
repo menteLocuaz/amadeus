@@ -18,6 +18,7 @@ const RolesPage = lazy(() => import("../features/auth/pages/RolesPage"));
 const Categoria = lazy(() => import("../features/stats/pages/Categoria"));
 const Medidas = lazy(() => import("../features/stats/pages/Medidas"));
 const Monedas = lazy(() => import("../features/stats/pages/Moneda"));
+const Inventario = lazy(()=> import("../features/products/pages/Inventario"));
 
 export function MyRoutes() {
   return (
@@ -40,6 +41,7 @@ export function MyRoutes() {
           <Route path={ROUTES.CATEGORIAS} element={<Categoria />} />
           <Route path={ROUTES.MEDIDAS} element={<Medidas />} />
           <Route path={ROUTES.MONEDAS} element={<Monedas />} />
+          <Route path={ROUTES.INVENTARIO} element={<Inventario />} />
         </Route>
 
         {/* Error 404 - Página no encontrada */}
