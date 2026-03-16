@@ -8,7 +8,7 @@ import {
   TableCard,
 } from "../../../shared/components/UI";
 
-export function Home() {
+export default function Home() {
   const { user, isLoading, error, fetchMe } = useAuthStore();
   const navigate = useNavigate();
 

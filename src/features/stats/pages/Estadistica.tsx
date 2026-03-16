@@ -1,6 +1,6 @@
 import styled from "styled-components";
 
-export function Estadisticas(){
+export default function Estadisticas(){
     return(
         <Container>
             <h1>Estadisticas</h1>
