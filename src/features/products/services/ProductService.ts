@@ -2,30 +2,59 @@ import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface Product {
-  id: string;
-  name: string;
-  price: number;
-  category: string;
+  id_producto?: string;
+  id?: string;
+  nombre: string;
+  descripcion: string;
+  precio_compra: number;
+  precio_venta: number;
+  stock: number;
+  fecha_vencimiento?: string;
+  imagen?: string;
+  id_status: string;
+  id_sucursal: string;
+  id_categoria: string;
+  id_moneda: string;
+  id_unidad: string;
+  categoria?: { nombre: string };
+  moneda?: { nombre: string };
+  unidad?: { nombre: string };
+  status?: { std_descripcion: string };
+}
+
+export interface CreateProductDTO {
+  nombre: string;
+  descripcion: string;
+  precio_compra: number;
+  precio_venta: number;
+  stock: number;
+  fecha_vencimiento?: string;
+  imagen?: string;
+  id_status: string;
+  id_sucursal: string;
+  id_categoria: string;
+  id_moneda: string;
+  id_unidad: string;
 }
 
 export const ProductService = {
-  getAll: async (): Promise<Product[]> => {
-    const { data } = await axiosClient.get<Product[]>(ENDPOINTS.productos.base);
+  getAll: async (): Promise<{ success: boolean; data: Product[] }> => {
+    const { data } = await axiosClient.get(ENDPOINTS.productos.base);
     return data;
   },
 
-  getById: async (id: string): Promise<Product> => {
-    const { data } = await axiosClient.get<Product>(ENDPOINTS.productos.byId(id));
+  getById: async (id: string): Promise<{ success: boolean; data: Product }> => {
+    const { data } = await axiosClient.get(ENDPOINTS.productos.byId(id));
     return data;
   },
 
-  create: async (product: Omit<Product, 'id'>): Promise<Product> => {
-    const { data } = await axiosClient.post<Product>(ENDPOINTS.productos.base, product);
+  create: async (payload: CreateProductDTO): Promise<{ success: boolean; data: Product }> => {
+    const { data } = await axiosClient.post(ENDPOINTS.productos.base, payload);
     return data;
   },
 
-  update: async (id: string, product: Partial<Product>): Promise<Product> => {
-    const { data } = await axiosClient.put<Product>(ENDPOINTS.productos.byId(id), product);
+  update: async (id: string, payload: CreateProductDTO): Promise<{ success: boolean; data: Product }> => {
+    const { data } = await axiosClient.put(ENDPOINTS.productos.byId(id), payload);
     return data;
   },
 

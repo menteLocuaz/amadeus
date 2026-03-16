@@ -4,11 +4,12 @@ import type { IconType } from "react-icons";
 import { 
   FiPrinter, FiShoppingCart, FiBox, FiUsers, 
   FiTruck, FiCreditCard, FiMapPin, FiUser, 
-  FiTag, FiSettings, FiSearch 
+  FiTag, FiSettings, FiSearch, FiSliders, FiDollarSign 
 } from "react-icons/fi";
 import { RiStore2Line } from "react-icons/ri";
 import { GiTicket } from "react-icons/gi";
 import { useNavigate } from "react-router-dom";
+import { ROUTES } from "../../../core/constants/routes";
 
 /**
  * Página de Configuración — Adaptada al ecosistema Groot-Type
@@ -165,9 +166,11 @@ export const Configuración: React.FC = () => {
 
   const items: ConfigItem[] = useMemo(() => [
     { id: "printers", title: "Impresoras", description: "Gestiona tus comprobantes de pago", Icon: FiPrinter, onClick: () => alert("Configurando Impresoras...") },
+    { id: "medidas", title: "Unidades de Medida", description: "Gestiona las unidades (Kilo, Metro, etc.)", Icon: FiSliders, path: ROUTES.MEDIDAS },
     { id: "company", title: "Empresa", description: "Configura la información de tu negocio", Icon: FiShoppingCart, onClick: () => alert("Configurando Empresa...") },
-    { id: "categories", title: "Categorías", description: "Organiza tus productos por grupos", Icon: FiTag, onClick: () => alert("Configurando Categorías...") },
-    { id: "products", title: "Productos", description: "Registro y control de inventario", Icon: FiBox, path: "/productos" },
+    { id: "categories", title: "Categorías", description: "Organiza tus productos por grupos", Icon: FiTag, path: ROUTES.CATEGORIAS },
+    { id: "currencies", title: "Monedas", description: "Configura divisas y tipos de cambio", Icon: FiDollarSign, path: ROUTES.MONEDAS },
+    { id: "products", title: "Productos", description: "Registro y control de inventario", Icon: FiBox, path: ROUTES.PRODUCTOS || "/productos" },
     { id: "clients", title: "Clientes", description: "Directorio y estados de cuenta", Icon: FiUsers, onClick: () => alert("Configurando Clientes...") },
     { id: "suppliers", title: "Proveedores", description: "Gestión de compras y abastecimiento", Icon: FiTruck, onClick: () => alert("Configurando Proveedores...") },
     { id: "payments", title: "Métodos de pago", description: "Configura cajas y formas de cobro", Icon: FiCreditCard, onClick: () => alert("Configurando Pagos...") },

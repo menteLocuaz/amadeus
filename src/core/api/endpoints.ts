@@ -20,4 +20,16 @@ export const ENDPOINTS = {
     base: '/productos',
     byId: (id: string) => `/productos/${id}`,
   },
+  categorias: {
+    base: '/categorias',
+    byId: (id: string) => `/categorias/${id}`,
+  },
+  medidas: {
+    base: '/medidas',
+    byId: (id: string) => `/medidas/${id}`,
+  },
+  monedas: {
+    base: '/monedas',
+    byId: (id: string) => `/monedas/${id}`,
+  },
 } as const;
