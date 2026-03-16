@@ -10,10 +10,12 @@ export const useCart = (initial: CartItem[] = []) => {
   const [items, setItems] = useState<CartItem[]>(initial);
   const [note, setNote] = useState("");
 
+  const getPid = (p: Product) => p.id_producto || p.id || "";
+
   const add = (product: Product) => {
     setItems(prev => {
-      const id = product.id_producto ?? (product as any).id;
-      const idx = prev.findIndex(i => (i.product.id_producto ?? (i.product as any).id) === id);
+      const id = getPid(product);
+      const idx = prev.findIndex(i => getPid(i.product) === id);
       
       if (idx >= 0) {
         const copy = [...prev];
@@ -25,12 +27,12 @@ export const useCart = (initial: CartItem[] = []) => {
   };
 
   const remove = (productId: string) => {
-    setItems(prev => prev.filter(i => (i.product.id_producto ?? (i.product as any).id) !== productId));
+    setItems(prev => prev.filter(i => getPid(i.product) !== productId));
   };
 
   const changeQty = (productId: string, qty: number) => {
     setItems(prev => prev.map(i => {
-      if ((i.product.id_producto ?? (i.product as any).id) === productId) {
+      if (getPid(i.product) === productId) {
         return { ...i, qty: Math.max(0, qty) };
       }
       return i;
@@ -43,12 +45,11 @@ export const useCart = (initial: CartItem[] = []) => {
   };
 
   const subtotal = useMemo(() => items.reduce((s, it) => {
-    // Corregido: Usamos solo precio_venta que es el que existe en tu interfaz Product
     const price = Number(it.product.precio_venta ?? 0);
     return s + price * it.qty;
   }, 0), [items]);
 
-  const taxRate = 0.225; // 22.5%
+  const taxRate = 0.19; // Updated from 0.225 to match 19% shown in UI
   const tax = subtotal * taxRate;
   const total = subtotal + tax;
 
