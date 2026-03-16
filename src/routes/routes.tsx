@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { Home } from "../features/stats/pages/Home";
 import { Estadisticas } from "../features/stats/pages/Estadistica";
-import Productos from "../features/stats/pages/Productos";
+import Productos from "../features/products/pages/Productos";
 import { Diagramas } from "../features/stats/pages/Diagramas";
 import { Reportes } from "../features/stats/pages/Reportes";
 import LoginPage from "../features/auth/pages/LoginPage";
