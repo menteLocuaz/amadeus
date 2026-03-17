@@ -11,6 +11,60 @@ export const PageContainer = styled.div`
   padding: 28px;
 `;
 
+export const PageHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 30px;
+  flex-wrap: wrap;
+  gap: 16px;
+`;
+
+export const HeaderTitle = styled.div`
+  h1 {
+    margin: 0;
+    font-size: 2rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  p {
+    margin: 4px 0 0 0;
+    opacity: 0.6;
+  }
+`;
+
+export const Toolbar = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+`;
+
+export const SearchBox = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: ${({ theme }) => theme.bg2};
+  padding: 10px 16px;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.bg3}33;
+  width: 300px;
+  input {
+    border: none;
+    background: transparent;
+    color: ${({ theme }) => theme.text};
+    outline: none;
+    width: 100%;
+    font-size: 0.9rem;
+    &::placeholder { opacity: 0.5; }
+  }
+  svg {
+    opacity: 0.5;
+  }
+`;
+
 export const TableCard = styled.div`
   background: ${({ theme }) => theme.bg};
   border-radius: 20px;
@@ -122,6 +176,14 @@ export const ModalContent = styled.div`
 
   &::-webkit-scrollbar { width: 6px; }
   &::-webkit-scrollbar-thumb { background: ${({ theme }) => theme.bg3}; border-radius: 10px; }
+`;
+
+export const ModalHeader = styled.div`
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 25px;
+  h2 { margin: 0; font-size: 1.5rem; font-weight: 800; }
 `;
 
 /* Thumbnail estándar para listas de items */

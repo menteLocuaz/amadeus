@@ -58,11 +58,8 @@ export const IconButton = styled.button<{ $danger?: boolean }>`
 `;
 
 /* ---------- Layout atoms ---------- */
-export const PageContainer = styled.div`
-  padding: 24px;
-  width: 100%;
-  box-sizing: border-box;
-`;
+// Usamos PageContainer de index.tsx para consistencia o lo definimos aquí si es base.
+// Para este proyecto, index.tsx parece ser el punto de entrada principal para UI atoms de layout.
 
 /* Card */
 export const Card = styled.div<{ $p?: string }>`
@@ -78,6 +75,12 @@ export const ProductGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
   gap: 16px;
+`;
+
+export const Grid = styled.div<{ $cols?: string; $gap?: string }>`
+  display: grid;
+  grid-template-columns: ${p => p.$cols ?? "1fr 1fr"};
+  gap: ${p => p.$gap ?? "20px"};
 `;
 
 /* Product card */
@@ -182,9 +185,9 @@ export const Input = styled.input`
 export default {
   Button,
   IconButton,
-  PageContainer,
   Card,
   ProductGrid,
+  Grid,
   ProductCard,
   ProductImage,
   CartPanel,

@@ -18,8 +18,9 @@ const RolesPage = lazy(() => import("../features/auth/pages/RolesPage"));
 const Categoria = lazy(() => import("../features/stats/pages/Categoria"));
 const Medidas = lazy(() => import("../features/stats/pages/Medidas"));
 const Monedas = lazy(() => import("../features/stats/pages/Moneda"));
-const Inventario = lazy(()=> import("../features/products/pages/Inventario"));
+const Inventario = lazy(()=> import("../features/catalogo/pages/Catalogos"));
 const Proveedores = lazy(() => import("../features/proveedor/pages/Proveedores"));
+const Compras = lazy(() => import("../features/purchases/pages/Compras"));
 
 export function MyRoutes() {
   return (
@@ -44,6 +45,7 @@ export function MyRoutes() {
           <Route path={ROUTES.MONEDAS} element={<Monedas />} />
           <Route path={ROUTES.INVENTARIO} element={<Inventario />} />
           <Route path={ROUTES.PROVEEDORES} element={<Proveedores />} />
+          <Route path={ROUTES.COMPRAS} element={<Compras />} />
         </Route>
 
         {/* Error 404 - Página no encontrada */}
