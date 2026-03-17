@@ -6,8 +6,10 @@ import { ProductModal } from "../components/ProductModal";
 import { type Product } from "../services/ProductService";
 
 import {
-  PageContainer, TableCard, Table, ActionBtn, Badge, Thumbnail
+  PageContainer, TableCard, Table, ActionBtn, Badge, Thumbnail,
+  PageHeader, HeaderTitle, Toolbar, SearchBox
 } from "../../../shared/components/UI";
+import { Button } from "../../../shared/components/UI/atoms";
 
 const Productos: React.FC = () => {
   const { 
@@ -30,22 +32,27 @@ const Productos: React.FC = () => {
 
   return (
     <PageContainer>
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 30 }}>
-        <div>
-          <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 800, display: "flex", alignItems: "center", gap: 12 }}>
-            <FiPackage /> Productos
+      <PageHeader>
+        <HeaderTitle>
+          <h1>
+            <FiPackage color="#FCA311" /> Productos
           </h1>
-        </div>
-        <div style={{ display: "flex", gap: 15 }}>
-          <div style={{ display: "flex", gap: 12, alignItems: "center", background: "var(--bg)", padding: "10px 14px", borderRadius: 14, border: "1px solid rgba(0,0,0,0.06)" }}>
-            <FiSearch color="#FCA311" />
-            <input placeholder="Buscar..." value={search} onChange={e => setSearch(e.target.value)} style={{ border: "none", outline: "none", background: "transparent" }} />
-          </div>
-          <button onClick={handleCreate} style={{ background: "#FCA311", color: "#000", border: "none", padding: "12px 20px", borderRadius: 12, fontWeight: 700, cursor: "pointer" }}>
+          <p>Administra tu catálogo de artículos y su inventario</p>
+        </HeaderTitle>
+        <Toolbar>
+          <SearchBox>
+            <FiSearch />
+            <input 
+              placeholder="Buscar por nombre..." 
+              value={search} 
+              onChange={e => setSearch(e.target.value)} 
+            />
+          </SearchBox>
+          <Button onClick={handleCreate}>
             <FiPlus /> Nuevo
-          </button>
-        </div>
-      </div>
+          </Button>
+        </Toolbar>
+      </PageHeader>
 
       {isLoading ? (
         <div style={{ padding: 100, display: "flex", justifyContent: "center" }}><ClimbingBoxLoader color="#FCA311" /></div>
