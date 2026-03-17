@@ -57,7 +57,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen })
         { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: ROUTES.ESTADISTICAS },
         { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },
         { label: "Diagramas", icon: <MdOutlineAnalytics />, to: ROUTES.DIAGRAMAS },
-        { label: "Reportes", icon: <MdOutlineAnalytics />, to: ROUTES.REPORTES }
+        { label: "Reportes", icon: <MdOutlineAnalytics />, to: ROUTES.REPORTES },
+        { label: "Kardex", icon: <MdOutlineAnalytics />, to: ROUTES.KARDEX }
     ];
 
     const secondaryLinks: NavLinkItem[] = [

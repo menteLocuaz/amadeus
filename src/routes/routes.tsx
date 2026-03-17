@@ -21,6 +21,7 @@ const Monedas = lazy(() => import("../features/stats/pages/Moneda"));
 const Inventario = lazy(()=> import("../features/catalogo/pages/Catalogos"));
 const Proveedores = lazy(() => import("../features/proveedor/pages/Proveedores"));
 const Compras = lazy(() => import("../features/purchases/pages/Compras"));
+const Kardex = lazy(() => import("../features/inventory/pages/Kardex"));
 
 export function MyRoutes() {
   return (
@@ -46,6 +47,7 @@ export function MyRoutes() {
           <Route path={ROUTES.INVENTARIO} element={<Inventario />} />
           <Route path={ROUTES.PROVEEDORES} element={<Proveedores />} />
           <Route path={ROUTES.COMPRAS} element={<Compras />} />
+          <Route path={ROUTES.KARDEX} element={<Kardex />} />
         </Route>
 
         {/* Error 404 - Página no encontrada */}

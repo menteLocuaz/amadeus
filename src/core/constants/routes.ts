@@ -20,6 +20,7 @@ export const ROUTES = {
     INVENTARIO: "/inventario",
     PROVEEDORES: "/proveedores",
     COMPRAS: "/compras",
+    KARDEX: "/reportes/kardex",
 } as const;
 
 // Tipo opcional para usar ROUTES como tipo si fuera necesario

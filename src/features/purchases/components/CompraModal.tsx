@@ -19,8 +19,8 @@ import { type Proveedor } from "../../proveedor/services/ProveedorService";
 /* -------------------- Validations -------------------- */
 const purchaseItemSchema = yup.object().shape({
     id_producto: yup.string().required("Requerido"),
-    cantidad: yup.number().typeError("Debe ser n\u00famero").positive("Min 1").required("Requerido"),
-    precio_unitario: yup.number().typeError("Debe ser n\u00famero").min(0, "No negativo").required("Requerido"),
+    cantidad: yup.number().typeError("Debe ser numero").positive("Min 1").required("Requerido"),
+    precio_unitario: yup.number().typeError("Debe ser numero").min(0, "No negativo").required("Requerido"),
 });
 
 const purchaseOrderSchema = yup.object().shape({
@@ -99,12 +99,12 @@ export const OrderForm: React.FC<OrderFormProps> = ({ suppliers, products, initi
                 </FormGroup>
 
                 <FormGroup>
-                    <label>C\u00f3digo Orden (Opcional)</label>
+                    <label>Codigo Orden (Opcional)</label>
                     <input {...register("codigo_orden")} placeholder="OC-0001" disabled={saving} />
                 </FormGroup>
 
                 <FormGroup>
-                    <label>Fecha Emisi\u00f3n</label>
+                    <label>Fecha Emision</label>
                     <input type="date" {...register("fecha_emision")} disabled={saving} />
                     {errors.fecha_emision && <small style={{ color: "#EF4444" }}>{errors.fecha_emision.message}</small>}
                 </FormGroup>
@@ -116,7 +116,7 @@ export const OrderForm: React.FC<OrderFormProps> = ({ suppliers, products, initi
 
                 <FormGroup style={{ gridColumn: "span 2" }}>
                     <label>Nota Interna</label>
-                    <input {...register("nota")} placeholder="Ej: Entrega en almac\u00e9n 2" disabled={saving} />
+                    <input {...register("nota")} placeholder="Ej: Entrega en almacen" disabled={saving} />
                 </FormGroup>
             </div>
 

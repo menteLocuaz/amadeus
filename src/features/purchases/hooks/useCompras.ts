@@ -26,9 +26,22 @@ export const useCompras = () => {
                 ProductService.getAll(),
                 ProveedorService.getAll(),
             ]);
-            setOrders(ordRes.data || []);
-            setProducts(prodRes.data || []);
-            setSuppliers(supRes.data || []);
+
+            const extractData = (res: any) => {
+                if (!res) return [];
+                if (Array.isArray(res)) return res;
+                if (Array.isArray(res.data)) return res.data;
+                if (res.data && Array.isArray(res.data.items)) return res.data.items;
+                if (res.data && typeof res.data === 'object') {
+                    const vals = Object.values(res.data).filter(v => typeof v === 'object') as any[];
+                    if (vals.length > 0 && Array.isArray(vals[0]?.items)) return vals[0].items;
+                }
+                return [];
+            };
+
+            setOrders(extractData(ordRes));
+            setProducts(extractData(prodRes));
+            setSuppliers(extractData(supRes));
         } catch (err) {
             console.error("Error loading Compras data:", err);
         } finally {
