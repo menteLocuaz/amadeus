@@ -49,18 +49,18 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ cart, onClear }) => {
         
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 8, fontSize: "0.95rem" }}>
           <span style={{ opacity: 0.7, fontWeight: 600 }}>Subtotal</span>
-          <span style={{ fontWeight: 700 }}>{cart.subtotal.toFixed(2)}</span>
+          <span style={{ fontWeight: 700 }}>$ {cart.subtotal.toFixed(2)}</span>
         </div>
         <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 12, fontSize: "0.95rem" }}>
           <span style={{ opacity: 0.7, fontWeight: 600 }}>Impuestos (19.0%)</span>
-          <span style={{ fontWeight: 700 }}>{cart.tax.toFixed(2)}</span>
+          <span style={{ fontWeight: 700 }}>$ {cart.tax.toFixed(2)}</span>
         </div>
         
         <Divider />
         
         <div style={{ display: "flex", justifyContent: "space-between", fontSize: "1.4rem", fontWeight: 900, margin: "16px 0 24px 0" }}>
           <span>Total</span>
-          <span style={{ color: "#FCA311" }}>${cart.total.toFixed(2)}</span>
+          <span style={{ color: "#FCA311" }}>$ {cart.total.toFixed(2)}</span>
         </div>
 
         <div style={{ display: "flex", gap: 12 }}>
