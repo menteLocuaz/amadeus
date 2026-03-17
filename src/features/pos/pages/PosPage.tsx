@@ -11,9 +11,9 @@ import CartSidebar from "../components/CartSidebar";
 
 const PosContainer = styled.div`
   display: flex;
-  height: calc(100vh - 40px);
+  height: calc(100vh - 40px); /* Adjusts for App.tsx padding */
   gap: 24px;
-  padding: 28px;
+  padding: 0 28px;
   box-sizing: border-box;
   max-width: 1400px;
   margin: 0 auto;
@@ -25,6 +25,7 @@ const LeftSide = styled.div`
   flex-direction: column;
   gap: 24px;
   overflow: hidden;
+  padding: 28px 0;
 `;
 
 const ContentScroll = styled.div`
@@ -63,6 +64,7 @@ const RightSide = styled.div`
   width: 400px;
   display: flex;
   flex-direction: column;
+  height: 100%;
 `;
 
 const PosPage: React.FC = () => {
@@ -150,7 +152,7 @@ const PosPage: React.FC = () => {
                   <ProductImage src={p.imagen || "https://placehold.co/100"} alt={p.nombre} />
                   <div className="name">{p.nombre}</div>
                   <div className="price">
-                    {p.moneda?.nombre ?? "$"} {(p.precio_venta ?? 0).toFixed(2)}
+                    {p.moneda?.nombre ?? "$"} - {(p.precio_venta ?? 0).toFixed(2)}
                   </div>
                 </ProductCard>
               ))}

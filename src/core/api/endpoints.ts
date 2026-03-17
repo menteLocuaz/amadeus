@@ -32,4 +32,9 @@ export const ENDPOINTS = {
     base: '/monedas',
     byId: (id: string) => `/monedas/${id}`,
   },
+  proveedores: {
+    base: '/proveedores',
+    byId: (id: string) => `/proveedores/${id}`,
+  },
+  empresas: '/empresas',
 } as const;

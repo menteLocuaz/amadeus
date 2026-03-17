@@ -21,7 +21,7 @@ const CartItem: React.FC<CartItemProps> = ({ item, onQtyChange }) => {
       </div>
       <div style={{ textAlign: "right" }}>
         <div style={{ fontWeight: 800, marginBottom: 8 }}>
-          {(Number(item.product.precio_venta ?? 0) * item.qty).toFixed(2)}
+          {item.product.moneda?.nombre ?? "$"} {(Number(item.product.precio_venta ?? 0) * item.qty).toFixed(2)}
         </div>
         <QtyControls>
           <IconButton 
