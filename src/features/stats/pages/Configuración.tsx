@@ -15,7 +15,7 @@ import {
   FiSearch,
   FiSliders,
   FiDollarSign,
-  FiLayers, // agregado para Inventario
+  FiShoppingBag, 
 } from "react-icons/fi";
 import { RiStore2Line } from "react-icons/ri";
 import { GiTicket } from "react-icons/gi";
@@ -177,11 +177,12 @@ export const Configuración: React.FC = () => {
       { id: "medidas", title: "Unidades de Medida", description: "Gestiona las unidades (Kilo, Metro, etc.)", Icon: FiSliders, path: ROUTES.MEDIDAS },
       { id: "company", title: "Empresa", description: "Configura la información de tu negocio", Icon: FiShoppingCart, onClick: () => alert("Configurando Empresa...") },
       { id: "categories", title: "Categorías", description: "Organiza tus productos por grupos", Icon: FiTag, path: ROUTES.CATEGORIAS },
+      { id: "catalogo", title: "Catalogo", description: "Consulta de productos, precios y stock", Icon: FiShoppingBag, path: ROUTES.INVENTARIO },
       { id: "currencies", title: "Monedas", description: "Configura divisas y tipos de cambio", Icon: FiDollarSign, path: ROUTES.MONEDAS },
       { id: "products", title: "Productos", description: "Registro y control de inventario", Icon: FiBox, path: ROUTES.PRODUCTOS || "/productos" },
-      { id: "inventario", title: "Inventario", description: "Consulta rápida de stock y precios", Icon: FiLayers, path: ROUTES.INVENTARIO }, // agregado
       { id: "clients", title: "Clientes", description: "Directorio y estados de cuenta", Icon: FiUsers, onClick: () => alert("Configurando Clientes...") },
-      { id: "suppliers", title: "Proveedores", description: "Gestión de compras y abastecimiento", Icon: FiTruck, path: ROUTES.PROVEEDORES },
+      { id: "suppliers", title: "Proveedores", description: "Administra tu lista de proveedores", Icon: FiTruck, path: ROUTES.PROVEEDORES },
+      { id: "purchases", title: "Compras", description: "Órdenes de compra y abastecimiento", Icon: FiShoppingBag, path: ROUTES.COMPRAS },
       { id: "payments", title: "Métodos de pago", description: "Configura cajas y formas de cobro", Icon: FiCreditCard, onClick: () => alert("Configurando Pagos...") },
       { id: "branches", title: "Sucursales", description: "Administra múltiples puntos de venta", Icon: RiStore2Line, onClick: () => alert("Configurando Sucursales...") },
       { id: "roles", title: "Roles", description: "Configura perfiles y permisos de acceso", Icon: FiUsers, path: ROUTES.ROLES || "/roles" },
