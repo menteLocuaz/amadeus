@@ -6,7 +6,7 @@ export interface MovimientoKardex {
   id_producto: string;
   id_sucursal?: string;
   fecha: string;
-  tipo: 'ENTRADA' | 'SALIDA' | 'AJUSTE'; // Assuming these types exist
+  tipo: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'COMPRA' | 'VENTA'; // Matching all possible backend types
   cantidad: number;
   saldo_resultante?: number;
   referencia?: string; // e.g., Factura ID, Orden Pedido ID
@@ -23,9 +23,8 @@ export const KardexService = {
     
     const queryString = params.toString() ? `?${params.toString()}` : '';
     
-    // Assuming a RESTful endpoint structure based on the DB schema
-    // If the endpoint differs in practice, this can be updated later.
-    const url = `/inventario/producto/${idProducto}/movimientos${queryString}`;
+    // URL based on api.md: GET /inventario/movimientos/{id_producto}
+    const url = `/inventario/movimientos/${idProducto}${queryString}`;
     
     // Fallback/Mock for now if endpoint isn't fully ready, but structured to call real API
     try {

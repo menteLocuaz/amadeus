@@ -62,8 +62,10 @@ const Productos: React.FC = () => {
             <thead>
               <tr>
                 <th>Producto</th>
-                <th>Precio</th>
-                <th>Stock</th>
+                <th style={{ textAlign: "right" }}>Precio</th>
+                <th>Moneda</th>
+                <th style={{ textAlign: "right" }}>Stock</th>
+                <th>Unidad</th>
                 <th>Categoría</th>
                 <th style={{ textAlign: "right" }}>Acciones</th>
               </tr>
@@ -77,10 +79,15 @@ const Productos: React.FC = () => {
                       <span style={{ fontWeight: 700 }}>{p.nombre}</span>
                     </div>
                   </td>
-                  <td style={{ color: "#22C55E", fontWeight: 700 }}>{p.moneda?.nombre} {p.precio_venta}</td>
-                  <td><Badge>{p.stock} {p.unidad?.nombre}</Badge></td>
+                  <td style={{ color: "#22C55E", fontWeight: 700, textAlign: "right" }}>
+                    {p.precio_venta?.toFixed(2)}
+                  </td>
+                  <td style={{ opacity: 0.7, fontSize: "0.9rem" }}>{p.moneda?.nombre}</td>
+                  <td style={{ textAlign: "right" }}><Badge>{p.stock}</Badge></td>
+                  <td style={{ opacity: 0.7, fontSize: "0.9rem" }}>{p.unidad?.nombre}</td>
                   <td>{p.categoria?.nombre}</td>
                   <td style={{ textAlign: "right" }}>
+
                     <ActionBtn onClick={() => handleEdit(p)}><FiEdit2 /></ActionBtn>
                     <ActionBtn $variant="delete" onClick={() => deleteProduct(p.id_producto!)}>
                       {isDeletingId === p.id_producto ? <ClimbingBoxLoader size={10} color="#ff4d4d" /> : <FiTrash2 />}

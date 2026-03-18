@@ -35,11 +35,14 @@ const Kardex: React.FC = () => {
 
     // Helper to format movement type badge
     const renderTipoBadge = (tipo: string) => {
-        switch (tipo) {
+        const t = tipo?.toUpperCase();
+        switch (t) {
             case 'ENTRADA':
-                return <Badge $color="#22C55E"><FiArrowDownLeft /> Entrada</Badge>;
+            case 'COMPRA':
+                return <Badge $color="#22C55E"><FiArrowDownLeft /> {t === 'COMPRA' ? 'Compra' : 'Entrada'}</Badge>;
             case 'SALIDA':
-                return <Badge $color="#EF4444"><FiArrowUpRight /> Salida</Badge>;
+            case 'VENTA':
+                return <Badge $color="#EF4444"><FiArrowUpRight /> {t === 'VENTA' ? 'Venta' : 'Salida'}</Badge>;
             case 'AJUSTE':
                 return <Badge $color="#FCA311"><FiRefreshCw /> Ajuste</Badge>;
             default:
@@ -137,8 +140,12 @@ const Kardex: React.FC = () => {
                                         <td>{formatDate(mov.fecha || mov.created_at)}</td>
                                         <td>{renderTipoBadge(mov.tipo)}</td>
                                         <td><span style={{ fontFamily: "monospace", opacity: 0.8 }}>{mov.referencia || '-'}</span></td>
-                                        <td style={{ textAlign: "right", fontWeight: 700, color: mov.tipo === 'ENTRADA' ? '#22C55E' : mov.tipo === 'SALIDA' ? '#EF4444' : 'inherit' }}>
-                                            {mov.tipo === 'ENTRADA' ? '+' : mov.tipo === 'SALIDA' ? '-' : ''}{mov.cantidad}
+                                        <td style={{ 
+                                            textAlign: "right", 
+                                            fontWeight: 700, 
+                                            color: (mov.tipo === 'ENTRADA' || mov.tipo === 'COMPRA') ? '#22C55E' : (mov.tipo === 'SALIDA' || mov.tipo === 'VENTA') ? '#EF4444' : 'inherit' 
+                                        }}>
+                                            {(mov.tipo === 'ENTRADA' || mov.tipo === 'COMPRA') ? '+' : (mov.tipo === 'SALIDA' || mov.tipo === 'VENTA') ? '-' : ''}{mov.cantidad}
                                         </td>
                                         <td style={{ textAlign: "right", fontWeight: 800 }}>
                                             {mov.saldo_calculado ?? mov.saldo_resultante ?? '-'}

@@ -73,10 +73,11 @@ export const useKardex = () => {
     // Calculate running balance for UI display if backend doesn't provide it
     const movimientosConSaldo = useMemo(() => {
         let currentBalance = 0;
-        return [...movimientos].sort((a, b) => new Date(a.fecha).getTime() - new Date(b.fecha).getTime()).map(mov => {
-            if (mov.tipo === 'ENTRADA') currentBalance += Number(mov.cantidad);
-            else if (mov.tipo === 'SALIDA') currentBalance -= Number(mov.cantidad);
-            else if (mov.tipo === 'AJUSTE') currentBalance = Number(mov.cantidad); // Assuming ajuste overrides balance
+        return [...movimientos].sort((a, b) => new Date(a.fecha || a.created_at || 0).getTime() - new Date(b.fecha || b.created_at || 0).getTime()).map(mov => {
+            const type = (mov.tipo || '').toUpperCase();
+            if (type === 'ENTRADA' || type === 'COMPRA') currentBalance += Number(mov.cantidad);
+            else if (type === 'SALIDA' || type === 'VENTA') currentBalance -= Number(mov.cantidad);
+            else if (type === 'AJUSTE') currentBalance = Number(mov.cantidad); // Assuming ajuste overrides balance
             
             return {
                 ...mov,

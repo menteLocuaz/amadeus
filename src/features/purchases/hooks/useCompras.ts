@@ -1,10 +1,13 @@
 import { useState, useEffect, useMemo } from "react";
-import { PurchaseService, type PurchaseOrder } from "../services/PurchaseService";
+import { PurchaseService } from "../services/PurchaseService";
 import { ProductService, type Product } from "../../products/services/ProductService";
 import { ProveedorService, type Proveedor } from "../../proveedor/services/ProveedorService";
 
+import { useAuthStore } from "../../auth/store/useAuthStore";
+
 export const useCompras = () => {
-    const [orders, setOrders] = useState<PurchaseOrder[]>([]);
+    const { user } = useAuthStore();
+    const [items, setItems] = useState<any[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [suppliers, setSuppliers] = useState<Proveedor[]>([]);
 
@@ -12,16 +15,12 @@ export const useCompras = () => {
     const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
     const [query, setQuery] = useState("");
 
-    const [openOrderModal, setOpenOrderModal] = useState(false);
-    const [editingOrder, setEditingOrder] = useState<PurchaseOrder | null>(null);
-
-    const [openReceiveModal, setOpenReceiveModal] = useState(false);
-    const [receivingOrder, setReceivingOrder] = useState<PurchaseOrder | null>(null);
+    const [openModal, setOpenModal] = useState(false);
 
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [ordRes, prodRes, supRes] = await Promise.all([
+            const [invRes, prodRes, supRes] = await Promise.all([
                 PurchaseService.getAll(),
                 ProductService.getAll(),
                 ProveedorService.getAll(),
@@ -31,19 +30,38 @@ export const useCompras = () => {
                 if (!res) return [];
                 if (Array.isArray(res)) return res;
                 if (Array.isArray(res.data)) return res.data;
-                if (res.data && Array.isArray(res.data.items)) return res.data.items;
+                if (res.items && Array.isArray(res.items)) return res.items;
                 if (res.data && typeof res.data === 'object') {
-                    const vals = Object.values(res.data).filter(v => typeof v === 'object') as any[];
-                    if (vals.length > 0 && Array.isArray(vals[0]?.items)) return vals[0].items;
+                    const modData = res.data["2"] || res.data["1"] || res.data["3"];
+                    if (modData && Array.isArray(modData.items)) return modData.items;
+                    return Object.values(res.data).filter(v => typeof v === 'object') as any[];
                 }
                 return [];
             };
 
-            setOrders(extractData(ordRes));
-            setProducts(extractData(prodRes));
-            setSuppliers(extractData(supRes));
+            const inventoryList = extractData(invRes);
+            const productList = extractData(prodRes);
+            const supplierList = extractData(supRes);
+
+            // Merge: Show all products, but update with inventory values if they exist
+            const mergedItems = productList.map((p: any) => {
+                const inv = inventoryList.find((i: any) => (i.id_producto === (p.id || p.id_producto)));
+                return {
+                    id: inv?.id || `new-${p.id || p.id_producto}`, // virtual ID for new items
+                    id_producto: p.id || p.id_producto,
+                    nombre: p.nombre,
+                    stock_actual: inv?.stock_actual || 0,
+                    precio_compra: inv?.precio_compra || p.precio_compra || 0,
+                    precio_venta: inv?.precio_venta || p.precio_venta || 0,
+                    producto: p
+                };
+            });
+
+            setItems(mergedItems);
+            setProducts(productList);
+            setSuppliers(supplierList);
         } catch (err) {
-            console.error("Error loading Compras data:", err);
+            console.error("Error loading Inventory/Compras data:", err);
         } finally {
             setIsLoading(false);
         }
@@ -55,65 +73,51 @@ export const useCompras = () => {
 
     const filtered = useMemo(() => {
         const q = query.trim().toLowerCase();
-        if (!q) return orders;
-        return orders.filter(o =>
-            (o.codigo_orden || "").toLowerCase().includes(q) ||
-            (o.proveedor?.nombre || "").toLowerCase().includes(q)
+        if (!q) return items;
+        return items.filter(i =>
+            (i.nombre || "").toLowerCase().includes(q) ||
+            (i.id_producto || "").toLowerCase().includes(q)
         );
-    }, [orders, query]);
+    }, [items, query]);
+
+    const handleCreate = async (data: any) => {
+        if (!user?.id_usuario) {
+            alert("Usuario no autenticado");
+            return;
+        }
+        await PurchaseService.create({
+            ...data,
+            id_usuario: user.id_usuario
+        });
+        await loadData();
+    };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm("¿Eliminar esta orden de compra?")) return;
+        if (!window.confirm("¿Eliminar este registro de inventario?")) return;
         setIsDeletingId(id);
         try {
             await PurchaseService.delete(id);
-            setOrders(prev => prev.filter(o => o.id !== id));
+            await loadData();
         } catch (err) {
-            console.error("Error deleting order:", err);
-            alert("Error eliminando orden");
+            console.error("Error deleting item:", err);
         } finally {
             setIsDeletingId(null);
         }
     };
 
-    const handleReceive = (o: PurchaseOrder) => {
-        setReceivingOrder(o);
-        setOpenReceiveModal(true);
-    };
-
-    const openCreateOrder = () => {
-        setEditingOrder(null);
-        setOpenOrderModal(true);
-    };
-
-    const openEditOrder = (o: PurchaseOrder) => {
-        setEditingOrder(o);
-        setOpenOrderModal(true);
-    };
-
-    const closeOrderModal = () => setOpenOrderModal(false);
-    const closeReceiveModal = () => setOpenReceiveModal(false);
-
     return {
-        orders: filtered,
+        items: filtered,
         products,
         suppliers,
         isLoading,
         isDeletingId,
         query,
         setQuery,
-        openOrderModal,
-        editingOrder,
-        openReceiveModal,
-        receivingOrder,
+        openModal,
+        openCreate: () => setOpenModal(true),
+        closeModal: () => setOpenModal(false),
         loadData,
-        handleDelete,
-        handleReceive,
-        openCreateOrder,
-        openEditOrder,
-        closeOrderModal,
-        closeReceiveModal,
-        setOpenOrderModal, // Keep for backward compatibility or direct control
-        setOpenReceiveModal,
+        handleCreate,
+        handleDelete
     };
 };

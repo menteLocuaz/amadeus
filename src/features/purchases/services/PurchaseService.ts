@@ -2,75 +2,47 @@ import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface PurchaseItem {
-  id?: string;
   id_producto: string;
   cantidad: number;
-  received_qty?: number;
   precio_unitario: number;
-  producto?: { nombre: string; sku?: string; unidad?: string };
-}
-
-export interface PurchaseOrder {
-  id: string;
-  id_proveedor: string;
-  codigo_orden: string;
-  fecha_emision: string;
-  fecha_llegada_estimada?: string;
-  status: 'DRAFT' | 'SENT' | 'PARTIAL' | 'RECEIVED';
-  nota?: string;
-  items: PurchaseItem[];
-  proveedor?: { nombre: string };
-  invoice_number?: string;
 }
 
 export interface PurchaseCreateRequest {
-  id_proveedor: string;
   codigo_orden?: string;
-  fecha_emision: string;
-  fecha_llegada_estimada?: string;
+  items: PurchaseItem[];
   nota?: string;
-  items: {
-    id_producto: string;
-    cantidad: number;
-    precio_unitario: number;
-  }[];
-}
-
-export interface ReceiveRequest {
-  invoice_number?: string;
-  items: {
-    id_item: string;
-    cantidad: number;
-  }[];
+  id_usuario?: string; // Required for backend movements
 }
 
 export const PurchaseService = {
-  getAll: async (): Promise<{ success: boolean; data: PurchaseOrder[] }> => {
-    const { data } = await axiosClient.get(ENDPOINTS.compras.base);
+  // Since there is no global 'Orders' histórico in api.md, we could list the inventory
+  // or use the general inventory endpoint.
+  getAll: async (): Promise<{ success: boolean; data: any[] }> => {
+    const { data } = await axiosClient.get(ENDPOINTS.inventario.base);
     return data;
   },
 
-  getById: async (id: string): Promise<{ success: boolean; data: PurchaseOrder }> => {
-    const { data } = await axiosClient.get(ENDPOINTS.compras.byId(id));
-    return data;
+  // According to api.md: POST /inventario/movimientos
+  // We simulate a bulk purchase by registering individual movements
+  create: async (payload: PurchaseCreateRequest): Promise<{ success: boolean; data: any }> => {
+    const promises = payload.items.map(item => 
+      axiosClient.post(ENDPOINTS.inventario.movimientos, {
+        id_producto: item.id_producto,
+        tipo_movimiento: "COMPRA",
+        cantidad: Number(item.cantidad),
+        id_usuario: payload.id_usuario, // Now mandatory
+        referencia: payload.codigo_orden || payload.nota || "ENTRADA MERCANCIA"
+      })
+    );
+
+    const results = await Promise.all(promises);
+    return { success: true, data: results };
   },
 
-  create: async (payload: PurchaseCreateRequest): Promise<{ success: boolean; data: PurchaseOrder }> => {
-    const { data } = await axiosClient.post(ENDPOINTS.compras.base, payload);
-    return data;
-  },
-
-  update: async (id: string, payload: Partial<PurchaseCreateRequest>): Promise<{ success: boolean; data: PurchaseOrder }> => {
-    const { data } = await axiosClient.put(ENDPOINTS.compras.byId(id), payload);
-    return data;
-  },
-
+  // Movement deletion/update is not documented in api.md movements,
+  // we could potentially update the inventory record directly.
   delete: async (id: string): Promise<void> => {
-    await axiosClient.delete(ENDPOINTS.compras.byId(id));
-  },
-
-  receive: async (id: string, payload: ReceiveRequest): Promise<{ success: boolean; data: PurchaseOrder }> => {
-    const { data } = await axiosClient.post(ENDPOINTS.compras.receive(id), payload);
-    return data;
+    // Direct inventory deletion if needed, or ignored if it's history
+    await axiosClient.delete(`${ENDPOINTS.inventario.base}/${id}`);
   }
 };
