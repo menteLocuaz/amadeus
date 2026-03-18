@@ -2,6 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { PurchaseService } from "../services/PurchaseService";
 import { ProductService, type Product } from "../../products/services/ProductService";
 import { ProveedorService, type Proveedor } from "../../proveedor/services/ProveedorService";
+import { SucursalService, type Sucursal } from "../../proveedor/services/SucursalService";
 
 import { useAuthStore } from "../../auth/store/useAuthStore";
 
@@ -10,6 +11,7 @@ export const useCompras = () => {
     const [items, setItems] = useState<any[]>([]);
     const [products, setProducts] = useState<Product[]>([]);
     const [suppliers, setSuppliers] = useState<Proveedor[]>([]);
+    const [sucursales, setSucursales] = useState<Sucursal[]>([]);
 
     const [isLoading, setIsLoading] = useState(false);
     const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
@@ -20,10 +22,11 @@ export const useCompras = () => {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [invRes, prodRes, supRes] = await Promise.all([
+            const [invRes, prodRes, supRes, sucRes] = await Promise.all([
                 PurchaseService.getAll(),
                 ProductService.getAll(),
                 ProveedorService.getAll(),
+                SucursalService.getAll(),
             ]);
 
             const extractData = (res: any) => {
@@ -42,6 +45,7 @@ export const useCompras = () => {
             const inventoryList = extractData(invRes);
             const productList = extractData(prodRes);
             const supplierList = extractData(supRes);
+            const sucursalList = extractData(sucRes);
 
             // Merge: Show all products, but update with inventory values if they exist
             const mergedItems = productList.map((p: any) => {
@@ -60,6 +64,7 @@ export const useCompras = () => {
             setItems(mergedItems);
             setProducts(productList);
             setSuppliers(supplierList);
+            setSucursales(sucursalList);
         } catch (err) {
             console.error("Error loading Inventory/Compras data:", err);
         } finally {
@@ -109,6 +114,7 @@ export const useCompras = () => {
         items: filtered,
         products,
         suppliers,
+        sucursales,
         isLoading,
         isDeletingId,
         query,

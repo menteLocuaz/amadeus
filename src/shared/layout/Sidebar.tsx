@@ -1,4 +1,4 @@
-import React, { useContext, useCallback } from "react";
+import React, { useCallback } from "react";
 import styled from "styled-components";
 import { NavLink, useNavigate } from "react-router-dom";
 import {
@@ -8,8 +8,8 @@ import {
     AiOutlineSetting,
 } from "react-icons/ai";
 import { MdOutlineAnalytics, MdLogout, MdPointOfSale } from "react-icons/md";
-import { ThemeContext } from "../../core/context/ThemeContext";
 import { useAuthStore } from "../../features/auth/store/useAuthStore";
+import { useUIStore } from "../store/useUIStore";
 import { v } from "../../core/styles/Variables";
 import { ROUTES } from "../../core/constants/routes";
 import logo from "../../assets/react.svg";
@@ -22,33 +22,16 @@ interface NavLinkItem {
     onClick?: () => void;
 }
 
-interface SidebarProps {
-    sidebarOpen: boolean;
-    setSidebarOpen: (open: boolean) => void;
-}
-
 // --- Componente Principal ---
-export const Sidebar: React.FC<SidebarProps> = ({ sidebarOpen, setSidebarOpen }) => {
-    const context = useContext(ThemeContext);
+export const Sidebar: React.FC = () => {
+    const { theme, toggleTheme, sidebarOpen, toggleSidebar } = useUIStore();
     const { logout } = useAuthStore();
     const navigate = useNavigate();
-
-    const toggleSidebar = useCallback(() => setSidebarOpen(!sidebarOpen), [sidebarOpen, setSidebarOpen]);
-
-    const toggleTheme = useCallback(() => {
-        if (context) {
-            context.setTheme((curr) => (curr === "light" ? "dark" : "light"));
-        }
-    }, [context]);
 
     const handleLogout = useCallback(async () => {
         await logout();
         navigate(ROUTES.LOGIN);
     }, [logout, navigate]);
-
-    // Manejo seguro del contexto (después de los hooks)
-    if (!context) return null;
-    const { theme } = context;
 
     // Datos de Configuración
     const primaryLinks: NavLinkItem[] = [

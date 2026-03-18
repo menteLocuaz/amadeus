@@ -50,5 +50,7 @@ export const ENDPOINTS = {
     impuestos: '/facturas/impuestos',
     formasPago: '/facturas/formas-pago',
   },
+  caja: '/caja',
+  pos: '/pos',
   empresas: '/empresas',
 } as const;
