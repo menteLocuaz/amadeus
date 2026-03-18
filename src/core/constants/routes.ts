@@ -9,6 +9,7 @@ export const ROUTES = {
     HOME: "/home",
     PRODUCTOS: "/productos",
     POS: "/pos",
+    POS_APERTURA: "/pos/apertura",
     ESTADISTICAS: "/estadisticas",
     DIAGRAMAS: "/diagramas",
     REPORTES: "/reportes",
@@ -21,6 +22,8 @@ export const ROUTES = {
     PROVEEDORES: "/proveedores",
     COMPRAS: "/compras",
     KARDEX: "/reportes/kardex",
+    SELECT_SYSTEM: "/select-system",
+    MECANICAS: "/orion/mecanicas",
 } as const;
 
 // Tipo opcional para usar ROUTES como tipo si fuera necesario

@@ -3,12 +3,14 @@ import { CategoryService } from "../../features/products/services/CategoryServic
 import { MedidaService } from "../../features/products/services/MedidaService";
 import { MonedaService } from "../../features/products/services/MonedaService";
 import { EstatusService } from "../../features/auth/services/EstatusService";
+import { SucursalService } from "../../features/proveedor/services/SucursalService";
 
 interface CatalogState {
   categories: any[];
   units: any[];
   currencies: any[];
   statusList: any[];
+  sucursales: any[];
   isLoading: boolean;
   isInitialized: boolean;
   error: string | null;
@@ -20,6 +22,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
   units: [],
   currencies: [],
   statusList: [],
+  sucursales: [],
   isLoading: false,
   isInitialized: false,
   error: null,
@@ -30,11 +33,12 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const [resCats, resUnits, resCurrs, resStatus] = await Promise.all([
+      const [resCats, resUnits, resCurrs, resStatus, resSuc] = await Promise.all([
         CategoryService.getAll(),
         MedidaService.getAll(),
         MonedaService.getAll(),
-        EstatusService.getCatalogo()
+        EstatusService.getCatalogo(),
+        SucursalService.getAll()
       ]);
 
       set({
@@ -50,6 +54,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
         statusList: resStatus.success 
           ? (resStatus.data["2"]?.items || resStatus.data["1"]?.items || []) 
           : [],
+        sucursales: resSuc.data || [],
         isLoading: false,
         isInitialized: true
       });

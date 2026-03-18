@@ -22,6 +22,9 @@ const Inventario = lazy(()=> import("../features/catalogo/pages/Catalogos"));
 const Proveedores = lazy(() => import("../features/proveedor/pages/Proveedores"));
 const Compras = lazy(() => import("../features/purchases/pages/Compras"));
 const Kardex = lazy(() => import("../features/inventory/pages/Kardex"));
+const AperturaCaja = lazy(() => import("../features/pos/pages/AperturaCaja"));
+const SelectSystem = lazy(() => import("../features/orion/MecanicaSele"));
+const MecanicaManagement = lazy(() => import("../features/orion/MecanicaManagement"));
 
 export function MyRoutes() {
   return (
@@ -48,6 +51,9 @@ export function MyRoutes() {
           <Route path={ROUTES.PROVEEDORES} element={<Proveedores />} />
           <Route path={ROUTES.COMPRAS} element={<Compras />} />
           <Route path={ROUTES.KARDEX} element={<Kardex />} />
+          <Route path={ROUTES.POS_APERTURA} element={<AperturaCaja />} />
+          <Route path={ROUTES.SELECT_SYSTEM} element={<SelectSystem />} />
+          <Route path={ROUTES.MECANICAS} element={<MecanicaManagement />} />
         </Route>
 
         {/* Error 404 - Página no encontrada */}

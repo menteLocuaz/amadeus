@@ -24,8 +24,8 @@ function AppContent() {
 
   const themeStyle = useMemo(() => (theme === "light" ? Light : Dark), [theme]);
   
-  // No mostrar sidebar en login ni registro
-  const isPublicPage = location.pathname === ROUTES.LOGIN || location.pathname === ROUTES.REGISTER;
+  // No mostrar sidebar en login, registro ni en la selección de sistema
+  const isPublicPage = [ROUTES.LOGIN, ROUTES.REGISTER, ROUTES.SELECT_SYSTEM].includes(location.pathname as any);
 
   // Adaptamos el setter del contexto para que use el store si algún componente lo requiere aún
   const setThemeFromContext = (value: any) => {

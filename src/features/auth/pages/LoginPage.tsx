@@ -25,7 +25,7 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      navigate("/home");
+      navigate("/select-system");
     }
   };
 
