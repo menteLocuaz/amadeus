@@ -11,42 +11,43 @@ Una aplicación de dashboard moderna construida con **React 19**, **TypeScript**
 - **Consumo de API:** Cliente de API centralizado con **Axios**.
 - **UI Responsiva:** Sidebar interactivo y layouts optimizados.
 
+- **Abastecimiento y Compras:** Registro de entradas de mercancía con cálculo de rentabilidad en tiempo real.
+- **Gestión de Inventario:** Control de stock físico con niveles críticos (+10% para reabastecimiento) y visualización por sucursales.
+- **Trazabilidad (Kardex):** Historial completo de movimientos de productos (Compra, Ajuste, Venta).
+
 ## 🛠️ Stack Tecnológico
 
 - **Frontend:** React 19 + TypeScript
-- **Estilos:** styled-components
-- **Estado:** Zustand
+- **Estilos:** styled-components (Vanilla CSS feel with custom themes)
+- **Componentes Atómicos:** Sistema de UI propio con átomos, bloques y componentes reutilizables.
+- **Estado:** Zustand & Context API
 - **HTTP:** Axios
-- **Iconos:** react-icons
-- **Build Tool:** Vite
+- **Validación:** Yup + React Hook Form
 
 ## 🧩 Patrones de Diseño Implementados
 
 Para garantizar un código limpio y mantenible, el proyecto utiliza:
 
-1.  **Singleton (Axios Client):** Centraliza la configuración de la API en `src/core/api/axiosClient.ts`, asegurando una única instancia de comunicación.
-2.  **Service Layer (Feature-scoped):** Los servicios dentro de cada característica (ej. `src/features/auth/services/`) encapsulan la lógica de las peticiones, separando la infraestructura de la UI.
-3.  **Observer (Zustand):** Los componentes se suscriben a los stores locales de cada característica (ej. `src/features/products/store/`), reaccionando automáticamente a los cambios de datos.
-4.  **Feature-based Architecture:** Organización del código por dominios de negocio (Auth, POS, Products, Stats), facilitando el mantenimiento y la escalabilidad.
+1.  **Atomic Design (UI Components):** Los componentes en `src/shared/components/UI` (como `StockIndicator`) son independientes y reutilizables en toda la aplicación.
+2.  **Singleton (Axios Client):** Centraliza la configuración de la API en `src/core/api/axiosClient.ts`.
+3.  **Service Layer (Feature-scoped):** Servicios por módulo (ej. `InventoryService.ts`) que encapsulan fetch/mutate.
+4.  **Custom Hooks (Logic Separation):** Los hooks (ej. `useInventory.ts`) separan la lógica de negocio del componente visual.
 
 ## 📁 Estructura del Proyecto
 
 ```text
 src/
-├── core/           # Núcleo de la aplicación (API, Context, Estilos globales)
-│   ├── api/        # Configuración de Axios
-│   ├── context/    # Contextos globales (ej. Tema)
-│   └── styles/     # Definiciones de temas y variables
-├── features/       # Módulos basados en características del negocio
-│   ├── auth/       # Autenticación, roles y usuarios
-│   ├── pos/        # Punto de Venta (Carrito, Grid de productos)
-│   ├── products/   # Gestión de productos
-│   └── stats/      # Estadísticas, reportes y dashboards
-├── routes/         # Configuración centralizada de rutas
-├── shared/         # Recursos compartidos entre características
-│   ├── components/ # Componentes UI genéricos
-│   └── layout/     # Componentes de estructura (Sidebar, Navbar)
-└── assets/         # Recursos estáticos (Imágenes, SVGs)
+├── core/           # API, Context y Estilos globales
+├── features/       # Módulos de negocio (Features)
+│   ├── auth/       # Login, roles y usuarios
+│   ├── pos/        # Punto de Venta y Carrito
+│   ├── products/   # Catálogo maestro de productos
+│   ├── inventory/  # Stock actual, Kardex y Ajustes (NUEVO)
+│   ├── purchases/  # Registro de entradas y proveedores (NUEVO)
+│   └── stats/      # Reportes y Dashboards
+├── routes/         # Enrutamiento React Router 7
+├── shared/         # UI/Atoms/Layout compartidos
+└── assets/         # Imágenes y constantes
 ```
 
 ## ⚙️ Instalación y Uso

@@ -18,6 +18,7 @@ const Compras = () => {
         items,
         products,
         suppliers,
+        sucursales,
         isLoading,
         isDeletingId,
         query,
@@ -119,6 +120,7 @@ const Compras = () => {
                         <OrderForm
                             suppliers={suppliers}
                             products={products}
+                            sucursales={sucursales}
                             onCancel={closeModal}
                             onSaved={async (data) => { 
                                 await handleCreate(data); 
