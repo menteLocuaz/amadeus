@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { ProductService, type Product } from "../services/ProductService";
+import { PurchaseService } from "../../purchases/services/PurchaseService";
 import { CategoryService } from "../services/CategoryService";
 import { MedidaService } from "../services/MedidaService";
 import { MonedaService } from "../services/MonedaService";
@@ -23,15 +24,31 @@ export const useProducts = () => {
   const loadAllData = async () => {
     setIsLoading(true);
     try {
-      const [resProd, resCats, resUnits, resCurrs, resStatus] = await Promise.all([
+      const [resProd, resCats, resUnits, resCurrs, resStatus, resInv] = await Promise.all([
         ProductService.getAll(),
         CategoryService.getAll(),
         MedidaService.getAll(),
         MonedaService.getAll(),
-        EstatusService.getCatalogo()
+        EstatusService.getCatalogo(),
+        PurchaseService.getAll()
       ]);
 
-      setProducts((resProd.data || []).map((p: any) => ({ ...p, id_producto: p.id_producto || p.id })));
+      const inventoryList = Array.isArray(resInv) ? resInv : (resInv.data || []);
+      
+      const mappedProducts = (resProd.data || []).map((p: any) => {
+        const id = p.id_producto || p.id;
+        const inv = inventoryList.find((i: any) => i.id_producto === id);
+        return { 
+          ...p, 
+          id_producto: id,
+          stock: inv?.stock_actual ?? p.stock ?? 0,
+          stock_actual: inv?.stock_actual ?? p.stock ?? 0,
+          precio_compra: inv?.precio_compra ?? p.precio_compra ?? 0,
+          precio_venta: inv?.precio_venta ?? p.precio_venta ?? 0
+        };
+      });
+
+      setProducts(mappedProducts);
       setCategories(resCats.data || []);
       setUnits((resUnits.data || []).map((u: any) => ({ ...u, id_unidad: u.id_unidad || u.id_medida || u.id })));
       setCurrencies((resCurrs.data || []).map((c: any) => ({ ...c, id_moneda: c.id_moneda || c.id_divisa || c.id })));

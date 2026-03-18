@@ -36,10 +36,19 @@ export const ENDPOINTS = {
     base: '/proveedores',
     byId: (id: string) => `/proveedores/${id}`,
   },
-  compras: {
-    base: '/compras',
-    byId: (id: string) => `/compras/${id}`,
-    receive: (id: string) => `/compras/${id}/receive`,
+  inventario: {
+    base: '/inventario',
+    movimientos: '/inventario/movimientos',
+    movimientosByProduct: (id: string) => `/inventario/movimientos/${id}`,
+  },
+  ordenes: {
+    base: '/ordenes',
+    updateStatus: (id: string) => `/ordenes/${id}/status`,
+  },
+  facturas: {
+    base: '/facturas',
+    impuestos: '/facturas/impuestos',
+    formasPago: '/facturas/formas-pago',
   },
   empresas: '/empresas',
 } as const;

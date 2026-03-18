@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { ProductService, type Product } from "../services/ProductService";
+import { PurchaseService } from "../../purchases/services/PurchaseService";
 
 export const useInventario = () => {
   const [products, setProducts] = useState<Product[]>([]);
@@ -10,8 +11,28 @@ export const useInventario = () => {
   const loadInventario = async () => {
     setIsLoading(true);
     try {
-      const res = await ProductService.getAll();
-      setProducts(res.data || []);
+      const [resProd, resInv] = await Promise.all([
+        ProductService.getAll(),
+        PurchaseService.getAll()
+      ]);
+      
+      const productList = resProd.data || [];
+      const inventoryList = Array.isArray(resInv) ? resInv : (resInv.data || []);
+
+      const merged = productList.map((p: any) => {
+        const id = p.id_producto || p.id;
+        const inv = inventoryList.find((i: any) => i.id_producto === id);
+        return {
+          ...p,
+          id_producto: id,
+          stock: inv?.stock_actual ?? p.stock ?? 0,
+          stock_actual: inv?.stock_actual ?? p.stock ?? 0,
+          precio_compra: inv?.precio_compra ?? p.precio_compra ?? 0,
+          precio_venta: inv?.precio_venta ?? p.precio_venta ?? 0
+        };
+      });
+
+      setProducts(merged);
     } catch (error) {
       console.error("Error al cargar inventario:", error);
     } finally {

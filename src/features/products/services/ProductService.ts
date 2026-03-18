@@ -9,6 +9,8 @@ export interface Product {
   precio_compra: number;
   precio_venta: number;
   stock: number;
+  stock_actual?: number;
+
   fecha_vencimiento?: string;
   imagen?: string;
   id_status: string;

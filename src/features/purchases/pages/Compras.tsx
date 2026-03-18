@@ -1,4 +1,4 @@
-import { FiPlus, FiEdit, FiTrash2, FiDownload, FiShoppingBag, FiSearch } from "react-icons/fi";
+import { FiPlus, FiTrash2, FiShoppingBag, FiSearch, FiPackage } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 
 // UI Components
@@ -11,50 +11,43 @@ import { Button } from "../../../shared/components/UI/atoms";
 
 // Hooks & Components
 import { useCompras } from "../hooks/useCompras";
-import { OrderForm, ReceiveForm } from "../components/CompraModal";
-import { formatDate } from "../../../utils/dateUtils";
+import { OrderForm } from "../components/CompraModal";
 
 const Compras = () => {
     const {
-        orders,
+        items,
         products,
         suppliers,
         isLoading,
         isDeletingId,
         query,
         setQuery,
-        openOrderModal,
-        editingOrder,
-        openReceiveModal,
-        receivingOrder,
-        loadData,
-        handleDelete,
-        handleReceive,
-        openCreateOrder,
-        openEditOrder,
-        closeOrderModal,
-        closeReceiveModal
+        openModal,
+        openCreate,
+        closeModal,
+        handleCreate,
+        handleDelete
     } = useCompras();
 
     return (
         <PageContainer>
             <PageHeader>
                 <HeaderTitle>
-                    <h1><FiShoppingBag color="#FCA311" /> Compras / Abastecimiento</h1>
-                    <p>Registra la entrada de mercancia desde proveedores</p>
+                    <h1><FiShoppingBag color="#FCA311" /> Abastecimiento de Inventario</h1>
+                    <p>Registra la entrada de productos directamente al stock</p>
                 </HeaderTitle>
 
                 <Toolbar>
                     <SearchBox>
                         <FiSearch />
                         <input
-                            placeholder="Buscar por codigo o proveedor..."
+                            placeholder="Buscar producto o ID..."
                             value={query}
                             onChange={(e) => setQuery(e.target.value)}
                         />
                     </SearchBox>
-                    <Button onClick={openCreateOrder}>
-                        <FiPlus /> Nueva Orden
+                    <Button onClick={openCreate}>
+                        <FiPlus /> Registrar Entrada
                     </Button>
                 </Toolbar>
             </PageHeader>
@@ -68,49 +61,46 @@ const Compras = () => {
                     <Table>
                         <thead>
                             <tr>
-                                <th>Codigo</th>
-                                <th>Proveedor</th>
-                                <th>Emision</th>
-                                <th>Llegada Est.</th>
-                                <th>Items</th>
-                                <th>Estado</th>
+                                <th>Producto</th>
+                                <th>ID Producto</th>
+                                <th style={{ textAlign: "right" }}>Stock Actual</th>
+                                <th style={{ textAlign: "right" }}>Precio Compra</th>
+                                <th style={{ textAlign: "right" }}>Precio Venta</th>
                                 <th style={{ textAlign: "right" }}>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
-                            {orders.length === 0 ? (
+                            {items.length === 0 ? (
                                 <tr>
-                                    <td colSpan={7} style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>
-                                        No hay ordenes registradas
+                                    <td colSpan={6} style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>
+                                        No hay registros de inventario
                                     </td>
                                 </tr>
                             ) : (
-                                orders.map(o => (
-                                    <tr key={o.id}>
-                                        <td><strong>{o.codigo_orden}</strong></td>
-                                        <td>{o.proveedor?.nombre || "N/A"}</td>
-                                        <td>{formatDate(o.fecha_emision)}</td>
-                                        <td>{formatDate(o.fecha_llegada_estimada)}</td>
-                                        <td>{o.items.length}</td>
+                                items.map(item => (
+                                    <tr key={item.id}>
                                         <td>
-                                            <Badge $color={o.status === 'RECEIVED' ? '#22C55E' : o.status === 'PARTIAL' ? '#FCA311' : '#64748B'}>
-                                                {o.status}
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                                                <FiPackage opacity={0.5} />
+                                                <strong>{item.nombre || item.producto?.nombre || "Producto"}</strong>
+                                            </div>
+                                        </td>
+                                        <td><code style={{ fontSize: '0.8rem' }}>{item.id_producto}</code></td>
+                                        <td style={{ textAlign: "right" }}>
+                                            <Badge $color={item.stock_actual > 10 ? '#22C55E' : '#EF4444'}>
+                                                {item.stock_actual}
                                             </Badge>
                                         </td>
+                                        <td style={{ textAlign: "right" }}>${item.precio_compra}</td>
+                                        <td style={{ textAlign: "right" }}>${item.precio_venta}</td>
                                         <td style={{ textAlign: "right" }}>
                                             <div style={{ display: "flex", gap: 8, justifyContent: "flex-end" }}>
-                                                <ActionBtn onClick={() => openEditOrder(o)} title="Editar">
-                                                    <FiEdit />
-                                                </ActionBtn>
-                                                <ActionBtn onClick={() => handleReceive(o)} title="Recibir Mercancia" disabled={o.status === 'RECEIVED'}>
-                                                    <FiDownload />
-                                                </ActionBtn>
                                                 <ActionBtn
                                                     $variant="delete"
-                                                    onClick={() => handleDelete(o.id)}
-                                                    disabled={isDeletingId === o.id}
+                                                    onClick={() => handleDelete(item.id)}
+                                                    disabled={isDeletingId === item.id}
                                                 >
-                                                    {isDeletingId === o.id ? <ClimbingBoxLoader size={5} color="#EF4444" /> : <FiTrash2 />}
+                                                    {isDeletingId === item.id ? <ClimbingBoxLoader size={5} color="#EF4444" /> : <FiTrash2 />}
                                                 </ActionBtn>
                                             </div>
                                         </td>
@@ -123,27 +113,17 @@ const Compras = () => {
             </TableCard>
 
             {/* Modals */}
-            {openOrderModal && (
+            {openModal && (
                 <ModalOverlay>
                     <ModalContent style={{ maxWidth: 1000 }}>
                         <OrderForm
                             suppliers={suppliers}
                             products={products}
-                            initial={editingOrder}
-                            onCancel={closeOrderModal}
-                            onSaved={() => { closeOrderModal(); loadData(); }}
-                        />
-                    </ModalContent>
-                </ModalOverlay>
-            )}
-
-            {openReceiveModal && receivingOrder && (
-                <ModalOverlay>
-                    <ModalContent style={{ maxWidth: 800 }}>
-                        <ReceiveForm
-                            order={receivingOrder}
-                            onCancel={closeReceiveModal}
-                            onSaved={() => { closeReceiveModal(); loadData(); }}
+                            onCancel={closeModal}
+                            onSaved={async (data) => { 
+                                await handleCreate(data); 
+                                closeModal(); 
+                            }}
                         />
                     </ModalContent>
                 </ModalOverlay>
