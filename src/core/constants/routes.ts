@@ -24,6 +24,9 @@ export const ROUTES = {
     KARDEX: "/reportes/kardex",
     SELECT_SYSTEM: "/select-system",
     MECANICAS: "/orion/mecanicas",
+    DISPOSITIVOS: "/dispositivos",
+    ESTATUS: "/estatus",
+    ESTACIONES: "/estaciones",
 } as const;
 
 // Tipo opcional para usar ROUTES como tipo si fuera necesario
