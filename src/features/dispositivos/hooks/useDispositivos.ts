@@ -4,7 +4,15 @@ import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { DispositivoService, type DispositivoAPI } from "../services/DispositivoService";
 import { EstacionService, type EstacionAPI } from "../../estacion/services/EstacionService";
-import { TIPO_META, type TipoDispositivo, type EstadoConexion, type Dispositivo } from "../constants/dispositivos";
+import { TIPO_META } from "../constants/dispositivos";
+
+/* ═══════════════════════════════════════════════════════════
+   TIPOS
+═══════════════════════════════════════════════════════════ */
+export type TipoDispositivo = "IMPRESORA" | "DATAFONO" | "KIOSKO" | "MONITOR";
+export type EstadoConexion  = "ONLINE" | "OFFLINE" | "DESCONOCIDO";
+
+export type Dispositivo = DispositivoAPI & { estado: EstadoConexion };
 
 /* ═══════════════════════════════════════════════════════════
    SCHEMA YUP
