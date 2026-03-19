@@ -6,8 +6,10 @@ import { EstacionService, type EstacionAPI } from "../services/EstacionService";
 import { estacionSchema, type EstacionForm } from "../constants/estaciones";
 
 export const useEstaciones = () => {
-    const { sucursales, statusList, fetchCatalogs } = useCatalogStore();
-    
+    const sucursales = useCatalogStore(state => state.sucursales);
+    const statusList = useCatalogStore(state => state.statusList);
+    const fetchCatalogs = useCatalogStore(state => state.fetchCatalogs);
+
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
     const [estaciones, setEstaciones] = useState<EstacionAPI[]>([]);
@@ -50,11 +52,11 @@ export const useEstaciones = () => {
         if (item) {
             setEditingItem(item);
             reset({
-                codigo:      item.codigo,
-                nombre:      item.nombre,
-                ip:          item.ip,
+                codigo: item.codigo,
+                nombre: item.nombre,
+                ip: item.ip,
                 id_sucursal: item.id_sucursal,
-                id_status:   item.id_status,
+                id_status: item.id_status,
             });
         } else {
             setEditingItem(null);
@@ -75,7 +77,7 @@ export const useEstaciones = () => {
         try {
             if (editingItem) {
                 const updated = await EstacionService.update(editingItem.id_estacion, data);
-                setEstaciones(prev => prev.map(e => 
+                setEstaciones(prev => prev.map(e =>
                     e.id_estacion === editingItem.id_estacion ? { ...e, ...updated } : e
                 ));
             } else {
@@ -104,14 +106,14 @@ export const useEstaciones = () => {
     /* ── Datos Derivados Memorizados ── */
     const filtered = useMemo(() => {
         const q = debouncedSearchTerm.toLowerCase().trim();
-        return estaciones.filter(e => 
-            e.nombre.toLowerCase().includes(q) || 
+        return (estaciones || []).filter(e =>
+            e.nombre.toLowerCase().includes(q) ||
             e.codigo.toLowerCase().includes(q)
         );
     }, [estaciones, debouncedSearchTerm]);
 
-    const activeStatusList = useMemo(() => 
-        statusList.filter(s => s.stp_tipo_estado === "ACTIVO" || s.stp_tipo_estado === "INACTIVO"), 
+    const activeStatusList = useMemo(() =>
+        statusList.filter(s => s.stp_tipo_estado === "ACTIVO" || s.stp_tipo_estado === "INACTIVO"),
         [statusList]
     );
 
@@ -124,11 +126,14 @@ export const useEstaciones = () => {
         return map;
     }, [sucursales]);
 
-    const stats = useMemo(() => ({
-        total: estaciones.length,
-        sucursales: new Set(estaciones.map(e => e.id_sucursal)).size,
-        activas: estaciones.filter(e => !e.deleted_at).length
-    }), [estaciones]);
+    const stats = useMemo(() => {
+        const list = estaciones || [];
+        return {
+            total: list.length,
+            sucursales: new Set(list.map(e => e.id_sucursal)).size,
+            activas: list.filter(e => !e.deleted_at).length
+        };
+    }, [estaciones]);
 
     return {
         // States
@@ -143,18 +148,18 @@ export const useEstaciones = () => {
         sucursalMap,
         activeStatusList,
         errors,
-        
+
         // Derived
         filtered,
         stats,
-        
+
         // Handlers
         setSearchTerm,
         handleOpenModal,
         handleCloseModal,
         handleDelete,
         onSubmit,
-        
+
         // Form
         register,
         handleSubmit

@@ -96,7 +96,7 @@ export const useDispositivos = () => {
                 nombre: "", 
                 tipo: "IMPRESORA", 
                 ip: "", 
-                id_estacion: estaciones.length > 0 ? "" : undefined 
+                id_estacion: (estaciones || []).length > 0 ? "" : undefined 
             });
         }
         setIsModalOpen(true);
@@ -168,8 +168,11 @@ export const useDispositivos = () => {
     /* ── Filtros Memorizados ── */
     const filtered = useMemo(() => {
         const q = debouncedSearchTerm.toLowerCase().trim();
-        return dispositivos.filter(d => {
-            const estacionNombre = estaciones.find(e => e.id_estacion === d.id_estacion)?.nombre || "";
+        const list = Array.isArray(dispositivos) ? dispositivos : [];
+        const ests = Array.isArray(estaciones) ? estaciones : [];
+
+        return list.filter(d => {
+            const estacionNombre = ests.find(e => e.id_estacion === d.id_estacion)?.nombre || "";
             const matchSearch = d.nombre.toLowerCase().includes(q) ||
                                 d.ip.includes(q) ||
                                 estacionNombre.toLowerCase().includes(q);
@@ -179,10 +182,11 @@ export const useDispositivos = () => {
     }, [dispositivos, estaciones, debouncedSearchTerm, filterTipo]);
 
     const statsPerTipo = useMemo(() => {
+        const list = Array.isArray(dispositivos) ? dispositivos : [];
         return (Object.keys(TIPO_META) as TipoDispositivo[]).map(tipo => ({
             tipo,
-            count:  dispositivos.filter(d => d.tipo === tipo).length,
-            online: dispositivos.filter(d => d.tipo === tipo && d.estado === "ONLINE").length,
+            count:  list.filter(d => d.tipo === tipo).length,
+            online: list.filter(d => d.tipo === tipo && d.estado === "ONLINE").length,
             ...TIPO_META[tipo],
         }));
     }, [dispositivos]);

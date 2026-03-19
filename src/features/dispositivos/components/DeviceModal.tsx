@@ -118,7 +118,7 @@ const DeviceModal: React.FC<DeviceModalProps> = ({
                             <label>Estación POS Vinculada</label>
                             <select {...register("id_estacion")} disabled={isSaving}>
                                 <option value="">Seleccione Estación...</option>
-                                {estaciones.map(e => (
+                                {(Array.isArray(estaciones) ? estaciones : []).map(e => (
                                     <option key={e.id_estacion} value={e.id_estacion}>
                                         {e.nombre} ({e.codigo})
                                     </option>
