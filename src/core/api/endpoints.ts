@@ -53,4 +53,12 @@ export const ENDPOINTS = {
   caja: '/caja',
   pos: '/pos',
   empresas: '/empresas',
+  estacionesPos: {
+    base: '/estaciones-pos',
+    byId: (id: string) => `/estaciones-pos/${id}`,
+  },
+  dispositivosPos: {
+    base: '/dispositivos-pos',
+    byId: (id: string) => `/dispositivos-pos/${id}`,
+  },
 } as const;

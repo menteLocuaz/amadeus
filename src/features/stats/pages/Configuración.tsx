@@ -15,7 +15,10 @@ import {
   FiSearch,
   FiSliders,
   FiDollarSign,
-  FiShoppingBag, 
+  FiShoppingBag,
+  FiCpu,
+  FiActivity,
+  FiMonitor,
 } from "react-icons/fi";
 import { RiStore2Line } from "react-icons/ri";
 import { GiTicket } from "react-icons/gi";
@@ -189,7 +192,10 @@ export const Configuración: React.FC = () => {
       { id: "users", title: "Usuarios", description: "Control de accesos y perfiles", Icon: FiUser, path: ROUTES.REGISTER || "/register" },
       { id: "warehouse", title: "Almacén", description: "Movimientos de stock y bodegas", Icon: FiMapPin, onClick: () => alert("Configurando Almacén...") },
       { id: "tickets", title: "Tickets", description: "Diseño de comprobantes y cupones", Icon: GiTicket, onClick: () => alert("Configurando Tickets...") },
-      { id: "invoices", title: "Facturación", description: "Parámetros fiscales y comprobantes", Icon: FiSettings, onClick: () => alert("Configurando Facturación...") },
+      { id: "invoices",    title: "Facturación",     description: "Parámetros fiscales y comprobantes",                         Icon: FiSettings, onClick: () => alert("Configurando Facturación...") },
+      { id: "dispositivos",title: "Dispositivos POS", description: "Impresoras, Datáfonos y Kioskos vinculados a las estaciones", Icon: FiCpu,      path: ROUTES.DISPOSITIVOS },
+      { id: "estaciones",  title: "Estaciones POS",   description: "Administra los terminales físicos de venta por sucursal",      Icon: FiMonitor,  path: ROUTES.ESTACIONES },
+      { id: "estatus",     title: "Estatus",          description: "Catálogo de estados del sistema agrupados por módulo",     Icon: FiActivity, path: ROUTES.ESTATUS },
     ],
     []
   );

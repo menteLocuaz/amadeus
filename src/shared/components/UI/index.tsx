@@ -117,13 +117,23 @@ export const ActionBtn = styled.button<{ $variant?: "edit" | "delete" | "close" 
 `;
 
 /* Badge / etiqueta */
-export const Badge = styled.span<{ $color?: string }>`
+export const Badge = styled.span<{ $color?: string; $variant?: "outline" }>`
   padding: 4px 10px;
   border-radius: 20px;
   font-size: 0.75rem;
   font-weight: 700;
-  background: ${({ $color }) => $color || "rgba(252, 163, 17, 0.1)"};
-  color: ${({ $color, theme }) => ($color ? "#fff" : theme.bg4)};
+  border: ${({ $variant, $color, theme }) =>
+    $variant === "outline" ? `1px solid ${$color || theme.bg4}55` : "none"};
+  background: ${({ $variant, $color }) =>
+    $variant === "outline"
+      ? "transparent"
+      : $color || "rgba(252, 163, 17, 0.1)"};
+  color: ${({ $variant, $color, theme }) =>
+    $variant === "outline"
+      ? $color || theme.bg4
+      : $color
+      ? "#fff"
+      : theme.bg4};
 `;
 
 /* FormGroup estándar */
