@@ -40,7 +40,17 @@ export const useDispositivos = () => {
     const [dispositivos,  setDispositivos]  = useState<Dispositivo[]>([]);
     const [estaciones,    setEstaciones]    = useState<EstacionAPI[]>([]);
     const [searchTerm,    setSearchTerm]    = useState("");
+    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [filterTipo,    setFilterTipo]    = useState<TipoDispositivo | "TODOS">("TODOS");
+
+    /* ── Debounce de Búsqueda ── */
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            setDebouncedSearchTerm(searchTerm);
+        }, 300);
+        return () => clearTimeout(timer);
+    }, [searchTerm]);
+
     const [isModalOpen,   setIsModalOpen]   = useState(false);
     const [editingItem,   setEditingItem]   = useState<Dispositivo | null>(null);
 
@@ -157,15 +167,16 @@ export const useDispositivos = () => {
 
     /* ── Filtros Memorizados ── */
     const filtered = useMemo(() => {
+        const q = debouncedSearchTerm.toLowerCase().trim();
         return dispositivos.filter(d => {
             const estacionNombre = estaciones.find(e => e.id_estacion === d.id_estacion)?.nombre || "";
-            const matchSearch = d.nombre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                                d.ip.includes(searchTerm) ||
-                                estacionNombre.toLowerCase().includes(searchTerm.toLowerCase());
+            const matchSearch = d.nombre.toLowerCase().includes(q) ||
+                                d.ip.includes(q) ||
+                                estacionNombre.toLowerCase().includes(q);
             const matchTipo   = filterTipo === "TODOS" || d.tipo === filterTipo;
             return matchSearch && matchTipo;
         });
-    }, [dispositivos, estaciones, searchTerm, filterTipo]);
+    }, [dispositivos, estaciones, debouncedSearchTerm, filterTipo]);
 
     const statsPerTipo = useMemo(() => {
         return (Object.keys(TIPO_META) as TipoDispositivo[]).map(tipo => ({
