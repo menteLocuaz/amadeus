@@ -1,15 +1,14 @@
 import React from "react";
 import styled from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
-import { FiPlus, FiSearch, FiMonitor } from "react-icons/fi";
+import { FiPlus, FiSearch, FiBriefcase } from "react-icons/fi";
 import {
     PageContainer, PageHeader, HeaderTitle, Toolbar, SearchBox
 } from "../../../shared/components/UI";
 
-import { useEstaciones } from "../hooks/useEstaciones";
-import EstacionStats from "../components/EstacionStats";
-import EstacionTable from "../components/EstacionTable";
-import EstacionModal from "../components/EstacionModal";
+import { useEmpresas } from "../hooks/useEmpresas";
+import EmpresaTable from "../components/EmpresaTable";
+import EmpresaModal from "../components/EmpresaModal";
 
 const SubmitBtn = styled.button`
     width: 100%;
@@ -23,7 +22,7 @@ const SubmitBtn = styled.button`
     &:hover:not(:disabled) { transform: translateY(-2px); opacity: 0.9; }
 `;
 
-const Estacion: React.FC = () => {
+const Empresa: React.FC = () => {
     const {
         isLoading,
         isSaving,
@@ -31,13 +30,10 @@ const Estacion: React.FC = () => {
         isModalOpen,
         editingItem,
         apiError,
-        sucursales,
-        sucursalMap,
+        statusList,
         statusMap,
-        activeStatusList,
         errors,
         filtered,
-        stats,
         setSearchTerm,
         handleOpenModal,
         handleCloseModal,
@@ -45,14 +41,14 @@ const Estacion: React.FC = () => {
         onSubmit,
         register,
         handleSubmit
-    } = useEstaciones();
+    } = useEmpresas();
 
     if (isLoading) {
         return (
             <PageContainer>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                     <ClimbingBoxLoader color="#FCA311" size={15} />
-                    <p style={{ marginTop: 20, fontWeight: 700 }}>Conectando con estaciones POS...</p>
+                    <p style={{ marginTop: 20, fontWeight: 700 }}>Conectando con empresas...</p>
                 </div>
             </PageContainer>
         );
@@ -62,14 +58,14 @@ const Estacion: React.FC = () => {
         <PageContainer>
             <PageHeader>
                 <HeaderTitle>
-                    <h1><FiMonitor /> Estaciones POS</h1>
-                    <p>Configura las terminales físicas y vincula sucursal y estatus</p>
+                    <h1><FiBriefcase /> Empresas</h1>
+                    <p>Administra los datos fiscales y el estatus de las empresas del sistema</p>
                 </HeaderTitle>
                 <Toolbar>
                     <SearchBox>
                         <FiSearch />
                         <input 
-                            placeholder="Buscar por código o nombre..." 
+                            placeholder="Buscar por nombre o RUT..." 
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
@@ -78,32 +74,24 @@ const Estacion: React.FC = () => {
                         style={{ width: 'auto', margin: 0, padding: '12px 24px' }}
                         onClick={() => handleOpenModal()}
                     >
-                        <FiPlus /> Nueva Estación
+                        <FiPlus /> Nueva Empresa
                     </SubmitBtn>
                 </Toolbar>
             </PageHeader>
 
-            <EstacionStats 
-                total={stats.total}
-                sucursalesCount={stats.sucursales}
-                activas={stats.activas}
-            />
-
-            <EstacionTable 
-                estaciones={filtered}
-                sucursalMap={sucursalMap}
+            <EmpresaTable 
+                empresas={filtered}
                 statusMap={statusMap}
                 onEdit={handleOpenModal}
                 onDelete={handleDelete}
             />
 
-            <EstacionModal 
+            <EmpresaModal 
                 isOpen={isModalOpen}
                 isSaving={isSaving}
                 editingItem={editingItem}
                 apiError={apiError}
-                sucursales={sucursales}
-                activeStatusList={activeStatusList}
+                statusList={statusList}
                 register={register}
                 errors={errors}
                 onClose={handleCloseModal}
@@ -114,4 +102,4 @@ const Estacion: React.FC = () => {
     );
 };
 
-export default Estacion;
+export default Empresa;

@@ -37,7 +37,8 @@ export type UpdateDispositivoDTO = Partial<CreateDispositivoDTO>;
 export const DispositivoService = {
     getAll: async (): Promise<DispositivoAPI[]> => {
         const { data } = await axiosClient.get(ENDPOINTS.dispositivosPos.base);
-        return data.data ?? data ?? [];
+        const list = data.data ?? data;
+        return Array.isArray(list) ? list : [];
     },
 
     getById: async (id: string): Promise<DispositivoAPI> => {

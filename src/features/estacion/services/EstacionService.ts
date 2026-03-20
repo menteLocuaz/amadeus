@@ -24,7 +24,8 @@ export interface CreateEstacionDTO {
 export const EstacionService = {
     getAll: async (): Promise<EstacionAPI[]> => {
         const { data } = await axiosClient.get(ENDPOINTS.estacionesPos.base);
-        return data.data ?? data ?? [];
+        const list = data.data ?? data;
+        return Array.isArray(list) ? list : [];
     },
 
     create: async (dto: CreateEstacionDTO): Promise<EstacionAPI> => {

@@ -94,7 +94,7 @@ const EstacionModal: React.FC<EstacionModalProps> = memo(({
                             <label>Sucursal</label>
                             <select {...register("id_sucursal")} disabled={isSaving}>
                                 <option value="">Seleccione...</option>
-                                {sucursales.map(s => (
+                                {(Array.isArray(sucursales) ? sucursales : []).map(s => (
                                     <option key={s.id || s.id_sucursal} value={s.id || s.id_sucursal}>{s.nombre}</option>
                                 ))}
                             </select>
@@ -104,8 +104,10 @@ const EstacionModal: React.FC<EstacionModalProps> = memo(({
                             <label>Estatus Inicial</label>
                             <select {...register("id_status")} disabled={isSaving}>
                                 <option value="">Seleccione...</option>
-                                {activeStatusList.map(s => (
-                                    <option key={s.id_status} value={s.id_status}>{s.std_descripcion}</option>
+                                {(Array.isArray(activeStatusList) ? activeStatusList : []).map(s => (
+                                    <option key={s.id_status} value={s.id_status}>
+                                        {s.std_descripcion || s.nombre || 'Estatus desconocido'}
+                                    </option>
                                 ))}
                             </select>
                             {errors.id_status && <p style={{ color: '#EF4444', fontSize: '0.75rem' }}>{errors.id_status.message}</p>}

@@ -42,19 +42,19 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
       ]);
 
       set({
-        categories: resCats.data || [],
-        units: (resUnits.data || []).map((u: any) => ({ 
+        categories: resCats.data || resCats || [],
+        units: (resUnits.data || resUnits || []).map((u: any) => ({ 
           ...u, 
           id_unidad: u.id_unidad || u.id_medida || u.id 
         })),
-        currencies: (resCurrs.data || []).map((c: any) => ({ 
+        currencies: (resCurrs.data || resCurrs || []).map((c: any) => ({ 
           ...c, 
           id_moneda: c.id_moneda || c.id_divisa || c.id 
         })),
         statusList: resStatus.success 
-          ? (resStatus.data["2"]?.items || resStatus.data["1"]?.items || []) 
-          : [],
-        sucursales: resSuc.data || [],
+          ? (resStatus.data["2"]?.items || resStatus.data["1"]?.items || resStatus.data["13"]?.items || Object.values(resStatus.data).flatMap((v: any) => v.items || [])) 
+          : (Array.isArray(resStatus) ? resStatus : []),
+        sucursales: resSuc.data || resSuc || [],
         isLoading: false,
         isInitialized: true
       });

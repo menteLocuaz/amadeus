@@ -16,6 +16,7 @@ const IPChip = styled.code`
 interface EstacionTableProps {
     estaciones: EstacionAPI[];
     sucursalMap: Record<string, string>;
+    statusMap: Record<string, string>;
     onEdit: (item: EstacionAPI) => void;
     onDelete: (id: string) => void;
 }
@@ -23,6 +24,7 @@ interface EstacionTableProps {
 const EstacionTable: React.FC<EstacionTableProps> = memo(({ 
     estaciones, 
     sucursalMap, 
+    statusMap,
     onEdit, 
     onDelete 
 }) => {
@@ -56,12 +58,12 @@ const EstacionTable: React.FC<EstacionTableProps> = memo(({
                                     background: !e.deleted_at ? 'rgba(16,185,129,0.1)' : 'rgba(239,68,68,0.1)',
                                     color: !e.deleted_at ? '#10B981' : '#EF4444'
                                 }}>
-                                    {!e.deleted_at ? "ACTIVO" : "ELIMINADO"}
+                                    {e.deleted_at ? "ELIMINADO" : (statusMap[e.id_status] || "ACTIVO")}
                                 </Badge>
                             </td>
                             <td style={{ textAlign: "right" }}>
                                 <ActionBtn $variant="edit" onClick={() => onEdit(e)}><FiEdit2 /></ActionBtn>
-                                <ActionBtn $variant="delete" onClick={() => handleDelete(e.id_estacion)}><FiTrash2 /></ActionBtn>
+                                <ActionBtn $variant="delete" onClick={() => onDelete(e.id_estacion)}><FiTrash2 /></ActionBtn>
                             </td>
                         </tr>
                     ))}
