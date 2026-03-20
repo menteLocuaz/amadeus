@@ -28,6 +28,9 @@ const MecanicaManagement = lazy(() => import("../features/orion/MecanicaManageme
 const DispositivoPage = lazy(() => import("../features/dispositivos/pages/Dispositivo"));
 const EstatusPage = lazy(() => import("../features/estatus/pages/Estatus"));
 const EstacionPage = lazy(() => import("../features/estacion/pages/Estacion"));
+const EmpresaPage = lazy(() => import("../features/empresa/pages/Empresa"));
+const SucursalPage = lazy(() => import("../features/sucursal/pages/Sucursal"));
+const UsuarioPage = lazy(() => import("../features/usuario/pages/Usuario"));
 
 export function MyRoutes() {
   return (
@@ -60,6 +63,9 @@ export function MyRoutes() {
           <Route path={ROUTES.DISPOSITIVOS} element={<DispositivoPage />} />
           <Route path={ROUTES.ESTATUS} element={<EstatusPage />} />
           <Route path={ROUTES.ESTACIONES} element={<EstacionPage />} />
+          <Route path={ROUTES.EMPRESAS} element={<EmpresaPage />} />
+          <Route path={ROUTES.SUCURSALES} element={<SucursalPage />} />
+          <Route path={ROUTES.USUARIOS} element={<UsuarioPage />} />
         </Route>
 
         {/* Error 404 - Página no encontrada */}

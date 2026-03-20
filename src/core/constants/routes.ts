@@ -27,6 +27,9 @@ export const ROUTES = {
     DISPOSITIVOS: "/dispositivos",
     ESTATUS: "/estatus",
     ESTACIONES: "/estaciones",
+    EMPRESAS: "/empresas",
+    SUCURSALES: "/sucursales",
+    USUARIOS: "/usuarios",
 } as const;
 
 // Tipo opcional para usar ROUTES como tipo si fuera necesario

@@ -7,7 +7,8 @@ import {
     AiOutlineApartment,
     AiOutlineSetting,
 } from "react-icons/ai";
-import { MdOutlineAnalytics, MdLogout, MdPointOfSale } from "react-icons/md";
+import { MdOutlineAnalytics, MdLogout, MdPointOfSale, MdBusiness } from "react-icons/md";
+import { FiMapPin, FiUsers } from "react-icons/fi";
 import { useAuthStore } from "../../features/auth/store/useAuthStore";
 import { useUIStore } from "../store/useUIStore";
 import { v } from "../../core/styles/Variables";
@@ -36,6 +37,9 @@ export const Sidebar: React.FC = () => {
     // Datos de Configuración
     const primaryLinks: NavLinkItem[] = [
         { label: "Home", icon: <AiOutlineHome />, to: ROUTES.HOME },
+        { label: "Empresas", icon: <MdBusiness />, to: ROUTES.EMPRESAS },
+        { label: "Sucursales", icon: <FiMapPin />, to: ROUTES.SUCURSALES },
+        { label: "Usuarios", icon: <FiUsers />, to: ROUTES.USUARIOS },
         { label: "Caja (POS)", icon: <MdPointOfSale />, to: ROUTES.POS },
         { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: ROUTES.ESTADISTICAS },
         { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },

@@ -4,12 +4,18 @@ export const ENDPOINTS = {
     me: '/auth/me',
     logout: '/auth/logout',
   },
-  usuarios: '/usuarios',
+  usuarios: {
+    base: '/usuarios',
+    byId: (id: string) => `/usuarios/${id}`,
+  },
   roles: {
     base: '/roles',
     byId: (id: string) => `/roles/${id}`,
   },
-  sucursales: '/sucursales',
+  sucursales: {
+    base: '/sucursales',
+    byId: (id: string) => `/sucursales/${id}`,
+  },
   estatus: {
     base: '/estatus',
     catalogo: '/estatus/catalogo',
@@ -52,7 +58,10 @@ export const ENDPOINTS = {
   },
   caja: '/caja',
   pos: '/pos',
-  empresas: '/empresas',
+  empresas: {
+    base: '/empresas',
+    byId: (id: string) => `/empresas/${id}`,
+  },
   estacionesPos: {
     base: '/estaciones-pos',
     byId: (id: string) => `/estaciones-pos/${id}`,

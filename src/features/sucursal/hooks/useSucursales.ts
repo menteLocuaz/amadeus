@@ -2,25 +2,26 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCatalogStore } from "../../../shared/store/useCatalogStore";
-import { EstacionService, type EstacionAPI } from "../services/EstacionService";
-import { estacionSchema, type EstacionForm } from "../constants/estaciones";
+import { SucursalService, type SucursalAPI } from "../services/SucursalService";
+import { sucursalSchema, type SucursalForm } from "../constants/sucursales";
+import { EmpresaService, type EmpresaAPI } from "../../empresa/services/EmpresaService";
 
-export const useEstaciones = () => {
-    const sucursales = useCatalogStore(state => state.sucursales);
+export const useSucursales = () => {
     const statusList = useCatalogStore(state => state.statusList);
     const fetchCatalogs = useCatalogStore(state => state.fetchCatalogs);
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
-    const [estaciones, setEstaciones] = useState<EstacionAPI[]>([]);
+    const [sucursales, setSucursales] = useState<SucursalAPI[]>([]);
+    const [empresas, setEmpresas] = useState<EmpresaAPI[]>([]);
     const [searchTerm, setSearchTerm] = useState("");
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
-    const [editingItem, setEditingItem] = useState<EstacionAPI | null>(null);
+    const [editingItem, setEditingItem] = useState<SucursalAPI | null>(null);
     const [apiError, setApiError] = useState<string | null>(null);
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<EstacionForm>({
-        resolver: yupResolver(estacionSchema),
+    const { register, handleSubmit, reset, formState: { errors } } = useForm<SucursalForm>({
+        resolver: yupResolver(sucursalSchema),
     });
 
     /* ── Debounce de Búsqueda ── */
@@ -36,8 +37,12 @@ export const useEstaciones = () => {
         setApiError(null);
         try {
             await fetchCatalogs();
-            const list = await EstacionService.getAll();
-            setEstaciones(list);
+            const [sucList, empList] = await Promise.all([
+                SucursalService.getAll(),
+                EmpresaService.getAll()
+            ]);
+            setSucursales(sucList);
+            setEmpresas(empList);
         } catch {
             setApiError("Error al sincronizar con el servidor.");
         } finally {
@@ -47,20 +52,18 @@ export const useEstaciones = () => {
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleOpenModal = (item?: EstacionAPI) => {
+    const handleOpenModal = (item?: SucursalAPI) => {
         setApiError(null);
         if (item) {
             setEditingItem(item);
             reset({
-                codigo: item.codigo,
-                nombre: item.nombre,
-                ip: item.ip,
-                id_sucursal: item.id_sucursal,
+                id_empresa: item.id_empresa,
+                nombre_sucursal: item.nombre_sucursal,
                 id_status: item.id_status,
             });
         } else {
             setEditingItem(null);
-            reset({ codigo: "", nombre: "", ip: "", id_sucursal: "", id_status: "" });
+            reset({ id_empresa: "", nombre_sucursal: "", id_status: "" });
         }
         setIsModalOpen(true);
     };
@@ -71,18 +74,18 @@ export const useEstaciones = () => {
         setApiError(null);
     };
 
-    const onSubmit = async (data: EstacionForm) => {
+    const onSubmit = async (data: SucursalForm) => {
         setIsSaving(true);
         setApiError(null);
         try {
             if (editingItem) {
-                const updated = await EstacionService.update(editingItem.id_estacion, data);
-                setEstaciones(prev => prev.map(e =>
-                    e.id_estacion === editingItem.id_estacion ? { ...e, ...updated } : e
+                const updated = await SucursalService.update(editingItem.id_sucursal, data);
+                setSucursales(prev => prev.map(s =>
+                    s.id_sucursal === editingItem.id_sucursal ? { ...s, ...updated } : s
                 ));
             } else {
-                const created = await EstacionService.create(data);
-                setEstaciones(prev => [created, ...prev]);
+                const created = await SucursalService.create(data);
+                setSucursales(prev => [created, ...prev]);
             }
             handleCloseModal();
         } catch (err) {
@@ -94,10 +97,10 @@ export const useEstaciones = () => {
     };
 
     const handleDelete = async (id: string) => {
-        if (!window.confirm("¿Dar de baja esta estación? Se realizará un Soft Delete.")) return;
+        if (!window.confirm("¿Dar de baja esta sucursal?")) return;
         try {
-            await EstacionService.delete(id);
-            setEstaciones(prev => prev.filter(e => e.id_estacion !== id));
+            await SucursalService.delete(id);
+            setSucursales(prev => prev.filter(s => s.id_sucursal !== id));
         } catch {
             alert("Error al eliminar.");
         }
@@ -106,26 +109,18 @@ export const useEstaciones = () => {
     /* ── Datos Derivados Memorizados ── */
     const filtered = useMemo(() => {
         const q = debouncedSearchTerm.toLowerCase().trim();
-        return (estaciones || []).filter(e =>
-            e.nombre.toLowerCase().includes(q) ||
-            e.codigo.toLowerCase().includes(q)
+        return (sucursales || []).filter(s =>
+            s.nombre_sucursal.toLowerCase().includes(q)
         );
-    }, [estaciones, debouncedSearchTerm]);
+    }, [sucursales, debouncedSearchTerm]);
 
-    const activeStatusList = useMemo(() =>
-        // Relaxing filter to allow more statuses if needed, but keeping it safe
-        statusList.filter(s => s.stp_tipo_estado === "ACTIVO" || s.stp_tipo_estado === "INACTIVO" || s.stp_tipo_estado === "TERMINAL"),
-        [statusList]
-    );
-
-    const sucursalMap = useMemo(() => {
+    const empresaMap = useMemo(() => {
         const map: Record<string, string> = {};
-        sucursales.forEach(s => {
-            const id = s.id || s.id_sucursal;
-            if (id) map[id] = s.nombre;
+        empresas.forEach(e => {
+            map[e.id] = e.nombre;
         });
         return map;
-    }, [sucursales]);
+    }, [empresas]);
 
     const statusMap = useMemo(() => {
         const map: Record<string, string> = {};
@@ -135,33 +130,23 @@ export const useEstaciones = () => {
         return map;
     }, [statusList]);
 
-    const stats = useMemo(() => {
-        const list = estaciones || [];
-        return {
-            total: list.length,
-            sucursales: new Set(list.map(e => e.id_sucursal)).size,
-            activas: list.filter(e => !e.deleted_at).length
-        };
-    }, [estaciones]);
-
     return {
         // States
         isLoading,
         isSaving,
-        estaciones,
+        sucursales,
+        empresas,
         searchTerm,
         isModalOpen,
         editingItem,
         apiError,
-        sucursales,
-        sucursalMap,
+        statusList,
         statusMap,
-        activeStatusList,
+        empresaMap,
         errors,
 
         // Derived
         filtered,
-        stats,
 
         // Handlers
         setSearchTerm,

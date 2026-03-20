@@ -1,15 +1,14 @@
 import React from "react";
 import styled from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
-import { FiPlus, FiSearch, FiMonitor } from "react-icons/fi";
+import { FiPlus, FiSearch, FiUsers } from "react-icons/fi";
 import {
     PageContainer, PageHeader, HeaderTitle, Toolbar, SearchBox
 } from "../../../shared/components/UI";
 
-import { useEstaciones } from "../hooks/useEstaciones";
-import EstacionStats from "../components/EstacionStats";
-import EstacionTable from "../components/EstacionTable";
-import EstacionModal from "../components/EstacionModal";
+import { useUsuarios } from "../hooks/useUsuarios";
+import UsuarioTable from "../components/UsuarioTable";
+import UsuarioModal from "../components/UsuarioModal";
 
 const SubmitBtn = styled.button`
     width: 100%;
@@ -23,7 +22,7 @@ const SubmitBtn = styled.button`
     &:hover:not(:disabled) { transform: translateY(-2px); opacity: 0.9; }
 `;
 
-const Estacion: React.FC = () => {
+const Usuario: React.FC = () => {
     const {
         isLoading,
         isSaving,
@@ -31,13 +30,14 @@ const Estacion: React.FC = () => {
         isModalOpen,
         editingItem,
         apiError,
+        statusList,
+        statusMap,
         sucursales,
         sucursalMap,
-        statusMap,
-        activeStatusList,
+        roles,
+        rolMap,
         errors,
         filtered,
-        stats,
         setSearchTerm,
         handleOpenModal,
         handleCloseModal,
@@ -45,14 +45,14 @@ const Estacion: React.FC = () => {
         onSubmit,
         register,
         handleSubmit
-    } = useEstaciones();
+    } = useUsuarios();
 
     if (isLoading) {
         return (
             <PageContainer>
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
                     <ClimbingBoxLoader color="#FCA311" size={15} />
-                    <p style={{ marginTop: 20, fontWeight: 700 }}>Conectando con estaciones POS...</p>
+                    <p style={{ marginTop: 20, fontWeight: 700 }}>Conectando con usuarios...</p>
                 </div>
             </PageContainer>
         );
@@ -62,14 +62,14 @@ const Estacion: React.FC = () => {
         <PageContainer>
             <PageHeader>
                 <HeaderTitle>
-                    <h1><FiMonitor /> Estaciones POS</h1>
-                    <p>Configura las terminales físicas y vincula sucursal y estatus</p>
+                    <h1><FiUsers /> Usuarios</h1>
+                    <p>Administra los accesos y perfiles del personal en el sistema</p>
                 </HeaderTitle>
                 <Toolbar>
                     <SearchBox>
                         <FiSearch />
                         <input 
-                            placeholder="Buscar por código o nombre..." 
+                            placeholder="Nombre, email o DNI..." 
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
                         />
@@ -78,40 +78,36 @@ const Estacion: React.FC = () => {
                         style={{ width: 'auto', margin: 0, padding: '12px 24px' }}
                         onClick={() => handleOpenModal()}
                     >
-                        <FiPlus /> Nueva Estación
+                        <FiPlus /> Nuevo Usuario
                     </SubmitBtn>
                 </Toolbar>
             </PageHeader>
 
-            <EstacionStats 
-                total={stats.total}
-                sucursalesCount={stats.sucursales}
-                activas={stats.activas}
-            />
-
-            <EstacionTable 
-                estaciones={filtered}
+            <UsuarioTable 
+                usuarios={filtered}
                 sucursalMap={sucursalMap}
+                rolMap={rolMap}
                 statusMap={statusMap}
                 onEdit={handleOpenModal}
                 onDelete={handleDelete}
             />
 
-            <EstacionModal 
+            <UsuarioModal 
                 isOpen={isModalOpen}
                 isSaving={isSaving}
                 editingItem={editingItem}
                 apiError={apiError}
+                statusList={statusList}
                 sucursales={sucursales}
-                activeStatusList={activeStatusList}
+                roles={roles}
                 register={register}
                 errors={errors}
                 onClose={handleCloseModal}
-                onSubmit={handleSubmit}
+                onSubmit={handleSubmit as any}
                 onSave={onSubmit}
             />
         </PageContainer>
     );
 };
 
-export default Estacion;
+export default Usuario;
