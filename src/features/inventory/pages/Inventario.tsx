@@ -18,10 +18,8 @@ import {
     PageContainer, TableCard, Table, ActionBtn,
     FormGroup, ModalOverlay, ModalContent,
     PageHeader, HeaderTitle, Toolbar, SearchBox,
-    ModalHeader
+    ModalHeader, Button, Grid, StockIndicator
 } from "../../../shared/components/UI";
-import { Button, Grid } from "../../../shared/components/UI/atoms";
-import { StockIndicator } from "../../../shared/components/UI/StockIndicator";
 
 // Hooks & Services
 import { useInventoryItems, useAdjustStock } from "../hooks/useInventoryQuery";

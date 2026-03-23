@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { FiCornerUpLeft } from "react-icons/fi";
-import { Card, IconButton, Divider, Input, Button } from "../../../shared/components/UI/atoms";
+import { Card, IconButton, Divider, Input, Button } from "../../../shared/components/UI";
 import CartItem from "./CartItem";
 import type { useCart } from "../hooks/useCart";
 

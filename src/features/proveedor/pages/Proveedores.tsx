@@ -14,9 +14,8 @@ import Swal from "sweetalert2";
 // UI Components
 import {
     PageContainer, TableCard, Table, ActionBtn, Badge,
-    PageHeader, HeaderTitle, Toolbar, SearchBox
+    PageHeader, HeaderTitle, Toolbar, SearchBox, Button
 } from "../../../shared/components/UI";
-import { Button } from "../../../shared/components/UI/atoms";
 
 // Hooks & Components
 import {

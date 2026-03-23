@@ -6,7 +6,7 @@ import { useCart } from "../hooks/useCart";
 import { ProductService, type Product } from "../../products/services/ProductService";
 import {
   ProductGrid, ProductCard, ProductImage
-} from "../../../shared/components/UI/atoms";
+} from "../../../shared/components/UI";
 import CartSidebar from "../components/CartSidebar";
 
 const PosContainer = styled.div`

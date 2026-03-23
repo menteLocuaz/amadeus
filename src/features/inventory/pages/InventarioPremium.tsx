@@ -20,9 +20,8 @@ import {
     PageContainer, TableCard, Table, ActionBtn,
     FormGroup, ModalOverlay, ModalContent,
     PageHeader, HeaderTitle, Toolbar, SearchBox,
-    ModalHeader, Badge
+    ModalHeader, Badge, Button
 } from "../../../shared/components/UI";
-import { Button } from "../../../shared/components/UI/atoms";
 
 // Hooks
 import { usePremiumInventory, type MergedInventoryItem } from "../hooks/usePremiumInventory";

@@ -7,8 +7,10 @@ import * as yup from "yup";
 import styled from "styled-components";
 
 // UI Components
-import { FormGroup, ModalHeader, ModalOverlay, ModalContent } from "../../../shared/components/UI";
-import { Button, IconButton, Divider, Grid } from "../../../shared/components/UI/atoms";
+import {
+    FormGroup, ModalHeader, ModalOverlay, ModalContent,
+    Button, IconButton, Divider, Grid
+} from "../../../shared/components/UI";
 
 // Types
 import { type Product } from "../../products/services/ProductService";

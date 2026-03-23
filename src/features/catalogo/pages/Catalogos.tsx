@@ -6,9 +6,8 @@ import styled from "styled-components";
 import {
     PageContainer, TableCard, Table, ActionBtn, Badge,
     PageHeader, HeaderTitle, Toolbar, SearchBox,
-    FormGroup, Thumbnail
+    FormGroup, Thumbnail, Button
 } from "../../../shared/components/UI";
-import { Button } from "../../../shared/components/UI/atoms";
 import { ClimbingBoxLoader } from "react-spinners";
 
 // Hook & Components

@@ -36,7 +36,7 @@ export default function Home() {
         {user ? (
           <WelcomeMessage>
             Bienvenido, <strong>{user.usu_nombre}</strong>. 
-            Estás conectado como <span>{user.rol.nombre_rol}</span> en <span>{user.sucursal.nombre_sucursal}</span>.
+            Estás conectado como <span>{user.rol?.nombre_rol || "N/A"}</span> en <span>{user.sucursal?.nombre_sucursal || "N/A"}</span>.
           </WelcomeMessage>
         ) : (
           <WelcomeMessage>Bienvenido al sistema.</WelcomeMessage>

@@ -2,9 +2,9 @@ import React from "react";
 import { FiX, FiSave } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import {
-    ModalOverlay, ModalContent, ModalHeader, ActionBtn, FormGroup
+    ModalOverlay, ModalContent, ModalHeader, ActionBtn, FormGroup,
+    Button, Divider, Grid
 } from "../../../shared/components/UI";
-import { Button, Divider, Grid } from "../../../shared/components/UI/atoms";
 
 interface ProveedorModalProps {
     open: boolean;

@@ -2,7 +2,7 @@ import { useMemo, useEffect } from "react";
 import { BrowserRouter, useLocation } from "react-router-dom";
 import styled, { ThemeProvider } from "styled-components";
 import { MyRoutes } from "./routes/routes";
-import { Sidebar } from "./shared/layout/Sidebar";
+import { Sidebar } from "./shared/components/UI";
 import { Light, Dark } from "./core/styles/Themes";
 import { ThemeContext } from "./core/context/ThemeContext";
 import { ROUTES } from "./core/constants/routes";
