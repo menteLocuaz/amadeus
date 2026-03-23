@@ -8,8 +8,7 @@ export interface Empresa {
 
 export const EmpresaService = {
   getAll: async (): Promise<{ success: boolean; data: Empresa[] }> => {
-    // In endpoints.ts, empresas is just a string '/empresas' (the one I added)
-    const { data } = await axiosClient.get(ENDPOINTS.empresas as any);
+    const { data } = await axiosClient.get(ENDPOINTS.empresas.base);
     return data;
   }
 };

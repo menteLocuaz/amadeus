@@ -24,6 +24,8 @@ export const Light = {
     bgtotal: "#E5E5E5",
     bgtgderecha: "#FFFFFF",
     barrascroll: "#FCA311",
+    bgCard: "#ffffff",
+
 
     gray900: "#000000",
     gray800: "#14213D",
@@ -78,6 +80,8 @@ export const Dark = {
     bgtotal: "#000000",
     bgtgderecha: "#14213D",
     barrascroll: "#FCA311",
+    bgCard: "#1a1a1a",
+
 
     gray900: "#000000",
     gray800: "#14213D",
