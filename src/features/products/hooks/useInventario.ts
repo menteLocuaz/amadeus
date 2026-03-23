@@ -13,7 +13,7 @@ export const useInventario = () => {
     try {
       const [resProd, resInv] = await Promise.all([
         ProductService.getAll(),
-        PurchaseService.getAll()
+        PurchaseService.getInventory()
       ]);
       
       const productList = resProd.data || [];

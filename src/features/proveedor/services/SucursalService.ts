@@ -8,8 +8,7 @@ export interface Sucursal {
 
 export const SucursalService = {
   getAll: async (): Promise<{ success: boolean; data: Sucursal[] }> => {
-    // In endpoints.ts, sucursales is just a string '/sucursales'
-    const { data } = await axiosClient.get(ENDPOINTS.sucursales as any);
+    const { data } = await axiosClient.get(ENDPOINTS.sucursales.base);
     return data;
   }
 };

@@ -1,11 +1,19 @@
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import { 
     FiSearch, FiRefreshCw, FiEdit,
-    FiX, FiSave, FiPackage
+    FiX, FiSave, FiPackage, FiFilter
 } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
+import {
+    useReactTable,
+    getCoreRowModel,
+    getFilteredRowModel,
+    getPaginationRowModel,
+    flexRender,
+    createColumnHelper,
+} from "@tanstack/react-table";
 
-// UI Components from shared
+// UI Components
 import {
     PageContainer, TableCard, Table, ActionBtn,
     FormGroup, ModalOverlay, ModalContent,
@@ -13,30 +21,104 @@ import {
     ModalHeader
 } from "../../../shared/components/UI";
 import { Button, Grid } from "../../../shared/components/UI/atoms";
-
-// Reusable Atomic Component
 import { StockIndicator } from "../../../shared/components/UI/StockIndicator";
 
 // Hooks & Services
-import { useInventory } from "../hooks/useInventory";
+import { useInventoryItems, useAdjustStock } from "../hooks/useInventoryQuery";
 import { type InventoryItem } from "../services/InventoryService";
 
-const Inventario: React.FC = () => {
-    const {
-        items,
-        totalCount,
-        categories,
-        isLoading,
-        isSaving,
-        search,
-        setSearch,
-        catFilter,
-        setCatFilter,
-        refresh,
-        handleAdjust
-    } = useInventory();
+const columnHelper = createColumnHelper<InventoryItem>();
 
+const Inventario: React.FC = () => {
+    // 1. Data Fetching with React Query
+    const { data: items = [], isLoading, refetch, isFetching } = useInventoryItems();
+    const { mutateAsync: adjustStock, isPending: isSaving } = useAdjustStock();
+
+    // 2. Local State for Filters & UI
+    const [globalFilter, setGlobalFilter] = useState("");
+    const [catFilter, setCatFilter] = useState("all");
     const [adjustItem, setAdjustItem] = useState<InventoryItem | null>(null);
+
+    // 3. Memoized Data for Filters
+    const categories = useMemo(() => 
+        ["all", ...new Set(items.map(i => i.producto?.categoria?.nombre).filter(Boolean))], 
+    [items]);
+
+    const filteredData = useMemo(() => {
+        if (catFilter === "all") return items;
+        return items.filter(item => item.producto?.categoria?.nombre === catFilter);
+    }, [items, catFilter]);
+
+    // 4. TanStack Table Configuration
+    const columns = useMemo(() => [
+        columnHelper.accessor("producto.nombre", {
+            header: "Producto",
+            cell: info => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                    {info.row.original.producto?.imagen ? (
+                        <img src={info.row.original.producto.imagen} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
+                    ) : (
+                        <div style={{ width: 40, height: 40, borderRadius: 8, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                            <FiPackage opacity={0.3} />
+                        </div>
+                    )}
+                    <div>
+                        <div style={{ fontWeight: 700 }}>{info.getValue() || "Sin nombre"}</div>
+                        <code style={{ fontSize: '0.75rem', opacity: 0.5 }}>{info.row.original.id_producto}</code>
+                    </div>
+                </div>
+            )
+        }),
+        columnHelper.accessor("producto.categoria.nombre", {
+            header: "Categoría",
+            cell: info => info.getValue() || "General"
+        }),
+        columnHelper.accessor("stock_actual", {
+            header: () => <div style={{ textAlign: 'right' }}>Estado Stock</div>,
+            cell: info => (
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                    <StockIndicator 
+                        actual={info.getValue()} 
+                        min={info.row.original.stock_minimo} 
+                        max={info.row.original.stock_maximo} 
+                        unit={info.row.original.producto?.unidad?.nombre}
+                    />
+                </div>
+            )
+        }),
+        columnHelper.accessor("precio_venta", {
+            header: () => <div style={{ textAlign: 'right' }}>Precio Venta</div>,
+            cell: info => (
+                <div style={{ textAlign: "right", fontWeight: 800, color: '#22C55E' }}>
+                    ${info.getValue()}
+                </div>
+            )
+        }),
+        columnHelper.display({
+            id: "actions",
+            header: () => <div style={{ textAlign: 'right' }}>Acciones</div>,
+            cell: info => (
+                <div style={{ textAlign: "right" }}>
+                    <ActionBtn onClick={() => setAdjustItem(info.row.original)} title="Ajustar Stock">
+                        <FiEdit />
+                    </ActionBtn>
+                </div>
+            )
+        })
+    ], []);
+
+    const table = useReactTable({
+        data: filteredData,
+        columns,
+        state: { globalFilter },
+        onGlobalFilterChange: setGlobalFilter,
+        getCoreRowModel: getCoreRowModel(),
+        getFilteredRowModel: getFilteredRowModel(),
+        getPaginationRowModel: getPaginationRowModel(),
+        initialState: {
+            pagination: { pageSize: 10 }
+        }
+    });
 
     return (
         <PageContainer>
@@ -51,95 +133,104 @@ const Inventario: React.FC = () => {
                         <FiSearch />
                         <input
                             placeholder="Buscar producto o ID..."
-                            value={search}
-                            onChange={(e) => setSearch(e.target.value)}
+                            value={globalFilter ?? ""}
+                            onChange={(e) => setGlobalFilter(e.target.value)}
                         />
                     </SearchBox>
-                    <ActionBtn onClick={refresh} title="Actualizar">
-                        <FiRefreshCw className={isLoading ? "spin" : ""} />
+                    <ActionBtn onClick={() => refetch()} title="Actualizar">
+                        <FiRefreshCw className={isFetching ? "spin" : ""} />
                     </ActionBtn>
                 </Toolbar>
             </PageHeader>
 
             {/* Filters Row */}
-            <div style={{ marginBottom: 20, display: 'flex', gap: 12, alignItems: 'center' }}>
-                <FormGroup style={{ marginBottom: 0 }}>
+            <div style={{ marginBottom: 20, display: 'flex', gap: 15, alignItems: 'center', flexWrap: 'wrap' }}>
+                <FormGroup style={{ marginBottom: 0, width: 250 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 5, fontSize: '0.8rem', opacity: 0.6 }}>
+                        <FiFilter size={12}/> <span>CATEGORÍA</span>
+                    </div>
                     <select value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
-                        <option value="all">Todas las categorías</option>
-                        {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                        {categories.map(c => (
+                            <option key={c} value={c}>
+                                {c === "all" ? "Todas las categorías" : c}
+                            </option>
+                        ))}
                     </select>
                 </FormGroup>
                 
-                <span style={{ opacity: 0.5, fontSize: '0.9rem' }}>
-                    Mostrando {items.length} de {totalCount} registros
+                <div style={{ flex: 1 }} />
+                
+                <span style={{ opacity: 0.5, fontSize: '0.9rem', fontWeight: 600 }}>
+                    {table.getFilteredRowModel().rows.length} registros encontrados
                 </span>
             </div>
 
             <TableCard>
                 {isLoading ? (
-                    <div style={{ padding: 100, display: "flex", justifyContent: "center" }}>
+                    <div style={{ padding: 100, display: "flex", flexDirection: 'column', alignItems: "center", gap: 20 }}>
                         <ClimbingBoxLoader color="#FCA311" />
+                        <p style={{ opacity: 0.5 }}>Cargando datos de inventario...</p>
                     </div>
                 ) : (
-                    <Table>
-                        <thead>
-                            <tr>
-                                <th>Producto</th>
-                                <th>Categoría</th>
-                                <th style={{ textAlign: "right", minWidth: 160 }}>Estado Stock</th>
-                                <th style={{ textAlign: "right" }}>Precio Venta</th>
-                                <th style={{ textAlign: "right" }}>Acciones</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {items.length === 0 ? (
-                                <tr>
-                                    <td colSpan={5} style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>
-                                        No se encontraron registros de inventario
-                                    </td>
-                                </tr>
-                            ) : (
-                                items.map(item => (
-                                    <tr key={item.id}>
-                                        <td>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                                                {item.producto?.imagen ? (
-                                                    <img src={item.producto.imagen} alt="" style={{ width: 40, height: 40, borderRadius: 8, objectFit: 'cover' }} />
-                                                ) : (
-                                                    <div style={{ width: 40, height: 40, borderRadius: 8, background: '#eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                        <FiPackage opacity={0.3} />
-                                                    </div>
-                                                )}
-                                                <div>
-                                                    <div style={{ fontWeight: 700 }}>{item.producto?.nombre || "Producto desconocido"}</div>
-                                                    <code style={{ fontSize: '0.75rem', opacity: 0.5 }}>{item.id_producto}</code>
-                                                </div>
-                                            </div>
-                                        </td>
-                                        <td>{item.producto?.categoria?.nombre || "General"}</td>
-                                        <td>
-                                            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
-                                                <StockIndicator 
-                                                    actual={item.stock_actual} 
-                                                    min={item.stock_minimo} 
-                                                    max={item.stock_maximo} 
-                                                    unit={item.producto?.unidad?.nombre}
-                                                />
-                                            </div>
-                                        </td>
-                                        <td style={{ textAlign: "right", fontWeight: 800, color: '#22C55E' }}>
-                                            ${item.precio_venta}
-                                        </td>
-                                        <td style={{ textAlign: "right" }}>
-                                            <ActionBtn onClick={() => setAdjustItem(item)} title="Ajustar Stock">
-                                                <FiEdit />
-                                            </ActionBtn>
+                    <>
+                        <Table>
+                            <thead>
+                                {table.getHeaderGroups().map(headerGroup => (
+                                    <tr key={headerGroup.id}>
+                                        {headerGroup.headers.map(header => (
+                                            <th key={header.id}>
+                                                {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                                            </th>
+                                        ))}
+                                    </tr>
+                                ))}
+                            </thead>
+                            <tbody>
+                                {table.getRowModel().rows.length === 0 ? (
+                                    <tr>
+                                        <td colSpan={columns.length} style={{ textAlign: "center", padding: 60, opacity: 0.5 }}>
+                                            No se encontraron registros de inventario
                                         </td>
                                     </tr>
-                                ))
-                            )}
-                        </tbody>
-                    </Table>
+                                ) : (
+                                    table.getRowModel().rows.map(row => (
+                                        <tr key={row.id}>
+                                            {row.getVisibleCells().map(cell => (
+                                                <td key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </td>
+                                            ))}
+                                        </tr>
+                                    ))
+                                )}
+                            </tbody>
+                        </Table>
+
+                        {/* Pagination */}
+                        <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                            <div style={{ display: 'flex', gap: 8 }}>
+                                <Button 
+                                    $variant="ghost" 
+                                    onClick={() => table.previousPage()} 
+                                    disabled={!table.getCanPreviousPage()}
+                                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                                >
+                                    Anterior
+                                </Button>
+                                <Button 
+                                    $variant="ghost" 
+                                    onClick={() => table.nextPage()} 
+                                    disabled={!table.getCanNextPage()}
+                                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                                >
+                                    Siguiente
+                                </Button>
+                            </div>
+                            <span style={{ fontSize: '0.85rem', opacity: 0.6 }}>
+                                Página {table.getState().pagination.pageIndex + 1} de {table.getPageCount()}
+                            </span>
+                        </div>
+                    </>
                 )}
             </TableCard>
 
@@ -149,7 +240,7 @@ const Inventario: React.FC = () => {
                     item={adjustItem}
                     saving={isSaving}
                     onClose={() => setAdjustItem(null)}
-                    onSave={handleAdjust}
+                    onSave={adjustStock}
                 />
             )}
         </PageContainer>
@@ -173,10 +264,10 @@ const AdjustModal = ({ item, saving, onClose, onSave }: any) => {
     const handleConfirm = async () => {
         try {
             const { motivo, ...payload } = formData;
-            await onSave(item.id, payload, motivo);
+            await onSave({ id: item.id, payload, motivo, original: item });
             onClose();
         } catch (err) {
-            // Error already handled in hook
+            // Error handling is inside the mutation hook with Swal
         }
     };
 

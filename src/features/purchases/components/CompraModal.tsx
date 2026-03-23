@@ -1,198 +1,414 @@
-import React, { useState } from "react";
-import { FiPlus, FiTrash2, FiCheck } from "react-icons/fi";
+import React, { useMemo } from "react";
+import { FiPlus, FiTrash2, FiSave } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import { useForm, useFieldArray, useWatch } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
+import styled from "styled-components";
 
 // UI Components
-import {
-    FormGroup, ModalHeader
-} from "../../../shared/components/UI";
-import { Button, IconButton, Divider } from "../../../shared/components/UI/atoms";
+import { FormGroup, ModalHeader, ModalOverlay, ModalContent } from "../../../shared/components/UI";
+import { Button, IconButton, Divider, Grid } from "../../../shared/components/UI/atoms";
 
-// Services & Types
+// Types
 import { type Product } from "../../products/services/ProductService";
 import { type Proveedor } from "../../proveedor/services/ProveedorService";
 import { type Sucursal } from "../../proveedor/services/SucursalService";
+import { type Moneda } from "../../products/services/MonedaService";
 
-/* -------------------- Validations -------------------- */
-const purchaseItemSchema = yup.object().shape({
+// ─────────────────────────────────────────────
+// CONSTANTES
+// ─────────────────────────────────────────────
+
+/** Item vacío por defecto al agregar una nueva fila */
+const DEFAULT_ITEM = { id_producto: "", cantidad_pedida: 1, precio_unitario: 0, impuesto: 7 };
+
+/** Genera un número de orden único basado en el año actual */
+const generateOrderNumber = () =>
+    `OC-${new Date().getFullYear()}-${Math.floor(Math.random() * 1000)}`;
+
+// ─────────────────────────────────────────────
+// ESQUEMAS DE VALIDACIÓN (Yup)
+// ─────────────────────────────────────────────
+
+const itemSchema = yup.object({
     id_producto: yup.string().required("Requerido"),
-    cantidad: yup.number().typeError("Debe ser numero").positive("Min 1").required("Requerido"),
-    precio_unitario: yup.number().typeError("Debe ser numero").min(0, "No negativo").required("Requerido"),
-    precio_venta: yup.number().typeError("Debe ser numero").min(0, "No negativo").required("Requerido"),
+    cantidad_pedida: yup.number().typeError("Debe ser número").positive("Mín 1").required("Requerido"),
+    precio_unitario: yup.number().typeError("Debe ser número").min(0, "No negativo").required("Requerido"),
+    impuesto: yup.number().typeError("Debe ser número").min(0, "No negativo").required("Requerido"),
 });
 
-const purchaseOrderSchema = yup.object().shape({
-    id_proveedor: yup.string().optional(),
+const orderSchema = yup.object({
+    id_proveedor: yup.string().required("El proveedor es obligatorio"),
     id_sucursal: yup.string().required("La sucursal es obligatoria"),
-    codigo_orden: yup.string().optional(),
-    fecha_emision: yup.string().required("Requerido"),
-    nota: yup.string().optional(),
-    items: yup.array().of(purchaseItemSchema).min(1, "Al menos 1 producto"),
+    id_moneda: yup.string().required("La moneda es obligatoria"),
+    id_status: yup.string().required("El estado es obligatorio"),
+    numero_orden: yup.string().required("El Nº de Orden es requerido"),
+    observaciones: yup.string().optional(),
+    detalles: yup.array().of(itemSchema).min(1, "Al menos 1 producto"),
 });
 
-/* ---------------------- OrderForm Component (Abastecimiento) ---------------------- */
-interface OrderFormProps {
+// ─────────────────────────────────────────────
+// TIPOS
+// ─────────────────────────────────────────────
+
+interface CompraModalProps {
+    open: boolean;
     suppliers: Proveedor[];
     products: Product[];
     sucursales: Sucursal[];
-    onCancel: () => void;
-    onSaved: (data: any) => void;
+    monedas: Moneda[];
+    statuses: any[];
+    saving: boolean;
+    onClose: () => void;
+    onSave: (data: any) => void;
 }
 
-export const OrderForm: React.FC<OrderFormProps> = ({ suppliers, products, sucursales, onCancel, onSaved }) => {
-    const [saving, setSaving] = useState(false);
-    const { register, control, handleSubmit, formState: { errors } } = useForm({
-        resolver: yupResolver(purchaseOrderSchema),
-        defaultValues: {
-            id_sucursal: "",
-            fecha_emision: new Date().toISOString().slice(0, 10),
-            items: [{ id_producto: "", cantidad: 1, precio_unitario: 0, precio_venta: 0 }]
-        }
-    });
+// ─────────────────────────────────────────────
+// HELPERS
+// ─────────────────────────────────────────────
 
-    const { fields, append, remove } = useFieldArray({ control, name: "items" });
-    const watchedItems = useWatch({ control, name: "items" });
+/** Normaliza el id de una entidad que puede tener distintos nombres de campo */
+const resolveId = (entity: any, ...keys: string[]) =>
+    keys.reduce((acc, key) => acc ?? entity?.[key], undefined as any);
 
-    const onSubmit = async (data: any) => {
-        setSaving(true);
-        try {
-            await onSaved(data);
-        } catch (err) {
-            console.error(err);
-            alert("Error al registrar la entrada de inventario");
-        } finally {
-            setSaving(false);
-        }
-    };
+/** Normaliza el nombre de una entidad */
+const resolveName = (entity: any, ...keys: string[]) =>
+    keys.reduce((acc, key) => acc ?? entity?.[key], undefined as any);
+
+/** Calcula subtotal + impuesto de un item */
+const calcItemTotal = (qty = 0, price = 0, tax = 0) => {
+    const sub = qty * price;
+    return sub + sub * (tax / 100);
+};
+
+// ─────────────────────────────────────────────
+// SUBCOMPONENTES
+// ─────────────────────────────────────────────
+
+/** Muestra un mensaje de error de validación */
+const FieldError = ({ message }: { message?: string }) =>
+    message ? <small style={{ color: "#EF4444" }}>{message}</small> : null;
+
+/** Fila de un item del detalle de la orden */
+const OrderItemRow = ({
+    index,
+    field,
+    products,
+    watchedDetails,
+    saving,
+    canRemove,
+    register,
+    remove,
+}: any) => {
+    const item = watchedDetails?.[index];
+    const subtotal = (item?.cantidad_pedida || 0) * (item?.precio_unitario || 0);
 
     return (
-        <form onSubmit={handleSubmit(onSubmit)}>
-            <ModalHeader>
-                <h2>Registrar Entrada de Mercancía</h2>
-                <IconButton type="button" onClick={onCancel}><FiCheck style={{ transform: 'rotate(45deg)' }} /></IconButton>
-            </ModalHeader>
+        <ItemRow key={field.id}>
+            {/* Selector de producto */}
+            <FormGroup style={{ marginBottom: 0 }}>
+                <select {...register(`detalles.${index}.id_producto`)} disabled={saving}>
+                    <option value="">Producto...</option>
+                    {products.map((p: any) => {
+                        const pid = resolveId(p, "id", "id_producto");
+                        return <option key={pid} value={pid}>{p.nombre}</option>;
+                    })}
+                </select>
+            </FormGroup>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: 16 }}>
-                <FormGroup>
-                    <label>Proveedor (Opcional)</label>
-                    <select {...register("id_proveedor")} disabled={saving}>
-                        <option value="">Seleccione Proveedor</option>
-                        {suppliers.map((s: any) => {
-                            const sid = s.id || s.id_proveedor;
-                            const sName = s.nombre || s.nombre_proveedor || s.std_descripcion || "Proveedor";
-                            return <option key={sid} value={sid}>{sName}</option>;
-                        })}
-                    </select>
-                </FormGroup>
+            {/* Cantidad */}
+            <FormGroup style={{ marginBottom: 0 }}>
+                <input
+                    type="number"
+                    placeholder="Cant"
+                    disabled={saving}
+                    {...register(`detalles.${index}.cantidad_pedida`)}
+                />
+            </FormGroup>
 
-                <FormGroup>
-                    <label>Sucursal Destino *</label>
-                    <select {...register("id_sucursal")} disabled={saving} required>
-                        <option value="">Seleccione Sucursal</option>
-                        {sucursales.map((s: any) => {
-                            const sid = s.id || s.id_sucursal;
-                            const sName = s.nombre || s.std_descripcion || "Sucursal";
-                            return <option key={sid} value={sid}>{sName}</option>;
-                        })}
-                    </select>
-                    {errors.id_sucursal && <small style={{ color: "#EF4444" }}>{errors.id_sucursal.message}</small>}
-                </FormGroup>
+            {/* Precio unitario */}
+            <FormGroup style={{ marginBottom: 0 }}>
+                <input
+                    type="number"
+                    step="0.01"
+                    placeholder="Costo"
+                    disabled={saving}
+                    {...register(`detalles.${index}.precio_unitario`)}
+                />
+            </FormGroup>
 
-                <FormGroup>
-                    <label>Referencia / Documento</label>
-                    <input {...register("codigo_orden")} placeholder="Ej: Factura #123 o Guía" disabled={saving} />
-                </FormGroup>
-            </div>
+            {/* Impuesto (%) */}
+            <FormGroup style={{ marginBottom: 0 }}>
+                <input
+                    type="number"
+                    step="0.1"
+                    placeholder="ITBMS %"
+                    disabled={saving}
+                    {...register(`detalles.${index}.impuesto`)}
+                />
+            </FormGroup>
 
-            <Divider />
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: 15 }}>
-                <h3>Detalle de Mercancía</h3>
-                <Button type="button" $variant="secondary" onClick={() => append({ id_producto: "", cantidad: 1, precio_unitario: 0, precio_venta: 0 })} disabled={saving}>
-                    <FiPlus /> Agregar Item
-                </Button>
-            </div>
+            {/* Subtotal calculado (sin impuesto) */}
+            <SubtotalCell>${subtotal.toLocaleString()}</SubtotalCell>
 
-            <div style={{ display: "grid", gap: 8 }}>
-                <div style={{ display: "grid", gridTemplateColumns: "2fr 100px 120px 120px 100px 40px", gap: 12, padding: "0 10px", opacity: 0.6, fontSize: "0.85rem", fontWeight: 700 }}>
-                    <div>Producto</div>
-                    <div>Cant.</div>
-                    <div>Costo (Compra)</div>
-                    <div>Precio (Venta)</div>
-                    <div style={{ textAlign: 'right' }}>Margen</div>
-                    <div></div>
-                </div>
-
-                {fields.map((field, index) => {
-                    const cost = Number(watchedItems?.[index]?.precio_unitario || 0);
-                    const sale = Number(watchedItems?.[index]?.precio_venta || 0);
-                    const margin = sale > 0 ? ((sale - cost) / sale) * 100 : 0;
-                    
-                    return (
-                        <div key={field.id} style={{ display: "grid", gridTemplateColumns: "2fr 100px 120px 120px 100px 40px", gap: 12, alignItems: "start", background: "rgba(0,0,0,0.02)", padding: "10px", borderRadius: "12px" }}>
-                            <FormGroup style={{ marginBottom: 0 }}>
-                                <select {...register(`items.${index}.id_producto` as const)} disabled={saving}>
-                                    <option value="">Seleccione Producto</option>
-                                    {products.map((p: any) => {
-                                        const pid = p.id || p.id_producto;
-                                        const pName = p.nombre || "Producto";
-                                        return <option key={pid} value={pid}>{pName}</option>;
-                                    })}
-                                </select>
-                                {errors.items?.[index]?.id_producto && (
-                                    <small style={{ color: "#EF4444" }}>{errors.items[index]?.id_producto?.message}</small>
-                                )}
-                            </FormGroup>
-
-                            <FormGroup style={{ marginBottom: 0 }}>
-                                <input type="number" {...register(`items.${index}.cantidad` as const)} placeholder="Cant" disabled={saving} />
-                                {errors.items?.[index]?.cantidad && (
-                                    <small style={{ color: "#EF4444" }}>{errors.items[index]?.cantidad?.message}</small>
-                                )}
-                            </FormGroup>
-
-                            <FormGroup style={{ marginBottom: 0 }}>
-                                <input type="number" step="0.01" {...register(`items.${index}.precio_unitario` as const)} placeholder="Costo" disabled={saving} />
-                                {errors.items?.[index]?.precio_unitario && (
-                                    <small style={{ color: "#EF4444" }}>{errors.items[index]?.precio_unitario?.message}</small>
-                                )}
-                            </FormGroup>
-
-                            <FormGroup style={{ marginBottom: 0 }}>
-                                <input type="number" step="0.01" {...register(`items.${index}.precio_venta` as const)} placeholder="Venta" disabled={saving} />
-                                {errors.items?.[index]?.precio_venta && (
-                                    <small style={{ color: "#EF4444" }}>{errors.items[index]?.precio_venta?.message}</small>
-                                )}
-                            </FormGroup>
-
-                            <div style={{ textAlign: 'right', paddingTop: 10 }}>
-                                <span style={{ 
-                                    fontWeight: 800, 
-                                    fontSize: "0.9rem",
-                                    color: margin > 20 ? "#22C55E" : margin > 0 ? "#FCA311" : "#EF4444" 
-                                }}>
-                                    {margin.toFixed(1)}%
-                                </span>
-                            </div>
-
-                            <IconButton $danger type="button" onClick={() => remove(index)} disabled={saving || fields.length === 1} style={{ marginTop: 4 }}>
-                                <FiTrash2 />
-                            </IconButton>
-                        </div>
-                    );
-                })}
-            </div>
-
-            <Divider />
-            <div style={{ display: "flex", justifyContent: "flex-end", gap: 12, marginTop: 10 }}>
-                <Button $variant="secondary" type="button" onClick={onCancel} disabled={saving}>Cancelar</Button>
-                <Button type="submit" disabled={saving}>
-                    {saving ? <ClimbingBoxLoader size={8} color="#000" /> : <><FiCheck /> Registrar Abastecimiento</>}
-                </Button>
-            </div>
-        </form>
+            {/* Botón eliminar fila — deshabilitado si solo queda 1 item */}
+            <IconButton
+                $danger
+                type="button"
+                onClick={() => remove(index)}
+                disabled={saving || !canRemove}
+            >
+                <FiTrash2 />
+            </IconButton>
+        </ItemRow>
     );
 };
 
+// ─────────────────────────────────────────────
+// COMPONENTE PRINCIPAL
+// ─────────────────────────────────────────────
+
+export const CompraModal: React.FC<CompraModalProps> = ({
+    open, suppliers, products, sucursales,
+    monedas, statuses, saving, onClose, onSave,
+}) => {
+    // Busca el status inicial "solicitado" para pre-seleccionarlo
+    const defaultStatusId = useMemo(
+        () => statuses.find(s => s.nombre?.toLowerCase().includes("solic"))?.id_status ?? "",
+        [statuses]
+    );
+
+    // Primer moneda disponible como valor por defecto
+    const defaultMonedaId = useMemo(
+        () => resolveId(monedas[0], "id_moneda", "id") ?? "",
+        [monedas]
+    );
+
+    const { register, control, handleSubmit, formState: { errors } } = useForm({
+        resolver: yupResolver(orderSchema),
+        defaultValues: {
+            id_sucursal: "",
+            id_proveedor: "",
+            numero_orden: generateOrderNumber(),
+            id_status: defaultStatusId,
+            id_moneda: defaultMonedaId,
+            observaciones: "",
+            detalles: [DEFAULT_ITEM],
+        },
+    });
+
+    const { fields, append, remove } = useFieldArray({ control, name: "detalles" });
+    const watchedDetails = useWatch({ control, name: "detalles" });
+
+    // Total general: suma de (subtotal + impuesto) por cada item
+    const grandTotal = useMemo(
+        () => (watchedDetails || []).reduce((acc, item) =>
+            acc + calcItemTotal(item?.cantidad_pedida, item?.precio_unitario, item?.impuesto), 0),
+        [watchedDetails]
+    );
+
+    // No renderiza nada si el modal está cerrado
+    if (!open) return null;
+
+    return (
+        <ModalOverlay>
+            <ModalContent style={{ maxWidth: 1000 }}>
+                <form onSubmit={handleSubmit(onSave)}>
+
+                    {/* ── Encabezado ── */}
+                    <ModalHeader>
+                        <h2>Nueva Orden de Compra</h2>
+                        <IconButton type="button" onClick={onClose}>
+                            <FiPlus style={{ transform: "rotate(45deg)" }} />
+                        </IconButton>
+                    </ModalHeader>
+
+                    {/* ── Campos generales de la orden ── */}
+                    <Grid $cols="1fr 1fr 1fr" $gap="16px">
+
+                        <FormGroup>
+                            <label>Proveedor *</label>
+                            <select {...register("id_proveedor")} disabled={saving}>
+                                <option value="">Seleccione Proveedor</option>
+                                {suppliers.map((s: any) => {
+                                    const sid = resolveId(s, "id", "id_proveedor");
+                                    return (
+                                        <option key={sid} value={sid}>
+                                            {resolveName(s, "nombre", "nombre_proveedor")}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                            <FieldError message={errors.id_proveedor?.message} />
+                        </FormGroup>
+
+                        <FormGroup>
+                            <label>Sucursal Destino *</label>
+                            <select {...register("id_sucursal")} disabled={saving}>
+                                <option value="">Seleccione Sucursal</option>
+                                {sucursales.map((s: any) => {
+                                    const sid = resolveId(s, "id", "id_sucursal");
+                                    return (
+                                        <option key={sid} value={sid}>
+                                            {resolveName(s, "nombre", "std_descripcion")}
+                                        </option>
+                                    );
+                                })}
+                            </select>
+                            <FieldError message={errors.id_sucursal?.message} />
+                        </FormGroup>
+
+                        <FormGroup>
+                            <label>Número de Orden *</label>
+                            <input {...register("numero_orden")} placeholder="OC-2024-..." disabled={saving} />
+                            <FieldError message={errors.numero_orden?.message} />
+                        </FormGroup>
+
+                        <FormGroup>
+                            <label>Moneda *</label>
+                            <select {...register("id_moneda")} disabled={saving}>
+                                <option value="">Seleccione Moneda</option>
+                                {monedas.map((m: any) => {
+                                    const mid = resolveId(m, "id_moneda", "id");
+                                    return <option key={mid} value={mid}>{m.nombre}</option>;
+                                })}
+                            </select>
+                            <FieldError message={errors.id_moneda?.message} />
+                        </FormGroup>
+
+                        <FormGroup>
+                            <label>Estado Inicial *</label>
+                            <select {...register("id_status")} disabled={saving}>
+                                {statuses.map(s => (
+                                    <option key={s.id_status} value={s.id_status}>
+                                        {resolveName(s, "nombre", "std_descripcion")}
+                                    </option>
+                                ))}
+                            </select>
+                            <FieldError message={errors.id_status?.message} />
+                        </FormGroup>
+
+                        <FormGroup>
+                            <label>Observaciones</label>
+                            <input {...register("observaciones")} placeholder="Opcional..." disabled={saving} />
+                        </FormGroup>
+
+                    </Grid>
+
+                    <Divider />
+
+                    {/* ── Encabezado de la sección de items ── */}
+                    <ItemsHeader>
+                        <h3>Detalle de Items</h3>
+                        <Button
+                            type="button"
+                            $variant="secondary"
+                            disabled={saving}
+                            onClick={() => append(DEFAULT_ITEM)}
+                        >
+                            <FiPlus /> Agregar Item
+                        </Button>
+                    </ItemsHeader>
+
+                    {/* ── Lista de items con scroll ── */}
+                    <ItemsList>
+                        {fields.map((field, index) => (
+                            <OrderItemRow
+                                key={field.id}
+                                index={index}
+                                field={field}
+                                products={products}
+                                watchedDetails={watchedDetails}
+                                saving={saving}
+                                canRemove={fields.length > 1}
+                                register={register}
+                                remove={remove}
+                            />
+                        ))}
+                    </ItemsList>
+
+                    {/* ── Total estimado ── */}
+                    <TotalRow>
+                        <span className="label">Total Estimado:</span>
+                        <span className="amount">${grandTotal.toLocaleString()}</span>
+                    </TotalRow>
+
+                    <Divider />
+
+                    {/* ── Acciones del formulario ── */}
+                    <FooterActions>
+                        <Button $variant="secondary" type="button" onClick={onClose} disabled={saving}>
+                            Cancelar
+                        </Button>
+                        <Button type="submit" disabled={saving}>
+                            {saving
+                                ? <ClimbingBoxLoader size={8} color="#000" />
+                                : <><FiSave /> Crear Orden</>
+                            }
+                        </Button>
+                    </FooterActions>
+
+                </form>
+            </ModalContent>
+        </ModalOverlay>
+    );
+};
+
+// ─────────────────────────────────────────────
+// ESTILOS LOCALES
+// ─────────────────────────────────────────────
+
+/** Fila de un item del detalle */
+const ItemRow = styled.div`
+    display: grid;
+    grid-template-columns: 2fr 100px 120px 80px 100px 40px;
+    gap: 12px;
+    align-items: start;
+    margin-bottom: 10px;
+    background: rgba(0, 0, 0, 0.02);
+    padding: 10px;
+    border-radius: 12px;
+`;
+
+/** Celda del subtotal alineada a la derecha */
+const SubtotalCell = styled.div`
+    text-align: right;
+    padding-top: 10px;
+    font-weight: 700;
+`;
+
+/** Contenedor scrolleable de la lista de items */
+const ItemsList = styled.div`
+    max-height: 300px;
+    overflow-y: auto;
+    padding-right: 10px;
+`;
+
+/** Encabezado de la sección de items */
+const ItemsHeader = styled.div`
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 15px;
+`;
+
+/** Fila del total estimado */
+const TotalRow = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    margin-top: 20px;
+    font-size: 1.2rem;
+    font-weight: 800;
+
+    .label  { opacity: 0.6; margin-right: 15px; }
+    .amount { color: #FCA311; }
+`;
+
+/** Botones de acción al pie del modal */
+const FooterActions = styled.div`
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+`;

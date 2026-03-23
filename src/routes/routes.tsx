@@ -18,7 +18,7 @@ const RolesPage = lazy(() => import("../features/auth/pages/RolesPage"));
 const Categoria = lazy(() => import("../features/stats/pages/Categoria"));
 const Medidas = lazy(() => import("../features/stats/pages/Medidas"));
 const Monedas = lazy(() => import("../features/stats/pages/Moneda"));
-const Inventario = lazy(()=> import("../features/catalogo/pages/Catalogos"));
+const Inventario = lazy(() => import("../features/inventory/pages/InventarioPremium"));
 const Proveedores = lazy(() => import("../features/proveedor/pages/Proveedores"));
 const Compras = lazy(() => import("../features/purchases/pages/Compras"));
 const Kardex = lazy(() => import("../features/inventory/pages/Kardex"));

@@ -55,39 +55,41 @@ export const Sidebar: React.FC = () => {
 
     return (
         <Container $isOpen={sidebarOpen}>
-            {/* Botón de colapso */}
+            {/* Botón de colapso - Fuera del contexto de scroll para evitar clipping */}
             <CollapseButton onClick={toggleSidebar} $isOpen={sidebarOpen}>
                 <AiOutlineLeft />
             </CollapseButton>
 
-            {/* Header / Logo */}
-            <LogoSection $isOpen={sidebarOpen}>
-                <div className="img-content">
-                    <img src={logo} alt="Logo" />
-                </div>
-                {sidebarOpen && <h2>Groot-Type</h2>}
-            </LogoSection>
+            <ScrollableContent>
+                {/* Header / Logo */}
+                <LogoSection $isOpen={sidebarOpen}>
+                    <div className="img-content">
+                        <img src={logo} alt="Logo" />
+                    </div>
+                    {sidebarOpen && <h2>Groot-Type</h2>}
+                </LogoSection>
 
-            {/* Secciones de Navegación */}
-            <NavSection links={primaryLinks} sidebarOpen={sidebarOpen} />
-            <Divider />
-            <NavSection links={secondaryLinks} sidebarOpen={sidebarOpen} />
-            <Divider />
+                {/* Secciones de Navegación */}
+                <NavSection links={primaryLinks} sidebarOpen={sidebarOpen} />
+                <Divider />
+                <NavSection links={secondaryLinks} sidebarOpen={sidebarOpen} />
+                <Divider />
 
-            {/* Control de Tema */}
-            <ThemeToggle $isOpen={sidebarOpen}>
-                {sidebarOpen && <span className="title">Dark Mode</span>}
-                <ToggleWrapper>
-                    <label className="switch">
-                        <input
-                            type="checkbox"
-                            checked={theme === "dark"}
-                            onChange={toggleTheme}
-                        />
-                        <span className="slider round"></span>
-                    </label>
-                </ToggleWrapper>
-            </ThemeToggle>
+                {/* Control de Tema */}
+                <ThemeToggle $isOpen={sidebarOpen}>
+                    {sidebarOpen && <span className="title">Dark Mode</span>}
+                    <ToggleWrapper>
+                        <label className="switch">
+                            <input
+                                type="checkbox"
+                                checked={theme === "dark"}
+                                onChange={toggleTheme}
+                            />
+                            <span className="slider round"></span>
+                        </label>
+                    </ToggleWrapper>
+                </ThemeToggle>
+            </ScrollableContent>
         </Container>
     );
 };
@@ -130,6 +132,31 @@ const Container = styled.div<{ $isOpen: boolean }>`
   transition: all 0.3s ease;
   z-index: 1000;
   box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+
+  display: flex;
+  flex-direction: column;
+  /* overflow movido a ScrollableContent para no tapar el botón */
+`;
+
+const ScrollableContent = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 0 20px 0;
+
+  /* Custom Scrollbar */
+  &::-webkit-scrollbar {
+    width: 6px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    background: ${({ theme }) => theme.bg3};
+    border-radius: 10px;
+  }
 `;
 
 const CollapseButton = styled.button<{ $isOpen: boolean }>`
@@ -156,15 +183,19 @@ const LogoSection = styled.div<{ $isOpen: boolean }>`
   align-items: center;
   justify-content: center;
   gap: 12px;
-  padding: 0 20px 30px;
+  padding: ${({ $isOpen }) => ($isOpen ? "0 20px 30px" : "0 0 30px")};
+  width: 100%;
   
   .img-content {
-    img { width: 40px; }
-    transform: ${({ $isOpen }) => ($isOpen ? "scale(1)" : "scale(1.3)")};
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    img { width: 35px; }
+    transform: ${({ $isOpen }) => ($isOpen ? "scale(1)" : "scale(1.15)")};
     transition: transform 0.3s ease;
   }
   
-  h2 { font-size: 1.2rem; margin: 0; }
+  h2 { font-size: 1.2rem; margin: 0; display: ${({ $isOpen }) => ($isOpen ? "block" : "none")}; }
 `;
 
 const LinksWrapper = styled.div`
@@ -216,7 +247,7 @@ const ThemeToggle = styled.div<{ $isOpen: boolean }>`
   display: flex;
   align-items: center;
   justify-content: ${({ $isOpen }) => ($isOpen ? "space-between" : "center")};
-  padding: 10px 20px;
+  padding: ${({ $isOpen }) => ($isOpen ? "10px 20px" : "10px 0")};
   
   .title { font-weight: 600; font-size: 0.9rem; }
 `;
