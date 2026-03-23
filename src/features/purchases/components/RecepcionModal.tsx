@@ -2,9 +2,9 @@ import React, { useState, useEffect } from "react";
 import { FiX, FiCheck, FiPackage } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import {
-    ModalOverlay, ModalContent, ModalHeader, ActionBtn, FormGroup
+  ModalOverlay, ModalContent, ModalHeader, ActionBtn, FormGroup, Button, Divider
 } from "../../../shared/components/UI";
-import { Button, Divider } from "../../../shared/components/UI/atoms";
+
 import { type Compra } from "../services/PurchaseService";
 
 interface RecepcionModalProps {

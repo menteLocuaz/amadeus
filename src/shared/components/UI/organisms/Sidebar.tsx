@@ -9,11 +9,11 @@ import {
 } from "react-icons/ai";
 import { MdOutlineAnalytics, MdLogout, MdPointOfSale, MdBusiness } from "react-icons/md";
 import { FiMapPin, FiUsers } from "react-icons/fi";
-import { useAuthStore } from "../../features/auth/store/useAuthStore";
-import { useUIStore } from "../store/useUIStore";
-import { v } from "../../core/styles/Variables";
-import { ROUTES } from "../../core/constants/routes";
-import logo from "../../assets/react.svg";
+import { useAuthStore } from "../../../../features/auth/store/useAuthStore";
+import { useUIStore } from "../../../store/useUIStore";
+import { v } from "../../../../core/styles/Variables";
+import { ROUTES } from "../../../../core/constants/routes";
+import logo from "../../../../assets/react.svg";
 
 // --- Interfaces ---
 interface NavLinkItem {

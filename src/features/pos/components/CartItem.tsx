@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import { FiPlus, FiMinus, FiTrash2 } from "react-icons/fi";
-import { CartItemRow, QtyControls, IconButton } from "../../../shared/components/UI/atoms";
+import { CartItemRow, QtyControls, IconButton } from "../../../shared/components/UI";
 import type { CartItem as CartItemType } from "../hooks/useCart";
 
 interface CartItemProps {

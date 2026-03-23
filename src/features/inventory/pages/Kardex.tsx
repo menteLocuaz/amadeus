@@ -19,7 +19,7 @@ import {
     PageContainer, TableCard, Table, Badge,
     PageHeader, HeaderTitle, FormGroup
 } from '../../../shared/components/UI';
-import { Button, Grid } from '../../../shared/components/UI/atoms';
+import { Button, Grid } from '../../../shared/components/UI';
 
 const columnHelper = createColumnHelper<MovimientoKardex>();
 

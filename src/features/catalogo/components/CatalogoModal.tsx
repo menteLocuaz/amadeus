@@ -1,9 +1,8 @@
 import React from "react";
 import { FiShoppingBag } from "react-icons/fi";
 import { 
-    Badge, ModalOverlay, ModalContent, ModalHeader, ActionBtn 
+    Badge, ModalOverlay, ModalContent, ModalHeader, ActionBtn, Button, Divider 
 } from "../../../shared/components/UI";
-import { Button, Divider } from "../../../shared/components/UI/atoms";
 import { type Product } from "../../products/services/ProductService";
 import styled from "styled-components";
 
