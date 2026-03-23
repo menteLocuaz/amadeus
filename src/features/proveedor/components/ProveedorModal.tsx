@@ -67,7 +67,7 @@ export const ProveedorModal: React.FC<ProveedorModalProps> = ({
                     </FormGroup>
 
                     <FormGroup>
-                        <label>Tel\u00e9fono</label>
+                        <label>Telefono</label>
                         <input
                             value={form.telefono ?? ""}
                             onChange={(e) => setForm((s: any) => ({ ...s, telefono: e.target.value }))}
@@ -76,7 +76,7 @@ export const ProveedorModal: React.FC<ProveedorModalProps> = ({
                     </FormGroup>
 
                     <FormGroup style={{ gridColumn: "1 / 3" }}>
-                        <label>Direcci\u00f3n Fiscal</label>
+                        <label>Direccion Fiscal</label>
                         <input
                             value={form.direccion ?? ""}
                             onChange={(e) => setForm((s: any) => ({ ...s, direccion: e.target.value }))}

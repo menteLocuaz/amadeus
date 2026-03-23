@@ -69,7 +69,8 @@ const Container = styled.div<{ $sidebarOpen: boolean; $hideSidebar: boolean }>`
   background: ${({ theme }) => theme.bgtotal};
   color: ${({ theme }) => theme.text};
   transition: grid-template-columns 0.3s ease;
-  min-height: 100vh;
+  height: 100vh;
+  overflow: hidden;
 `;
 
 const ContentArea = styled.main`

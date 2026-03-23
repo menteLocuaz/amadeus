@@ -9,6 +9,7 @@ export interface MovimientoKardex {
   tipo: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'COMPRA' | 'VENTA'; // Matching all possible backend types
   cantidad: number;
   saldo_resultante?: number;
+  saldo_calculado?: number;
   referencia?: string; // e.g., Factura ID, Orden Pedido ID
   id_usuario?: string;
   created_at?: string;
