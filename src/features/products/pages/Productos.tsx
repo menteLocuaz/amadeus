@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import styled from "styled-components";
+import styled, { useTheme } from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiImage, FiPackage, FiRefreshCw } from "react-icons/fi";
 import {
@@ -63,12 +63,13 @@ const ProductSku = styled.div`
 `;
 
 const PriceText = styled.div`
-    color: #22C55E;
+    color: ${({ theme }) => theme.success};
     font-weight: 700;
     text-align: right;
 `;
 
 const Productos: React.FC = () => {
+    const theme = useTheme();
     // 1. Data Fetching
     const {
         products, categories, units, currencies, sucursales, estatusList,
@@ -126,12 +127,13 @@ const Productos: React.FC = () => {
             cell: info => {
                 const val = info.getValue() ?? 0;
                 const isLow = val <= 5;
+                const color = val > 0 ? (isLow ? theme.warning : theme.success) : theme.danger;
                 return (
                     <div style={{ textAlign: "right" }}>
-                        <div style={{ fontSize: '1.1rem', fontWeight: 900, color: val > 0 ? (isLow ? "#f59e0b" : "#10b981") : "#ef4444" }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 900, color }}>
                             {val}
                         </div>
-                        <Badge $color={val > 0 ? (isLow ? "#f59e0b22" : "#10b98122") : "#ef444422"} style={{ fontSize: '0.65rem', padding: '2px 6px', marginTop: 4 }}>
+                        <Badge $color={`${color}22`} style={{ fontSize: '0.65rem', padding: '2px 6px', marginTop: 4 }}>
                             {val > 0 ? (isLow ? "Bajo" : "Disponible") : "Agotado"}
                         </Badge>
                     </div>
@@ -168,7 +170,7 @@ const Productos: React.FC = () => {
                 </div>
             )
         })
-    ], [isDeletingId]);
+    ], [isDeletingId, theme]);
 
     // 5. Table Instance
     const table = useReactTable({
@@ -189,7 +191,7 @@ const Productos: React.FC = () => {
             <PageHeader>
                 <HeaderTitle>
                     <h1>
-                        <FiPackage color="#FCA311" /> Productos
+                        <FiPackage color={theme.primary} /> Productos
                     </h1>
                     <p>Administra tu catálogo de artículos y su inventario</p>
                 </HeaderTitle>
@@ -214,7 +216,7 @@ const Productos: React.FC = () => {
             <TableCard>
                 {isLoading ? (
                     <div style={{ padding: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
-                        <ClimbingBoxLoader color="#FCA311" />
+                        <ClimbingBoxLoader color={theme.primary} />
                         <p style={{ opacity: 0.5 }}>Cargando catálogo...</p>
                     </div>
                 ) : (

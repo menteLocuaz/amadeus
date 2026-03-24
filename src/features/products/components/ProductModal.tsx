@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { FiX, FiSave } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
+import { useTheme } from "styled-components";
 import { type Product } from "../services/ProductService";
 import { useProductMutations } from "../hooks/useProductQueries";
 import { ActionBtn, FormGroup, ModalOverlay, ModalContent, Button } from "../../../shared/components/UI";
@@ -30,6 +31,7 @@ export const ProductModal: React.FC<Props> = ({
     userIdSucursal,
     onSuccess,
 }) => {
+    const theme = useTheme();
     const { createMutation, updateMutation } = useProductMutations();
     
     const [formData, setFormData] = useState({
@@ -309,7 +311,7 @@ export const ProductModal: React.FC<Props> = ({
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? <ClimbingBoxLoader size={12} color="#000" /> : <><FiSave /> Confirmar</>}
+            {saving ? <ClimbingBoxLoader size={12} color={theme.bg} /> : <><FiSave /> Confirmar</>}
           </Button>
         </div>
       </ModalContent>
