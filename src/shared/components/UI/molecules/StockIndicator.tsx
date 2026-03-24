@@ -81,9 +81,10 @@ export const StockIndicator: React.FC<Props> = ({ actual, min, max, unit }) => {
         <Container>
             <InfoRow>
                 <span className="actual" style={{ color: cfg.color }}>
-                    {actual} <small style={{ fontWeight: 400, fontSize: '0.75rem', opacity: 0.7 }}>{unit}</small>
+                    <span style={{ fontSize: '1.2rem', fontWeight: 900 }}>{actual}</span>
+                    <small style={{ fontWeight: 400, fontSize: '0.75rem', opacity: 0.7, marginLeft: 4 }}>{unit}</small>
                 </span>
-                <span className="limits">{min} / {max}</span>
+                <span className="limits">Min: {min} / Max: {max}</span>
             </InfoRow>
             <ProgressBar $pct={pct} $level={level} />
             <Badge $level={level}>

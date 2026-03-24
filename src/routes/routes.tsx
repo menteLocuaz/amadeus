@@ -18,6 +18,7 @@ const RolesPage = lazy(() => import("../features/auth/pages/RolesPage"));
 const Categoria = lazy(() => import("../features/stats/pages/Categoria"));
 const Medidas = lazy(() => import("../features/stats/pages/Medidas"));
 const Monedas = lazy(() => import("../features/stats/pages/Moneda"));
+const Catalogos = lazy(() => import("../features/catalogo/pages/Catalogos"));
 const Inventario = lazy(() => import("../features/inventory/pages/InventarioPremium"));
 const Proveedores = lazy(() => import("../features/proveedor/pages/Proveedores"));
 const Compras = lazy(() => import("../features/purchases/pages/Compras"));
@@ -53,6 +54,7 @@ export function MyRoutes() {
           <Route path={ROUTES.CATEGORIAS} element={<Categoria />} />
           <Route path={ROUTES.MEDIDAS} element={<Medidas />} />
           <Route path={ROUTES.MONEDAS} element={<Monedas />} />
+          <Route path={ROUTES.CATALOGO} element={<Catalogos />} />
           <Route path={ROUTES.INVENTARIO} element={<Inventario />} />
           <Route path={ROUTES.PROVEEDORES} element={<Proveedores />} />
           <Route path={ROUTES.COMPRAS} element={<Compras />} />

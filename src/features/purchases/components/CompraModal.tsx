@@ -62,6 +62,7 @@ interface CompraModalProps {
     monedas: Moneda[];
     statuses: any[];
     saving: boolean;
+    defaultSucursalId?: string;
     onClose: () => void;
     onSave: (data: any) => void;
 }
@@ -173,7 +174,7 @@ const OrderItemRow = ({
 
 export const CompraModal: React.FC<CompraModalProps> = ({
     open, suppliers, products, sucursales,
-    monedas, statuses, saving, onClose, onSave,
+    monedas, statuses, saving, defaultSucursalId, onClose, onSave,
 }) => {
     // Busca el status inicial "solicitado" para pre-seleccionarlo
     const defaultStatusId = useMemo(
@@ -187,10 +188,10 @@ export const CompraModal: React.FC<CompraModalProps> = ({
         [monedas]
     );
 
-    const { register, control, handleSubmit, formState: { errors } } = useForm({
+    const { register, control, handleSubmit, reset, formState: { errors } } = useForm({
         resolver: yupResolver(orderSchema),
         defaultValues: {
-            id_sucursal: "",
+            id_sucursal: defaultSucursalId || "",
             id_proveedor: "",
             numero_orden: generateOrderNumber(),
             id_status: defaultStatusId,
@@ -199,6 +200,21 @@ export const CompraModal: React.FC<CompraModalProps> = ({
             detalles: [DEFAULT_ITEM],
         },
     });
+
+    // Asegura que los valores por defecto se apliquen cuando el modal se abre
+    React.useEffect(() => {
+        if (open) {
+            reset({
+                id_sucursal: defaultSucursalId || "",
+                id_proveedor: "",
+                numero_orden: generateOrderNumber(),
+                id_status: defaultStatusId,
+                id_moneda: defaultMonedaId,
+                observaciones: "",
+                detalles: [DEFAULT_ITEM],
+            });
+        }
+    }, [open, defaultSucursalId, defaultStatusId, defaultMonedaId, reset]);
 
     const { fields, append, remove } = useFieldArray({ control, name: "detalles" });
     const watchedDetails = useWatch({ control, name: "detalles" });
@@ -237,7 +253,7 @@ export const CompraModal: React.FC<CompraModalProps> = ({
                                     const sid = resolveId(s, "id", "id_proveedor");
                                     return (
                                         <option key={sid} value={sid}>
-                                            {resolveName(s, "nombre", "nombre_proveedor")}
+                                            {resolveName(s, "nombre", "nombre_proveedor", "razon_social")}
                                         </option>
                                     );
                                 })}
@@ -253,7 +269,7 @@ export const CompraModal: React.FC<CompraModalProps> = ({
                                     const sid = resolveId(s, "id", "id_sucursal");
                                     return (
                                         <option key={sid} value={sid}>
-                                            {resolveName(s, "nombre", "std_descripcion")}
+                                            {resolveName(s, "nombre", "nombre_sucursal", "std_descripcion")}
                                         </option>
                                     );
                                 })}
@@ -273,7 +289,7 @@ export const CompraModal: React.FC<CompraModalProps> = ({
                                 <option value="">Seleccione Moneda</option>
                                 {monedas.map((m: any) => {
                                     const mid = resolveId(m, "id_moneda", "id");
-                                    return <option key={mid} value={mid}>{m.nombre}</option>;
+                                    return <option key={mid} value={mid}>{resolveName(m, "nombre", "nombre_moneda")}</option>;
                                 })}
                             </select>
                             <FieldError message={errors.id_moneda?.message} />

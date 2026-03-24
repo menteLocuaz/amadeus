@@ -3,6 +3,7 @@ import styled from "styled-components";
 import { useNavigate } from "react-router-dom";
 import FontLogin from "../../../assets/login.jpg";
 import { useAuthStore } from "../store/useAuthStore";
+import { AuthService } from "../services/AuthService";
 import { ClimbingBoxLoader } from "react-spinners";
 
 const LoginPage: React.FC = () => {
@@ -10,7 +11,13 @@ const LoginPage: React.FC = () => {
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   
-  const { login, clearSession, isLoading, error } = useAuthStore();
+  // Paso 2: Selección de Sucursal
+  const [step, setStep] = useState<"LOGIN" | "SUCURSAL">("LOGIN");
+  const [sucursales, setSucursales] = useState<any[]>([]);
+  const [selectedSucursal, setSelectedSucursal] = useState("");
+  const [loadingSucursales, setLoadingSucursales] = useState(false);
+
+  const { login, clearSession, isLoading, error, user, setSucursalActiva } = useAuthStore();
   const navigate = useNavigate();
 
   // Limpiar sesión al entrar al login solo si hay un token (evita bucles infinitos)
@@ -25,8 +32,50 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      navigate("/select-system");
+      // El store ya se actualizó en background porque `login` hace `set({ user: usuario })`.
+      // Necesitamos leer el estado de JWT guardado por AuthService.
+      const userDataStr = localStorage.getItem('token'); // Solo para chequear auth
+      if (!userDataStr) return;
+
+      // El store puede demorar un microciclo en sincronizarse si leemos "user" directo.
+      // Así que verificaremos obteniendo el perfil de inmediato o con `useAuthStore.getState()`
+      const currentUser = useAuthStore.getState().user;
+      
+      const hasSucursal = currentUser?.id_sucursal || currentUser?.sucursal?.id_sucursal || (currentUser as any)?.sucursal?.id;
+
+      if (hasSucursal) {
+        navigate("/select-system");
+      } else {
+        setStep("SUCURSAL");
+        fetchSucursales();
+      }
     }
+  };
+
+  const fetchSucursales = async () => {
+    setLoadingSucursales(true);
+    try {
+      const resp = await AuthService.getSucursales();
+      setSucursales(resp.data || []);
+      if ((resp.data || []).length > 0) {
+        setSelectedSucursal(resp.data[0].id_sucursal);
+      }
+    } catch(e) {
+      console.error("Error cargando sucursales:", e);
+    } finally {
+      setLoadingSucursales(false);
+    }
+  };
+
+  const handleSucursalSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedSucursal) return alert("Debe seleccionar una sucursal.");
+    
+    const branch = sucursales.find(s => s.id_sucursal === selectedSucursal);
+    const branchName = branch?.nombre_sucursal || branch?.nombre || "Central";
+    
+    setSucursalActiva(selectedSucursal, branchName);
+    navigate("/select-system");
   };
 
   return (
@@ -42,54 +91,90 @@ const LoginPage: React.FC = () => {
           )}
 
           <TitleSection>
-            <Title>¡Bienvenido!</Title>
-            <Subtitle>Ingresa tus credenciales para continuar</Subtitle>
+            {step === "LOGIN" ? (
+              <>
+                <Title>¡Bienvenido!</Title>
+                <Subtitle>Ingresa tus credenciales para continuar</Subtitle>
+              </>
+            ) : (
+              <>
+                <Title>Cuenta Principal</Title>
+                <Subtitle>Por favor elige la sucursal de trabajo actual.</Subtitle>
+              </>
+            )}
           </TitleSection>
 
           {error && <ErrorMessage>{error}</ErrorMessage>}
 
-          <form onSubmit={handleSubmit}>
-            <FieldGroup>
-              <Label htmlFor="email">Email</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@correo.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </FieldGroup>
+          {step === "LOGIN" ? (
+            <form onSubmit={handleSubmit}>
+              <FieldGroup>
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="tu@correo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </FieldGroup>
 
-            <FieldGroup>
-              <Label htmlFor="password">Contraseña</Label>
-              <Input
-                id="password"
-                type="password"
-                placeholder="••••••••"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-                required
-                disabled={isLoading}
-              />
-            </FieldGroup>
+              <FieldGroup>
+                <Label htmlFor="password">Contraseña</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                  disabled={isLoading}
+                />
+              </FieldGroup>
 
-            <CheckboxRow>
-              <StyledCheckbox
-                id="remember"
-                type="checkbox"
-                checked={remember}
-                onChange={(e) => setRemember(e.target.checked)}
-                disabled={isLoading}
-              />
-              <CheckboxLabel htmlFor="remember">Recordar sesión</CheckboxLabel>
-            </CheckboxRow>
+              <CheckboxRow>
+                <StyledCheckbox
+                  id="remember"
+                  type="checkbox"
+                  checked={remember}
+                  onChange={(e) => setRemember(e.target.checked)}
+                  disabled={isLoading}
+                />
+                <CheckboxLabel htmlFor="remember">Recordar sesión</CheckboxLabel>
+              </CheckboxRow>
 
-            <LoginButton type="submit" disabled={isLoading}>
-              {isLoading ? "Validando..." : "Iniciar Sesión"}
-            </LoginButton>
-          </form>
+              <LoginButton type="submit" disabled={isLoading}>
+                {isLoading ? "Validando..." : "Iniciar Sesión"}
+              </LoginButton>
+            </form>
+          ) : (
+            <form onSubmit={handleSucursalSubmit}>
+              <FieldGroup>
+                <Label>Selecciona tu Sucursal</Label>
+                <Select
+                  value={selectedSucursal}
+                  onChange={(e) => setSelectedSucursal(e.target.value)}
+                  disabled={loadingSucursales}
+                >
+                  {loadingSucursales ? (
+                    <option>Cargando lista...</option>
+                  ) : (
+                    sucursales.map(s => (
+                      <option key={s.id_sucursal} value={s.id_sucursal}>
+                        {s.nombre_sucursal}
+                      </option>
+                    ))
+                  )}
+                </Select>
+              </FieldGroup>
+
+              <LoginButton type="submit" disabled={loadingSucursales || !selectedSucursal}>
+                {loadingSucursales ? "Cargando..." : "Entrar al Sistema"}
+              </LoginButton>
+            </form>
+          )}
         </FormSide>
 
         <ImageSide />
@@ -228,6 +313,24 @@ const Input = styled.input`
   transition: all 0.2s ease;
 
   &::placeholder { color: ${({ theme }) => theme.texttertiary}; opacity: 0.5; }
+
+  &:focus {
+    border-color: ${({ theme }) => theme.bg4};
+    box-shadow: 0 0 0 2px ${({ theme }) => theme.bg4}22;
+  }
+`;
+
+const Select = styled.select`
+  width: 100%;
+  background: ${({ theme }) => theme.bg2};
+  border: 1px solid ${({ theme }) => theme.bg3}33;
+  border-radius: 10px;
+  padding: 14px 18px;
+  color: ${({ theme }) => theme.text};
+  font-size: 1rem;
+  outline: none;
+  transition: all 0.2s ease;
+  cursor: pointer;
 
   &:focus {
     border-color: ${({ theme }) => theme.bg4};

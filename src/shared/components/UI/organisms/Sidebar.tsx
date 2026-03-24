@@ -8,7 +8,7 @@ import {
     AiOutlineSetting,
 } from "react-icons/ai";
 import { MdOutlineAnalytics, MdLogout, MdPointOfSale, MdBusiness } from "react-icons/md";
-import { FiMapPin, FiUsers } from "react-icons/fi";
+import { FiMapPin, FiUsers, FiShoppingBag } from "react-icons/fi";
 import { useAuthStore } from "../../../../features/auth/store/useAuthStore";
 import { useUIStore } from "../../../store/useUIStore";
 import { v } from "../../../../core/styles/Variables";
@@ -42,6 +42,7 @@ export const Sidebar: React.FC = () => {
         { label: "Usuarios", icon: <FiUsers />, to: ROUTES.USUARIOS },
         { label: "Caja (POS)", icon: <MdPointOfSale />, to: ROUTES.POS },
         { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: ROUTES.ESTADISTICAS },
+        { label: "Catálogo", icon: <FiShoppingBag />, to: ROUTES.CATALOGO },
         { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },
         { label: "Diagramas", icon: <MdOutlineAnalytics />, to: ROUTES.DIAGRAMAS },
         { label: "Reportes", icon: <MdOutlineAnalytics />, to: ROUTES.REPORTES },

@@ -24,19 +24,33 @@ export const useCatalogo = () => {
                 ProductService.getAll(),
                 CategoryService.getAll(),
                 SucursalService.getAll(),
-                EstatusService.getCatalogo() // Using getCatalogo for grouped data
+                EstatusService.getCatalogo()
             ]);
             
-            setProducts(pRes?.data || []);
-            setCategories(cRes?.data || []);
-            setSucursales(sRes?.data || []);
+            const extract = (res: any) => {
+                if (!res) return [];
+                if (Array.isArray(res)) return res;
+                if (Array.isArray(res.data)) return res.data;
+                if (res.items && Array.isArray(res.items)) return res.items;
+                if (res.data && typeof res.data === 'object') {
+                    const modData = res.data["2"] || res.data["1"] || res.data["3"] || res.data["6"] || res.data["4"];
+                    if (modData && Array.isArray(modData.items)) return modData.items;
+                    return Object.values(res.data).find(v => typeof v === 'object' && Array.isArray((v as any).items))
+                        ? (Object.values(res.data).find(v => typeof v === 'object' && Array.isArray((v as any).items)) as any).items
+                        : [];
+                }
+                return res.data || [];
+            };
+
+            setProducts(extract(pRes));
+            setCategories(extract(cRes));
+            setSucursales(extract(sRes));
             
-            // Extract module 4 (stock/products) if grouped, otherwise fallback to others
             const stData = stRes?.data;
             if (stData && typeof stData === 'object' && !Array.isArray(stData)) {
                 setStatuses(stData["4"]?.items || stData["2"]?.items || stData["1"]?.items || []);
             } else {
-                setStatuses(stRes?.data || []);
+                setStatuses(extract(stRes));
             }
         } catch (err) {
             console.error("Error loading catalogue data:", err);

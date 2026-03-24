@@ -14,13 +14,48 @@ export const proveedorKeys = {
 export const extractData = (res: any) => {
     if (!res) return [];
     if (Array.isArray(res)) return res;
-    if (Array.isArray(res.data)) return res.data;
+    
+    // Case: { success: true, data: [...] }
+    if (res.data && Array.isArray(res.data)) return res.data;
+    
+    // Case: { items: [...] }
     if (res.items && Array.isArray(res.items)) return res.items;
-    if (res.data && typeof res.data === 'object') {
-        const modData = res.data["2"] || res.data["1"] || res.data["3"];
-        if (modData && Array.isArray(modData.items)) return modData.items;
-        return Object.values(res.data).filter(v => typeof v === 'object') as any[];
+
+    // Aggressive search for any array property in the top level
+    for (const key in res) {
+        if (Array.isArray(res[key]) && res[key].length > 0) return res[key];
     }
+    
+    // Case: { data: { "1": { items: [...] }, "7": { items: [...] } } }
+    const dataContainer = res.data || res; // Check res itself if no data property
+    if (dataContainer && typeof dataContainer === 'object' && !Array.isArray(dataContainer)) {
+        // Try known modules first (including 7 for Compras, 2 for Products)
+        const commonModuleIds = ["2", "1", "3", "7", "8"];
+        for (const id of commonModuleIds) {
+            if (dataContainer[id]?.items && Array.isArray(dataContainer[id].items)) {
+                return dataContainer[id].items;
+            }
+        }
+        
+        // Fallback: look for ANY key that has an 'items' array
+        for (const key in dataContainer) {
+            if (dataContainer[key]?.items && Array.isArray(dataContainer[key].items)) {
+                return dataContainer[key].items;
+            }
+        }
+
+        // Fallback: search for any array within data property
+        for (const key in dataContainer) {
+            if (Array.isArray(dataContainer[key]) && dataContainer[key].length > 0) return dataContainer[key];
+        }
+
+        // Fallback: return first object that looks like an array container
+        const values = Object.values(dataContainer).filter(v => typeof v === 'object' && v !== null);
+        if (values.length > 0) {
+            return values as any[];
+        }
+    }
+    
     return [];
 };
 

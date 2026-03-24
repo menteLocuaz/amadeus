@@ -1,70 +1,36 @@
 import { useState, useEffect } from "react";
-import { FiX } from "react-icons/fi";
+import { FiX, FiSave } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
-import { ProductService, type Product } from "../services/ProductService";
-import { ActionBtn, FormGroup, ModalOverlay, ModalContent } from "../../../shared/components/UI";
+import { type Product } from "../services/ProductService";
+import { useProductMutations } from "../hooks/useProductQueries";
+import { ActionBtn, FormGroup, ModalOverlay, ModalContent, Button } from "../../../shared/components/UI";
 
 interface Props {
-  isOpen: boolean;
-  onClose: () => void;
-  editingProduct: Product | null;
-  categories: any[];
-  units: any[];
-  currencies: any[];
-  estatusList: any[];
-  userIdSucursal?: string;
-  onSuccess: () => void;
+    isOpen: boolean;
+    onClose: () => void;
+    editingProduct: Product | null;
+    categories: any[];
+    units: any[];
+    currencies: any[];
+    estatusList: any[];
+    userIdSucursal?: string;
+    onSuccess: () => void;
 }
 
 export const ProductModal: React.FC<Props> = ({
-  isOpen,
-  onClose,
-  editingProduct,
-  categories,
-  units,
-  currencies,
-  estatusList,
-  userIdSucursal,
-  onSuccess,
+    isOpen,
+    onClose,
+    editingProduct,
+    categories,
+    units,
+    currencies,
+    estatusList,
+    userIdSucursal,
+    onSuccess,
 }) => {
-  const [saving, setSaving] = useState(false);
-  const [formData, setFormData] = useState({
-    nombre: "",
-    descripcion: "",
-    precio_compra: 0,
-    precio_venta: 0,
-    stock: 0,
-    fecha_vencimiento: "",
-    imagen: "",
-    id_categoria: "",
-    id_moneda: "",
-    id_unidad: "",
-    id_status: "",
-  });
-
-  useEffect(() => {
-    if (!isOpen) return;
-
-    if (editingProduct) {
-      setFormData({
-        nombre: editingProduct.nombre || "",
-        descripcion: editingProduct.descripcion || "",
-        precio_compra: editingProduct.precio_compra ?? 0,
-        precio_venta: editingProduct.precio_venta ?? 0,
-        stock: editingProduct.stock ?? 0,
-        fecha_vencimiento: editingProduct.fecha_vencimiento
-          ? String(editingProduct.fecha_vencimiento).split("T")[0]
-          : "",
-        imagen: editingProduct.imagen || "",
-        id_categoria: editingProduct.id_categoria || "",
-        id_moneda: editingProduct.id_moneda || "",
-        id_unidad: editingProduct.id_unidad || "",
-        id_status: editingProduct.id_status || "",
-      });
-    } else {
-      const activeStatus =
-        estatusList.find((e: any) => String(e.std_descripcion).toLowerCase().includes("activ"))?.id_status || "";
-      setFormData({
+    const { createMutation, updateMutation } = useProductMutations();
+    
+    const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
         precio_compra: 0,
@@ -73,62 +39,88 @@ export const ProductModal: React.FC<Props> = ({
         fecha_vencimiento: "",
         imagen: "",
         id_categoria: "",
-        id_moneda: currencies?.[0]?.id_moneda || "",
+        id_moneda: "",
         id_unidad: "",
-        id_status: activeStatus,
-      });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen, editingProduct, estatusList, currencies]);
+        id_status: "",
+    });
 
-  const handleChange = (key: keyof typeof formData, value: any) => {
-    setFormData((prev) => ({ ...prev, [key]: value }));
-  };
+    useEffect(() => {
+        if (!isOpen) return;
 
-  const handleSave = async () => {
-    if (!formData.nombre.trim()) {
-      alert("El nombre del producto es obligatorio.");
-      return;
-    }
-    if (!userIdSucursal) {
-      alert("No se identificó la sucursal (id_sucursal).");
-      return;
-    }
+        if (editingProduct) {
+            setFormData({
+                nombre: editingProduct.nombre || "",
+                descripcion: editingProduct.descripcion || "",
+                precio_compra: editingProduct.precio_compra ?? 0,
+                precio_venta: editingProduct.precio_venta ?? 0,
+                stock: editingProduct.stock ?? 0,
+                fecha_vencimiento: editingProduct.fecha_vencimiento
+                    ? String(editingProduct.fecha_vencimiento).split("T")[0]
+                    : "",
+                imagen: editingProduct.imagen || "",
+                id_categoria: editingProduct.id_categoria || "",
+                id_moneda: editingProduct.id_moneda || "",
+                id_unidad: editingProduct.id_unidad || "",
+                id_status: editingProduct.id_status || "",
+            });
+        } else {
+            const activeStatus =
+                estatusList.find((e: any) => String(e.std_descripcion).toLowerCase().includes("activ"))?.id_status || "";
+            setFormData({
+                nombre: "",
+                descripcion: "",
+                precio_compra: 0,
+                precio_venta: 0,
+                stock: 0,
+                fecha_vencimiento: "",
+                imagen: "",
+                id_categoria: "",
+                id_moneda: currencies?.[0]?.id_moneda || "",
+                id_unidad: "",
+                id_status: activeStatus,
+            });
+        }
+    }, [isOpen, editingProduct, estatusList, currencies]);
 
-    setSaving(true);
-    try {
-      const payload = {
-        ...formData,
-        nombre: formData.nombre.trim(),
-        descripcion: formData.descripcion.trim(),
-        id_sucursal: userIdSucursal,
-        precio_compra: Number(formData.precio_compra),
-        precio_venta: Number(formData.precio_venta),
-        stock: Number(formData.stock),
-        fecha_vencimiento: formData.fecha_vencimiento
-          ? new Date(formData.fecha_vencimiento).toISOString()
-          : undefined,
-      };
+    const handleChange = (key: keyof typeof formData, value: any) => {
+        setFormData((prev) => ({ ...prev, [key]: value }));
+    };
 
-      if (editingProduct) {
-        const id = String(editingProduct.id_producto ?? (editingProduct as any).id ?? "");
-        if (!id) throw new Error("ID de producto no encontrado");
-        await ProductService.update(id, payload as any);
-      } else {
-        await ProductService.create(payload as any);
-      }
+    const handleSave = async () => {
+        if (!formData.nombre.trim()) return alert("El nombre del producto es obligatorio.");
+        if (!userIdSucursal) return alert("No se identificó la sucursal (id_sucursal).");
 
-      onSuccess();
-      onClose();
-    } catch (error: any) {
-      console.error("Error guardando producto:", error);
-      alert("Error al guardar: " + (error?.response?.data?.message || error?.message || "Error desconocido"));
-    } finally {
-      setSaving(false);
-    }
-  };
+        const payload = {
+            ...formData,
+            nombre: formData.nombre.trim(),
+            descripcion: formData.descripcion.trim(),
+            id_sucursal: userIdSucursal,
+            precio_compra: Number(formData.precio_compra),
+            precio_venta: Number(formData.precio_venta),
+            stock: Number(formData.stock),
+            fecha_vencimiento: formData.fecha_vencimiento
+                ? new Date(formData.fecha_vencimiento).toISOString()
+                : undefined,
+        };
 
-  if (!isOpen) return null;
+        try {
+            if (editingProduct) {
+                const id = String(editingProduct.id_producto ?? (editingProduct as any).id ?? "");
+                await updateMutation.mutateAsync({ id, payload });
+            } else {
+                await createMutation.mutateAsync(payload);
+            }
+            onSuccess();
+            onClose();
+        } catch (error: any) {
+            console.error("Error guardando producto:", error);
+            alert("Error al guardar: " + (error?.response?.data?.message || error?.message || "Error desconocido"));
+        }
+    };
+
+    const saving = createMutation.isPending || updateMutation.isPending;
+
+    if (!isOpen) return null;
 
   return (
     <ModalOverlay>
@@ -283,30 +275,19 @@ export const ProductModal: React.FC<Props> = ({
         </div>
 
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 20 }}>
-          <button
-            style={{ padding: "10px 16px", borderRadius: 10, background: "rgba(255,255,255,0.04)", border: "none" }}
+          <Button
+            $variant="ghost"
             onClick={onClose}
             disabled={saving}
           >
             Cancelar
-          </button>
-
-          <button
+          </Button>
+          <Button
             onClick={handleSave}
             disabled={saving}
-            style={{
-              padding: "10px 16px",
-              borderRadius: 10,
-              background: "#FCA311",
-              color: "#000",
-              border: "none",
-              display: "inline-flex",
-              alignItems: "center",
-              gap: 8,
-            }}
           >
-            {saving ? <ClimbingBoxLoader size={12} color="#000" /> : "Confirmar"}
-          </button>
+            {saving ? <ClimbingBoxLoader size={12} color="#000" /> : <><FiSave /> Confirmar</>}
+          </Button>
         </div>
       </ModalContent>
     </ModalOverlay>

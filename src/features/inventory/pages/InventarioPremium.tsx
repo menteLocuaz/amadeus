@@ -3,7 +3,7 @@ import styled from "styled-components";
 import { 
     FiSearch, FiRefreshCw, FiEdit, FiPackage, 
     FiAlertTriangle, FiTrendingUp, 
-    FiX, FiSave
+    FiX, FiActivity
 } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import {
@@ -18,24 +18,38 @@ import {
 // UI Components
 import {
     PageContainer, TableCard, Table, ActionBtn,
-    FormGroup, ModalOverlay, ModalContent,
     PageHeader, HeaderTitle, Toolbar, SearchBox,
-    ModalHeader, Badge, Button
+    Badge, Button
 } from "../../../shared/components/UI";
 
 // Hooks
-import { usePremiumInventory, type MergedInventoryItem } from "../hooks/usePremiumInventory";
+import { 
+    usePremiumInventory, 
+    useInitializeInventory, 
+    useUpdateInventory, 
+    useCreateMovement, 
+    type MergedInventoryItem 
+} from "../hooks/usePremiumInventory";
+
+// Modals
+import { InitInventoryModal, UpdateInventoryModal, MovementModal } from "../components/InventoryModals";
 
 const columnHelper = createColumnHelper<MergedInventoryItem>();
 
+type ActionType = 'init' | 'update' | 'movement';
+
+
 const InventarioPremium: React.FC = () => {
     // 1. Data Fetching
-    const { data: items = [], isLoading, isFetching, refetch, adjustStock } = usePremiumInventory();
+    const { data: items = [], isLoading, isFetching, refetch } = usePremiumInventory();
+    const initMutation = useInitializeInventory();
+    const updateMutation = useUpdateInventory();
+    const moveMutation = useCreateMovement();
 
     // 2. UI State
     const [globalFilter, setGlobalFilter] = useState("");
     const [catFilter, setCatFilter] = useState("all");
-    const [adjustItem, setAdjustItem] = useState<MergedInventoryItem | null>(null);
+    const [actionState, setActionState] = useState<{ type: ActionType, item: MergedInventoryItem } | null>(null);
 
     // 3. Stats Calculation
     const stats = useMemo(() => {
@@ -85,7 +99,7 @@ const InventarioPremium: React.FC = () => {
         columnHelper.accessor("stock_actual", {
             header: () => <div style={{textAlign: 'right'}}>Existencias</div>,
             cell: info => {
-                const val = info.getValue();
+                const val = info.getValue() ?? 0;
                 const min = info.row.original.stock_minimo;
                 const isLow = val <= min && val > 0;
                 const isOut = val <= 0;
@@ -93,9 +107,12 @@ const InventarioPremium: React.FC = () => {
                 return (
                     <StockContainer>
                         <div className="label">
-                            <span className={isOut ? "out" : isLow ? "low" : "ok"}>
-                                {val} {info.row.original.unidad_nombre}
+                            <span className={isOut ? "out" : isLow ? "low" : "ok"} style={{ fontSize: '1.2rem', fontWeight: 900 }}>
+                                {val}
                             </span>
+                            <small style={{ fontSize: '0.75rem', opacity: 0.5, marginLeft: 4, fontWeight: 600 }}>
+                                {info.row.original.unidad_nombre}
+                            </small>
                         </div>
                         <ProgressBar>
                             <ProgressFill 
@@ -117,16 +134,31 @@ const InventarioPremium: React.FC = () => {
         }),
         columnHelper.display({
             id: "actions",
-            header: () => <div style={{ textAlign: 'right' }}>Ajustar</div>,
-            cell: info => (
-                <div style={{ textAlign: "right" }}>
-                    <ActionBtn onClick={() => setAdjustItem(info.row.original)} title="Ajustar Stock">
-                        <FiEdit />
-                    </ActionBtn>
-                </div>
-            )
+            header: () => <div style={{ textAlign: 'right' }}>Acciones</div>,
+            cell: info => {
+                const item = info.row.original;
+                return (
+                    <div style={{ textAlign: "right", display: "flex", gap: "8px", justifyContent: "flex-end" }}>
+                        {!item.id ? (
+                            <Button style={{ padding: '4px 12px', fontSize: '0.85rem' }} onClick={() => setActionState({ type: 'init', item })}>
+                                Inicializar
+                            </Button>
+                        ) : (
+                            <>
+                                <ActionBtn onClick={() => setActionState({ type: 'movement', item })} title="Registrar Movimiento">
+                                    <FiActivity />
+                                </ActionBtn>
+                                <ActionBtn onClick={() => setActionState({ type: 'update', item })} title="Editar Límites / Precios">
+                                    <FiEdit />
+                                </ActionBtn>
+                            </>
+                        )}
+                    </div>
+                );
+            }
         })
     ], []);
+
 
     const table = useReactTable({
         data: filteredData,
@@ -138,9 +170,16 @@ const InventarioPremium: React.FC = () => {
         getPaginationRowModel: getPaginationRowModel(),
     });
 
-    const handleAdjust = async (id_producto: string, payload: any, motivo: string) => {
-        await adjustStock.mutateAsync({ id_producto, payload, motivo });
-        setAdjustItem(null);
+    const handleActionComplete = async (payload: any) => {
+        if (!actionState) return;
+        if (actionState.type === 'init') {
+            await initMutation.mutateAsync(payload);
+        } else if (actionState.type === 'update') {
+            await updateMutation.mutateAsync(payload);
+        } else if (actionState.type === 'movement') {
+            await moveMutation.mutateAsync(payload);
+        }
+        setActionState(null);
     };
 
     return (
@@ -249,12 +288,28 @@ const InventarioPremium: React.FC = () => {
                 )}
             </TableCard>
 
-            {adjustItem && (
-                <AdjustModal 
-                    item={adjustItem} 
-                    onClose={() => setAdjustItem(null)} 
-                    onSave={handleAdjust}
-                    saving={adjustStock.isPending}
+            {actionState?.type === 'init' && (
+                <InitInventoryModal 
+                    item={actionState.item} 
+                    onClose={() => setActionState(null)} 
+                    onSave={handleActionComplete}
+                    saving={initMutation.isPending}
+                />
+            )}
+            {actionState?.type === 'update' && (
+                <UpdateInventoryModal 
+                    item={actionState.item} 
+                    onClose={() => setActionState(null)} 
+                    onSave={handleActionComplete}
+                    saving={updateMutation.isPending}
+                />
+            )}
+            {actionState?.type === 'movement' && (
+                <MovementModal 
+                    item={actionState.item} 
+                    onClose={() => setActionState(null)} 
+                    onSave={handleActionComplete}
+                    saving={moveMutation.isPending}
                 />
             )}
         </PageContainer>
@@ -404,56 +459,5 @@ const LoaderContainer = styled.div`
     opacity: 0.8;
 `;
 
-/* --- Adjustment Modal --- */
-const AdjustModal = ({ item, onClose, onSave, saving }: any) => {
-    const [val, setVal] = useState(item.stock_actual);
-    const [motivo, setMotivo] = useState("");
-
-    return (
-        <ModalOverlay onClick={onClose}>
-            <ModalContent style={{maxWidth: 400}} onClick={e => e.stopPropagation()}>
-                <ModalHeader>
-                    <h2><FiEdit /> Ajustar Existencias</h2>
-                    <ActionBtn onClick={onClose}><FiX /></ActionBtn>
-                </ModalHeader>
-
-                <div style={{marginBottom: 25}}>
-                    <strong style={{fontSize: '1.1rem'}}>{item.nombre}</strong>
-                    <div style={{opacity: 0.5, fontSize: '0.8rem'}}>Actual: {item.stock_actual} {item.unidad_nombre}</div>
-                </div>
-
-                <FormGroup>
-                    <label>Nuevo Stock Físico</label>
-                    <input 
-                        type="number" 
-                        value={val} 
-                        onChange={e => setVal(Number(e.target.value))}
-                        autoFocus
-                    />
-                </FormGroup>
-
-                <FormGroup>
-                    <label>Motivo del Ajuste</label>
-                    <textarea 
-                        value={motivo} 
-                        onChange={e => setMotivo(e.target.value)}
-                        placeholder="Ej: Conteo cíclico, pérdida, etc."
-                    />
-                </FormGroup>
-
-                <div style={{display: "flex", gap: 10, marginTop: 10}}>
-                    <Button $variant="ghost" onClick={onClose} style={{flex: 1}}>Cancelar</Button>
-                    <Button 
-                        onClick={() => onSave(item.id_producto, { stock_actual: val }, motivo)}
-                        style={{flex: 2}}
-                        disabled={saving}
-                    >
-                        {saving ? "Guardando..." : <><FiSave /> Guardar Ajuste</>}
-                    </Button>
-                </div>
-            </ModalContent>
-        </ModalOverlay>
-    );
-};
-
 export default InventarioPremium;
+

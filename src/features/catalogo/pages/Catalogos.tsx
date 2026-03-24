@@ -95,7 +95,10 @@ const InventarioCatalogo: React.FC = () => {
                         <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.5 }}>Categoria</label>
                         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)}>
                             <option value="all">Todas las Categorias</option>
-                            {categories.map(c => <option key={c.id_categoria} value={c.id_categoria}>{c.nombre}</option>)}
+                            {categories.map(c => {
+                                const id = c.id_categoria || (c as any).id;
+                                return <option key={id} value={id}>{c.nombre}</option>;
+                            })}
                         </select>
                     </FormGroup>
 
@@ -103,7 +106,10 @@ const InventarioCatalogo: React.FC = () => {
                         <label style={{ fontSize: '0.75rem', textTransform: 'uppercase', opacity: 0.5 }}>Sucursal</label>
                         <select value={selectedSuc} onChange={(e) => setSelectedSuc(e.target.value)}>
                             <option value="all">Todas las Sucursales</option>
-                            {sucursales.map(s => <option key={s.id} value={s.id}>{s.nombre}</option>)}
+                            {sucursales.map(s => {
+                                const id = s.id || (s as any).id_sucursal;
+                                return <option key={id} value={id}>{s.nombre}</option>;
+                            })}
                         </select>
                     </FormGroup>
 

@@ -12,6 +12,8 @@ export const inventoryKeys = {
 };
 
 export const useInventoryItems = () => {
+    const { user } = useAuthStore();
+    
     return useQuery({
         queryKey: inventoryKeys.lists(),
         queryFn: async () => {
@@ -32,7 +34,17 @@ export const useInventoryItems = () => {
                 return [];
             };
 
-            return extractData(res) as InventoryItem[];
+            const allItems = extractData(res) as InventoryItem[];
+            
+            // Filtro por sucursal del usuario
+            const currentUserSucursalId = user?.id_sucursal || user?.sucursal?.id_sucursal || (user as any)?.sucursal?.id;
+            
+            if (!currentUserSucursalId) return allItems;
+
+            return allItems.filter(i => {
+                const invSucursalId = i.id_sucursal || i.sucursal?.id_sucursal || i.sucursal?.id;
+                return invSucursalId === currentUserSucursalId;
+            });
         },
     });
 };

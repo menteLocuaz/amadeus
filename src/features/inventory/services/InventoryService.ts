@@ -20,33 +20,51 @@ export interface InventoryItem {
     updated_at?: string;
 }
 
-export interface AdjustStockPayload {
+export interface InventarioCreateRequest {
     id_producto: string;
-    stock_actual?: number;
-    stock_minimo?: number;
-    stock_maximo?: number;
-    precio_venta?: number;
-    precio_compra?: number;
+    id_sucursal: string;
+    stock_actual: number;
+    stock_minimo: number;
+    stock_maximo: number;
+    precio_compra: number;
+    precio_venta: number;
+}
+
+export interface InventarioUpdateRequest {
+    stock_actual: number;
+    stock_minimo: number;
+    stock_maximo: number;
+    precio_compra: number;
+    precio_venta: number;
+}
+
+export interface MovimientoCreateRequest {
+    id_producto: string;
+    id_sucursal: string;
+    tipo_movimiento: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'DEVOLUCION' | 'TRASLADO';
+    cantidad: number;
+    referencia?: string;
 }
 
 export const InventoryService = {
-    getAll: async (): Promise<{ success: boolean; data: InventoryItem[] }> => {
-        const { data } = await axiosClient.get(ENDPOINTS.inventario.base);
+    getAll: async (id_sucursal?: string): Promise<{ success: boolean; data: InventoryItem[] }> => {
+        const { data } = await axiosClient.get(ENDPOINTS.inventario.base, {
+            params: id_sucursal ? { id_sucursal } : {}
+        });
         return data;
     },
 
-    update: async (id: string, payload: Partial<InventoryItem>): Promise<{ success: boolean; data: InventoryItem }> => {
+    create: async (payload: InventarioCreateRequest): Promise<{ success: boolean; data: InventoryItem }> => {
+        const { data } = await axiosClient.post(ENDPOINTS.inventario.base, payload);
+        return data;
+    },
+
+    update: async (id: string, payload: InventarioUpdateRequest): Promise<{ success: boolean; data: InventoryItem }> => {
         const { data } = await axiosClient.put(`${ENDPOINTS.inventario.base}/${id}`, payload);
         return data;
     },
 
-    createMovement: async (payload: {
-        id_producto: string;
-        tipo_movimiento: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'COMPRA' | 'VENTA';
-        cantidad: number;
-        id_usuario: string;
-        referencia?: string;
-    }): Promise<{ success: boolean; data: any }> => {
+    createMovement: async (payload: MovimientoCreateRequest): Promise<{ success: boolean; data: any }> => {
         const { data } = await axiosClient.post(ENDPOINTS.inventario.movimientos, payload);
         return data;
     }
