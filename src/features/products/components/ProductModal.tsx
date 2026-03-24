@@ -12,6 +12,7 @@ interface Props {
     categories: any[];
     units: any[];
     currencies: any[];
+    sucursales: any[];
     estatusList: any[];
     userIdSucursal?: string;
     onSuccess: () => void;
@@ -24,6 +25,7 @@ export const ProductModal: React.FC<Props> = ({
     categories,
     units,
     currencies,
+    sucursales,
     estatusList,
     userIdSucursal,
     onSuccess,
@@ -42,6 +44,7 @@ export const ProductModal: React.FC<Props> = ({
         id_moneda: "",
         id_unidad: "",
         id_status: "",
+        id_sucursal: "",
     });
 
     useEffect(() => {
@@ -62,6 +65,7 @@ export const ProductModal: React.FC<Props> = ({
                 id_moneda: editingProduct.id_moneda || "",
                 id_unidad: editingProduct.id_unidad || "",
                 id_status: editingProduct.id_status || "",
+                id_sucursal: editingProduct.id_sucursal || "",
             });
         } else {
             const activeStatus =
@@ -78,9 +82,10 @@ export const ProductModal: React.FC<Props> = ({
                 id_moneda: currencies?.[0]?.id_moneda || "",
                 id_unidad: "",
                 id_status: activeStatus,
+                id_sucursal: userIdSucursal || "",
             });
         }
-    }, [isOpen, editingProduct, estatusList, currencies]);
+    }, [isOpen, editingProduct, estatusList, currencies, userIdSucursal]);
 
     const handleChange = (key: keyof typeof formData, value: any) => {
         setFormData((prev) => ({ ...prev, [key]: value }));
@@ -88,13 +93,12 @@ export const ProductModal: React.FC<Props> = ({
 
     const handleSave = async () => {
         if (!formData.nombre.trim()) return alert("El nombre del producto es obligatorio.");
-        if (!userIdSucursal) return alert("No se identificó la sucursal (id_sucursal).");
+        if (!formData.id_sucursal) return alert("Debe seleccionar una sucursal.");
 
         const payload = {
             ...formData,
             nombre: formData.nombre.trim(),
             descripcion: formData.descripcion.trim(),
-            id_sucursal: userIdSucursal,
             precio_compra: Number(formData.precio_compra),
             precio_venta: Number(formData.precio_venta),
             stock: Number(formData.stock),
@@ -254,6 +258,25 @@ export const ProductModal: React.FC<Props> = ({
                 onChange={(e) => handleChange("imagen", e.target.value)}
                 placeholder="https://..."
               />
+            </FormGroup>
+
+            <FormGroup>
+              <label>Sucursal</label>
+              <select
+                value={formData.id_sucursal}
+                onChange={(e) => handleChange("id_sucursal", e.target.value)}
+                required
+              >
+                <option value="">Seleccione Sucursal...</option>
+                {sucursales?.map((s: any) => {
+                  const sid = s.id_sucursal || s.id;
+                  return (
+                    <option key={String(sid)} value={sid}>
+                      {s.nombre || s.std_descripcion || s.nombre_sucursal}
+                    </option>
+                  );
+                })}
+              </select>
             </FormGroup>
 
             <FormGroup>

@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 import { useProductQueries, useProductMutations } from "./useProductQueries";
+import { type Product } from "../services/ProductService";
 
 export const useProducts = () => {
   const [search, setSearch] = useState("");
@@ -9,7 +10,7 @@ export const useProducts = () => {
 
   // --- Store de Catálogos (Centralizado) ---
   const { 
-    categories, units, currencies, statusList, 
+    categories, units, currencies, statusList, sucursales,
     fetchCatalogs, isLoading: isCatalogLoading 
   } = useCatalogStore();
 
@@ -25,7 +26,7 @@ export const useProducts = () => {
   }, [fetchCatalogs]);
 
   const filteredProducts = useMemo(() => 
-    products.filter((p) => p.nombre.toLowerCase().includes(search.toLowerCase())), 
+    products.filter((p: Product) => p.nombre.toLowerCase().includes(search.toLowerCase())), 
     [products, search]
   );
 
@@ -41,6 +42,7 @@ export const useProducts = () => {
     categories,
     units,
     currencies,
+    sucursales,
     estatusList: statusList,
     search,
     setSearch,

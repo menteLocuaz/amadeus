@@ -1,5 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { ProductService } from "../services/ProductService";
+import { ProductService, type Product } from "../services/ProductService";
 import { CategoryService } from "../services/CategoryService";
 import { MedidaService } from "../services/MedidaService";
 import { MonedaService } from "../services/MonedaService";
@@ -12,7 +12,7 @@ import { useAuthStore } from "../../auth/store/useAuthStore";
 export const useProductQueries = () => {
   const { user } = useAuthStore();
   
-  return useQuery({
+  return useQuery<Product[]>({
     queryKey: ["products", user?.id_sucursal],
     queryFn: async () => {
       // Obtener sucursal actual
@@ -48,7 +48,7 @@ export const useProductQueries = () => {
       const products = extract(resProd);
       const inventory = extract(resInv);
 
-      const mappedProducts = products.map((p: any) => {
+      const mappedProducts = products.map((p: any): Product => {
         const pId = p.id_producto || p.id;
         
         // Buscar el registro de inventario que coincida con el producto
@@ -65,9 +65,9 @@ export const useProductQueries = () => {
           id_producto: pId,
           stock: currentStock,
           stock_actual: currentStock,
-          precio_compra: inv?.precio_compra ?? p.precio_compra ?? 0,
-          precio_venta: inv?.precio_venta ?? p.precio_venta ?? 0
-        };
+          precio_compra: p.precio_compra ?? inv?.precio_compra ?? 0,
+          precio_venta: p.precio_venta ?? inv?.precio_venta ?? 0
+        } as Product;
       });
       return mappedProducts;
     },
@@ -136,6 +136,7 @@ export const useProductMutations = () => {
     mutationFn: (id: string) => ProductService.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
     },
   });
 
@@ -143,6 +144,7 @@ export const useProductMutations = () => {
     mutationFn: (payload: any) => ProductService.create(payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
     },
   });
 
@@ -150,6 +152,8 @@ export const useProductMutations = () => {
     mutationFn: ({ id, payload }: { id: string; payload: any }) => ProductService.update(id, payload),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["products"] });
+      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      queryClient.invalidateQueries({ queryKey: ["kardex"] });
     },
   });
 
