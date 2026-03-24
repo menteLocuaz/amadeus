@@ -4,26 +4,67 @@ import { CategoryService } from "../services/CategoryService";
 import { MedidaService } from "../services/MedidaService";
 import { MonedaService } from "../services/MonedaService";
 import { EstatusService } from "../../auth/services/EstatusService";
-import { PurchaseService } from "../../purchases/services/PurchaseService";
+import { InventoryService } from "../../inventory/services/InventoryService";
+import { useAuthStore } from "../../auth/store/useAuthStore";
 
 // --- Hooks de Consulta (Lectura) ---
 
 export const useProductQueries = () => {
+  const { user } = useAuthStore();
+  
   return useQuery({
-    queryKey: ["products"],
+    queryKey: ["products", user?.id_sucursal],
     queryFn: async () => {
-      const resProd = await ProductService.getAll();
-      const resInv = await PurchaseService.getAll();
+      // Obtener sucursal actual
+      const sucursalId = user?.id_sucursal || user?.sucursal?.id_sucursal || (user as any)?.sucursal?.id;
+
+      const [resProd, resInv] = await Promise.all([
+        ProductService.getAll(),
+        InventoryService.getAll(sucursalId)
+      ]);
       
-      const inventoryList = Array.isArray(resInv) ? resInv : (resInv.data || []);
-      const mappedProducts = (resProd.data || []).map((p: any) => {
-        const id = p.id_producto || p.id;
-        const inv = inventoryList.find((i: any) => i.id_producto === id);
+      const extract = (res: any) => {
+        if (!res) return [];
+        if (Array.isArray(res)) return res;
+        if (Array.isArray(res.data)) return res.data;
+        if (res.items && Array.isArray(res.items)) return res.items;
+        
+        if (res.data && typeof res.data === 'object') {
+          // Intentar capturar estructuras anidadas (Módulos 1, 2, 3, 6, 4, etc.)
+          const modData = res.data["2"] || res.data["1"] || res.data["3"] || res.data["6"] || res.data["4"];
+          if (modData && Array.isArray(modData.items)) return modData.items;
+          if (modData && Array.isArray(modData)) return modData;
+          
+          // Buscar cualquier propiedad que sea un array de items
+          const possibleItems = Object.values(res.data).find(v => typeof v === 'object' && Array.isArray((v as any).items));
+          if (possibleItems) return (possibleItems as any).items;
+          
+          // Si es un objeto de objetos que parecen registros
+          return Object.values(res.data).filter(v => typeof v === 'object' && ((v as any).id_producto || (v as any).id)) || [];
+        }
+        return res.data || [];
+      };
+
+      const products = extract(resProd);
+      const inventory = extract(resInv);
+
+      const mappedProducts = products.map((p: any) => {
+        const pId = p.id_producto || p.id;
+        
+        // Buscar el registro de inventario que coincida con el producto
+        const inv = inventory.find((i: any) => {
+          const invProductId = i.id_producto || i.producto?.id_producto || i.producto?.id || i.idProducto;
+          return String(invProductId) === String(pId);
+        });
+
+        // Prioridad: 1. Stock de Inventario por sucursal, 2. Stock base del producto, 3. Cero
+        const currentStock = inv?.stock_actual ?? p.stock ?? p.stock_actual ?? 0;
+
         return { 
           ...p, 
-          id_producto: id,
-          stock: inv?.stock_actual ?? p.stock ?? 0,
-          stock_actual: inv?.stock_actual ?? p.stock ?? 0,
+          id_producto: pId,
+          stock: currentStock,
+          stock_actual: currentStock,
           precio_compra: inv?.precio_compra ?? p.precio_compra ?? 0,
           precio_venta: inv?.precio_venta ?? p.precio_venta ?? 0
         };
@@ -98,5 +139,19 @@ export const useProductMutations = () => {
     },
   });
 
-  return { deleteMutation };
+  const createMutation = useMutation({
+    mutationFn: (payload: any) => ProductService.create(payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({ id, payload }: { id: string; payload: any }) => ProductService.update(id, payload),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["products"] });
+    },
+  });
+
+  return { deleteMutation, createMutation, updateMutation };
 };

@@ -122,14 +122,21 @@ const Productos: React.FC = () => {
             cell: info => <span style={{ opacity: 0.7, fontSize: "0.9rem" }}>{info.getValue() || "---"}</span>
         }),
         columnHelper.accessor("stock", {
-            header: () => <div style={{ textAlign: "right" }}>Stock</div>,
-            cell: info => (
-                <div style={{ textAlign: "right" }}>
-                    <Badge $color={info.getValue() > 0 ? "#10b98122" : "#ef444422"} style={{ color: info.getValue() > 0 ? "#10b981" : "#ef4444" }}>
-                        {info.getValue() ?? 0}
-                    </Badge>
-                </div>
-            )
+            header: () => <div style={{ textAlign: "right" }}>Stock Actual</div>,
+            cell: info => {
+                const val = info.getValue() ?? 0;
+                const isLow = val <= 5;
+                return (
+                    <div style={{ textAlign: "right" }}>
+                        <div style={{ fontSize: '1.1rem', fontWeight: 900, color: val > 0 ? (isLow ? "#f59e0b" : "#10b981") : "#ef4444" }}>
+                            {val}
+                        </div>
+                        <Badge $color={val > 0 ? (isLow ? "#f59e0b22" : "#10b98122") : "#ef444422"} style={{ fontSize: '0.65rem', padding: '2px 6px', marginTop: 4 }}>
+                            {val > 0 ? (isLow ? "Bajo" : "Disponible") : "Agotado"}
+                        </Badge>
+                    </div>
+                );
+            }
         }),
         columnHelper.accessor("unidad.nombre", {
             header: "Unidad",

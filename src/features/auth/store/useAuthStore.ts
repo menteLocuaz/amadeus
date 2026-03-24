@@ -9,6 +9,7 @@ interface AuthState {
   fetchMe: () => Promise<void>;
   logout: () => Promise<void>;
   clearSession: () => void;
+  setSucursalActiva: (id_sucursal: string, nombre_sucursal: string) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -54,5 +55,21 @@ export const useAuthStore = create<AuthState>((set) => ({
   clearSession: () => {
     localStorage.removeItem('token');
     set({ user: null, error: null });
+  },
+
+  setSucursalActiva: (id_sucursal, nombre_sucursal) => {
+    set((state) => {
+      if (!state.user) return state;
+      return {
+        user: {
+          ...state.user,
+          id_sucursal,
+          sucursal: {
+            id_sucursal,
+            nombre_sucursal
+          }
+        }
+      };
+    });
   }
 }));

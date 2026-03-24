@@ -55,8 +55,10 @@ export interface RecepcionRequest {
 }
 
 export const PurchaseService = {
-  getOrders: async (): Promise<{ success: boolean; data: Compra[] }> => {
-    const { data } = await axiosClient.get(ENDPOINTS.compras.base);
+  getOrders: async (id_sucursal?: string): Promise<{ success: boolean; data: Compra[] }> => {
+    const { data } = await axiosClient.get(ENDPOINTS.compras.base, {
+      params: id_sucursal ? { id_sucursal } : {}
+    });
     return data;
   },
 

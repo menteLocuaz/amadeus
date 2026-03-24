@@ -1,4 +1,7 @@
 import React, { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
+import Swal from "sweetalert2";
+import { ROUTES } from "../../../core/constants/routes";
 import { FiPlus, FiShoppingBag, FiSearch, FiPackage, FiTruck, FiCheckCircle, FiClock, FiXCircle, FiRefreshCw } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import {
@@ -12,8 +15,8 @@ import {
 
 // UI Components
 import {
-  PageContainer, TableCard, Table, ActionBtn, Badge,
-  PageHeader, HeaderTitle, Toolbar, SearchBox, Button
+    PageContainer, TableCard, Table, ActionBtn, Badge,
+    PageHeader, HeaderTitle, Toolbar, SearchBox, Button
 } from "../../../shared/components/UI";
 
 
@@ -43,7 +46,8 @@ const Compras: React.FC = () => {
     const { data: products = [] } = useProducts();
     const { data: sucursales = [] } = useSucursales();
     const { data: monedas = [] } = useMonedas();
-    const { data: statuses = [] } = useStatuses(7); // Modulo Compras
+    const { data: statuses = [] } = useStatuses(6); // Modulo Compras (ID 6)
+    const navigate = useNavigate();
 
     // 2. Mutations
     const createMutation = useCreateOrder();
@@ -56,15 +60,24 @@ const Compras: React.FC = () => {
 
     // 4. Helpers
     const getStatusLabel = (order: Compra) => {
-        if (order.status?.nombre) return order.status.nombre;
+        // Priorizamos std_descripcion sobre nombre, ya que suele contener la descripción completa
+        const nestedStatus = (order.status as any)?.std_descripcion || order.status?.nombre;
+        if (nestedStatus) return nestedStatus;
+
         const found = statuses.find((s: any) => String(s.id_status) === String(order.id_status));
-        return found?.nombre || found?.std_descripcion || String(order.id_status || "N/A");
+        return found?.std_descripcion || found?.nombre || String(order.id_status || "N/A");
     };
 
     const getProviderName = (order: Compra) => {
         if (order.proveedor?.nombre) return order.proveedor.nombre;
         const found = suppliers.find((s: any) => (s.id || s.id_proveedor) === order.id_proveedor);
         return found?.nombre || (found as any)?.nombre_proveedor || "Desconocido";
+    };
+
+    const getSucursalName = (order: Compra) => {
+        if (order.sucursal?.nombre) return order.sucursal.nombre;
+        const found = sucursales.find((s: any) => (s.id || s.id_sucursal) === order.id_sucursal);
+        return found?.nombre || (found as any)?.nombre_sucursal || "Central";
     };
 
     const getStatusInfo = (order: Compra) => {
@@ -75,20 +88,26 @@ const Compras: React.FC = () => {
         return { color: "#64748B", icon: <FiPackage /> };
     };
 
-    const handleCreateOrder = async (data: any) => {
-        await createMutation.mutateAsync(data);
-        setOpenCreate(false);
+    const handleCreateOrder = (data: any) => {
+        createMutation.mutate(data, {
+            onSuccess: () => setOpenCreate(false)
+        });
     };
 
-    const handleConfirmReception = async (payload: any) => {
-        const orderId = (selectedOrder as any)?.id_orden_compra || selectedOrder?.id;
-        if (!orderId) return;
-
-        await receiveMutation.mutateAsync({
-            ...payload,
-            id_orden_compra: orderId
+    const handleConfirmReception = (payload: any) => {
+        receiveMutation.mutate(payload, {
+            onSuccess: () => {
+                setSelectedOrder(null);
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Inventario actualizado correctamente',
+                    showConfirmButton: false,
+                    timer: 2000
+                }).then(() => {
+                    navigate(ROUTES.INVENTARIO);
+                });
+            }
         });
-        setSelectedOrder(null);
     };
 
     // 5. TanStack Table
@@ -106,6 +125,10 @@ const Compras: React.FC = () => {
             header: "Proveedor",
             cell: info => getProviderName(info.row.original)
         }),
+        columnHelper.accessor("id_sucursal", {
+            header: "Sucursal",
+            cell: info => getSucursalName(info.row.original)
+        }),
         columnHelper.accessor("fecha_creacion", {
             header: "Fecha",
             cell: info => info.getValue() ? new Date(info.getValue()).toLocaleDateString() : "N/A"
@@ -118,17 +141,14 @@ const Compras: React.FC = () => {
                 </div>
             )
         }),
-        columnHelper.display({
+        columnHelper.accessor(row => getStatusLabel(row), {
             id: "estado",
             header: "Estado",
             cell: info => {
                 const { color, icon } = getStatusInfo(info.row.original);
-                const label = getStatusLabel(info.row.original);
                 return (
-                    <Badge $color={color}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                            {icon} {label}
-                        </div>
+                    <Badge $color={color} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
+                        {icon} {info.getValue()}
                     </Badge>
                 );
             }
