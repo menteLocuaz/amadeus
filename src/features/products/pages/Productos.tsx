@@ -71,7 +71,7 @@ const PriceText = styled.div`
 const Productos: React.FC = () => {
     // 1. Data Fetching
     const {
-        products, categories, units, currencies, estatusList,
+        products, categories, units, currencies, sucursales, estatusList,
         isLoading, isDeletingId, user, refresh, deleteProduct
     } = useProducts();
 
@@ -287,6 +287,7 @@ const Productos: React.FC = () => {
                 categories={categories}
                 units={units}
                 currencies={currencies}
+                sucursales={sucursales}
                 estatusList={estatusList}
                 userIdSucursal={user?.id_sucursal}
                 onSuccess={refresh}
