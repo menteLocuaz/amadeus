@@ -302,6 +302,7 @@ const Compras: React.FC = () => {
             <RecepcionModal
                 open={!!selectedOrder}
                 order={selectedOrder}
+                products={products}
                 statuses={statuses}
                 receiving={receiveMutation.isPending}
                 onClose={() => setSelectedOrder(null)}
