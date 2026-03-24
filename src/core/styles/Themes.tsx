@@ -17,15 +17,19 @@ export const Light = {
     bg: "#FFFFFF",
     bgAlpha: "rgba(255, 255, 255, .3)",
     bg2: "#E5E5E5",
-    bg3: "#FCA311", // Acento dorado en elementos secundarios
+    bg3: "#FCA311", 
     textFont: "#14213D",
     primary: "#FCA311",
+    secondary: "#14213D",
+    success: "#10B981",
+    danger: "#EF4444",
+    warning: "#FCA311",
+    info: "#3B82F6",
     bg4: "#FCA311",
     bgtotal: "#E5E5E5",
     bgtgderecha: "#FFFFFF",
     barrascroll: "#FCA311",
     bgCard: "#ffffff",
-
 
     gray900: "#000000",
     gray800: "#14213D",
@@ -36,9 +40,6 @@ export const Light = {
     gray300: "#bdbbb7",
     gray200: "#E5E5E5",
     gray100: "#FFFFFF",
-
-    green500: "#FCA311",
-    olive500: "#FCA311",
 
     white: "#ffffff",
 
@@ -75,13 +76,17 @@ export const Dark = {
     bg2: "#14213D",
     bg3: "#333333",
     textFont: "#E5E5E5",
-    primary: "#FCA311", // El oro resalta sobre el negro
+    primary: "#FCA311", 
+    secondary: "#E5E5E5",
+    success: "#10B981",
+    danger: "#EF4444",
+    warning: "#FCA311",
+    info: "#3B82F6",
     bg4: "#FCA311",
     bgtotal: "#000000",
     bgtgderecha: "#14213D",
     barrascroll: "#FCA311",
     bgCard: "#1a1a1a",
-
 
     gray900: "#000000",
     gray800: "#14213D",
@@ -92,9 +97,6 @@ export const Dark = {
     gray300: "#bdbbb7",
     gray200: "#E5E5E5",
     gray100: "#FFFFFF",
-
-    green500: "#FCA311",
-    olive500: "#FCA311",
 
     white: "#ffffff",
 
@@ -109,3 +111,4 @@ export const Dark = {
     darkbackground: "linear-gradient(135deg, #000000 0%, #14213D 100%)",
     darkcheckbox: "#FCA311"
 }
+

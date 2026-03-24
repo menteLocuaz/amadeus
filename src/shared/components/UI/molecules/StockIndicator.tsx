@@ -1,5 +1,5 @@
 import React from 'react';
-import styled from 'styled-components';
+import styled, { useTheme } from 'styled-components';
 import { FiAlertCircle, FiAlertTriangle, FiCheckCircle, FiTrendingUp } from 'react-icons/fi';
 
 export type StockLevel = "critico" | "reabastecer" | "optimo" | "sobrestock";
@@ -18,12 +18,12 @@ export const getStockLevel = (actual: number, min: number, max: number): StockLe
     return "optimo";
 };
 
-const LEVEL_CONFIG: Record<StockLevel, { label: string; color: string; bg: string; Icon: React.ElementType }> = {
-    critico: { label: "Crítico", color: "#EF4444", bg: "#EF444418", Icon: FiAlertCircle },
-    reabastecer: { label: "Reabastecer", color: "#FCA311", bg: "#FCA31118", Icon: FiAlertTriangle },
-    optimo: { label: "Óptimo", color: "#10B981", bg: "#10B98118", Icon: FiCheckCircle },
-    sobrestock: { label: "Sobre-stock", color: "#3B82F6", bg: "#3B82F618", Icon: FiTrendingUp },
-};
+const LEVEL_CONFIG = (theme: any): Record<StockLevel, { label: string; color: string; bg: string; Icon: React.ElementType }> => ({
+    critico: { label: "Crítico", color: theme.danger, bg: `${theme.danger}18`, Icon: FiAlertCircle },
+    reabastecer: { label: "Reabastecer", color: theme.warning, bg: `${theme.warning}18`, Icon: FiAlertTriangle },
+    optimo: { label: "Óptimo", color: theme.success, bg: `${theme.success}18`, Icon: FiCheckCircle },
+    sobrestock: { label: "Sobre-stock", color: theme.info, bg: `${theme.info}18`, Icon: FiTrendingUp },
+});
 
 const Container = styled.div`
   min-width: 140px;
@@ -41,15 +41,16 @@ const Badge = styled.span<{ $level: StockLevel }>`
   font-size: 0.72rem;
   font-weight: 700;
   width: fit-content;
-  background: ${({ $level }) => LEVEL_CONFIG[$level].bg};
-  color:      ${({ $level }) => LEVEL_CONFIG[$level].color};
+  background: ${({ $level, theme }) => LEVEL_CONFIG(theme)[$level].bg};
+  color:      ${({ $level, theme }) => LEVEL_CONFIG(theme)[$level].color};
 `;
 
 const ProgressBar = styled.div<{ $pct: number; $level: StockLevel }>`
   width: 100%;
   height: 6px;
   border-radius: 99px;
-  background: rgba(0,0,0,0.07);
+  background: ${({ theme }) => theme.bg2};
+  opacity: 0.8;
   overflow: hidden;
 
   &::after {
@@ -58,7 +59,7 @@ const ProgressBar = styled.div<{ $pct: number; $level: StockLevel }>`
     height: 100%;
     width: ${({ $pct }) => Math.min($pct, 100)}%;
     border-radius: 99px;
-    background: ${({ $level }) => LEVEL_CONFIG[$level].color};
+    background: ${({ $level, theme }) => LEVEL_CONFIG(theme)[$level].color};
     transition: width 0.4s ease;
   }
 `;
@@ -68,12 +69,13 @@ const InfoRow = styled.div`
   justify-content: space-between;
   align-items: baseline;
   .actual { font-weight: 800; font-size: 1rem; }
-  .limits { font-size: 0.75rem; opacity: 0.5; font-weight: 600; }
+  .limits { font-size: 0.75rem; opacity: 0.5; font-weight: 600; color: ${({ theme }) => theme.text}; }
 `;
 
 export const StockIndicator: React.FC<Props> = ({ actual, min, max, unit }) => {
+    const theme = useTheme();
     const level = getStockLevel(actual, min, max);
-    const cfg = LEVEL_CONFIG[level];
+    const cfg = LEVEL_CONFIG(theme)[level];
     const Icon = cfg.Icon;
     const pct = max > 0 ? (actual / max) * 100 : 0;
 

@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo } from "react";
+import { useTheme } from "styled-components";
 import { CategoryService, type Category } from "../../products/services/CategoryService";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiTag } from "react-icons/fi";
@@ -20,74 +21,84 @@ const Header = ({ children }: { children: React.ReactNode }) => (
   </div>
 );
 
-const TitleSection = ({ title, subtitle }: { title: string; subtitle?: string }) => (
-  <div>
-    <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 800, color: "var(--accent, #FCA311)", display: "flex", alignItems: "center", gap: 12 }}>
-      <FiTag /> {title}
-    </h1>
-    {subtitle && <p style={{ fontSize: "0.95rem", color: "var(--text-tertiary, #9CA3AF)", marginTop: 5 }}>{subtitle}</p>}
-  </div>
-);
+const TitleSection = ({ title, subtitle }: { title: string; subtitle?: string }) => {
+  const theme = useTheme();
+  return (
+    <div>
+      <h1 style={{ margin: 0, fontSize: "2rem", fontWeight: 800, color: theme.primary, display: "flex", alignItems: "center", gap: 12 }}>
+        <FiTag /> {title}
+      </h1>
+      {subtitle && <p style={{ fontSize: "0.95rem", color: theme.texttertiary, marginTop: 5 }}>{subtitle}</p>}
+    </div>
+  );
+};
 
-const AddButton = ({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    style={{
-      background: "var(--accent, #FCA311)",
-      color: "#000",
-      border: "none",
-      padding: "12px 24px",
-      borderRadius: 12,
-      fontWeight: 700,
-      display: "flex",
-      alignItems: "center",
-      gap: 10,
-      cursor: disabled ? "not-allowed" : "pointer",
-      opacity: disabled ? 0.5 : 1,
-      transition: "all 0.2s",
-    }}
-  >
-    <FiPlus size={20} /> Nueva Categoría
-  </button>
-);
-
-const SearchBar = ({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) => (
-  <div
-    style={{
-      background: "var(--bg, #fff)",
-      border: "1px solid rgba(0,0,0,0.06)",
-      padding: "12px 18px",
-      borderRadius: 14,
-      display: "flex",
-      alignItems: "center",
-      gap: 12,
-      width: "100%",
-      maxWidth: 400,
-      marginBottom: 25,
-      transition: "all 0.2s",
-    }}
-  >
-    <FiSearch style={{ color: "var(--accent, #FCA311)" }} />
-    <input
-      placeholder="Buscar categoría..."
-      value={value}
-      onChange={(e) => onChange(e.target.value)}
+const AddButton = ({ onClick, disabled }: { onClick: () => void; disabled?: boolean }) => {
+  const theme = useTheme();
+  return (
+    <button
+      onClick={onClick}
       disabled={disabled}
       style={{
+        background: theme.primary,
+        color: theme.bg,
         border: "none",
-        outline: "none",
-        background: "transparent",
-        color: "var(--text, #000)",
-        width: "100%",
-        fontSize: "1rem",
-        opacity: disabled ? 0.6 : 1,
+        padding: "12px 24px",
+        borderRadius: 12,
+        fontWeight: 700,
+        display: "flex",
+        alignItems: "center",
+        gap: 10,
+        cursor: disabled ? "not-allowed" : "pointer",
+        opacity: disabled ? 0.5 : 1,
+        transition: "all 0.2s",
       }}
-    />
-  </div>
-);
+    >
+      <FiPlus /> Nueva Categoría
+    </button>
+  );
+};
+
+const SearchBar = ({ value, onChange, disabled }: { value: string; onChange: (v: string) => void; disabled?: boolean }) => {
+  const theme = useTheme();
+  return (
+    <div
+      style={{
+        background: theme.bg,
+        border: `1px solid ${theme.bg2}`,
+        padding: "12px 18px",
+        borderRadius: 14,
+        display: "flex",
+        alignItems: "center",
+        gap: 12,
+        width: "100%",
+        maxWidth: 400,
+        marginBottom: 25,
+        transition: "all 0.2s",
+      }}
+    >
+      <FiSearch style={{ color: theme.primary }} />
+      <input
+        placeholder="Buscar categoría..."
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        disabled={disabled}
+        style={{
+          border: "none",
+          outline: "none",
+          background: "transparent",
+          color: theme.text,
+          width: "100%",
+          fontSize: "1rem",
+          opacity: disabled ? 0.6 : 1,
+        }}
+      />
+    </div>
+  );
+};
 
 export const Categoria: React.FC = () => {
+  const theme = useTheme();
   const [categorias, setCategorias] = useState<Category[]>([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -185,7 +196,7 @@ export const Categoria: React.FC = () => {
 
       {isLoading ? (
         <div style={{ display: "flex", justifyContent: "center", padding: 40 }}>
-          <ClimbingBoxLoader color="#FCA311" size={20} />
+          <ClimbingBoxLoader color={theme.primary} size={20} />
         </div>
       ) : (
         <TableCard>
@@ -222,7 +233,7 @@ export const Categoria: React.FC = () => {
                         disabled={isSaving || isDeletingId !== null}
                       >
                         {isDeletingId === cat.id_categoria ? (
-                          <ClimbingBoxLoader color="#ff4d4d" size={18} />
+                          <ClimbingBoxLoader color={theme.danger} size={18} />
                         ) : (
                           <FiTrash2 size={18} />
                         )}
@@ -240,7 +251,7 @@ export const Categoria: React.FC = () => {
         <ModalOverlay>
           <ModalContent>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 25 }}>
-              <h2 style={{ margin: 0, fontSize: "1.5rem", color: "var(--text, #000)" }}>
+              <h2 style={{ margin: 0, fontSize: "1.5rem", color: theme.text }}>
                 {editingCategory ? "Editar Categoría" : "Nueva Categoría"}
               </h2>
               <ActionBtn $variant="close" onClick={() => setIsModalOpen(false)} disabled={isSaving}>
@@ -261,18 +272,18 @@ export const Categoria: React.FC = () => {
 
             <div style={{ display: "flex", gap: 15, marginTop: 30 }}>
               <button
-                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: "rgba(255,255,255,0.05)", color: "inherit", transition: "all 0.2s" }}
+                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: theme.bg2, color: theme.text, transition: "all 0.2s" }}
                 onClick={() => setIsModalOpen(false)}
                 disabled={isSaving}
               >
                 Cancelar
               </button>
               <button
-                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: "var(--accent, #FCA311)", color: "#000", transition: "all 0.2s" }}
+                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: theme.primary, color: theme.bg, transition: "all 0.2s" }}
                 onClick={handleSave}
                 disabled={isSaving}
               >
-                {isSaving ? "Guardando..." : editingCategory ? "Guardar Cambios" : "Crear Categoría"}
+                {isSaving ? <ClimbingBoxLoader color={theme.bg} size={10} /> : editingCategory ? "Guardar Cambios" : "Crear Categoría"}
               </button>
             </div>
           </ModalContent>

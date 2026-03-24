@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTheme } from "styled-components";
 import Swal from "sweetalert2";
 import { ROUTES } from "../../../core/constants/routes";
 import { FiPlus, FiShoppingBag, FiSearch, FiPackage, FiTruck, FiCheckCircle, FiClock, FiXCircle, FiRefreshCw } from "react-icons/fi";
@@ -40,6 +41,7 @@ import { type Compra } from "../services/PurchaseService";
 const columnHelper = createColumnHelper<Compra>();
 
 const Compras: React.FC = () => {
+    const theme = useTheme();
     // 1. Data Fetching
     const { data: orders = [], isLoading, isFetching, refetch } = useOrdersData();
     const { data: suppliers = [] } = useProveedoresData();
@@ -80,12 +82,12 @@ const Compras: React.FC = () => {
         return found?.nombre || (found as any)?.nombre_sucursal || "Central";
     };
 
-    const getStatusInfo = (order: Compra) => {
+    const getStatusInfo = (order: Compra, theme: any) => {
         const label = getStatusLabel(order).toLowerCase();
-        if (label.includes("recib")) return { color: "#22C55E", icon: <FiCheckCircle /> };
-        if (label.includes("solic") || label.includes("pend")) return { color: "#FCA311", icon: <FiClock /> };
-        if (label.includes("canc")) return { color: "#EF4444", icon: <FiXCircle /> };
-        return { color: "#64748B", icon: <FiPackage /> };
+        if (label.includes("recib")) return { color: theme.success, icon: <FiCheckCircle /> };
+        if (label.includes("solic") || label.includes("pend")) return { color: theme.warning, icon: <FiClock /> };
+        if (label.includes("canc")) return { color: theme.danger, icon: <FiXCircle /> };
+        return { color: theme.gray500, icon: <FiPackage /> };
     };
 
     const handleCreateOrder = (data: any) => {
@@ -145,7 +147,7 @@ const Compras: React.FC = () => {
             id: "estado",
             header: "Estado",
             cell: info => {
-                const { color, icon } = getStatusInfo(info.row.original);
+                const { color, icon } = getStatusInfo(info.row.original, theme);
                 return (
                     <Badge $color={color} style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}>
                         {icon} {info.getValue()}
@@ -195,7 +197,7 @@ const Compras: React.FC = () => {
         <PageContainer>
             <PageHeader>
                 <HeaderTitle>
-                    <h1><FiShoppingBag color="#FCA311" /> Gestionn de Compras</h1>
+                    <h1><FiShoppingBag color={theme.primary} /> Gestionn de Compras</h1>
                     <p>Administra ordenes de compra y recepcion de mercancia</p>
                 </HeaderTitle>
 
@@ -220,7 +222,7 @@ const Compras: React.FC = () => {
             <TableCard>
                 {isLoading ? (
                     <div style={{ padding: 100, display: "flex", flexDirection: 'column', alignItems: "center", gap: 20 }}>
-                        <ClimbingBoxLoader color="#FCA311" />
+                        <ClimbingBoxLoader color={theme.primary} />
                         <p style={{ opacity: 0.5 }}>Cargando ordenes...</p>
                     </div>
                 ) : (

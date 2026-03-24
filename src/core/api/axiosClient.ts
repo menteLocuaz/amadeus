@@ -3,7 +3,7 @@ import { useAuthStore } from '../../features/auth/store/useAuthStore';
 
 // PATRÓN SINGLETON: Instancia única para la API PRUNUS
 const axiosClient = axios.create({
-  baseURL: 'http://localhost:9090/api/v1', // URL de la API PRUNUS
+  baseURL: import.meta.env.VITE_API_BASE_URL, // URL de la API PRUNUS desde variables de entorno
   headers: {
     'Content-Type': 'application/json',
   },
