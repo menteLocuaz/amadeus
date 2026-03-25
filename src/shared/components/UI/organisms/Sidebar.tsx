@@ -41,11 +41,8 @@ export const Sidebar: React.FC = () => {
         { label: "Sucursales", icon: <FiMapPin />, to: ROUTES.SUCURSALES },
         { label: "Usuarios", icon: <FiUsers />, to: ROUTES.USUARIOS },
         { label: "Caja (POS)", icon: <MdPointOfSale />, to: ROUTES.POS },
-        { label: "Estadísticas", icon: <MdOutlineAnalytics />, to: ROUTES.ESTADISTICAS },
         { label: "Catálogo", icon: <FiShoppingBag />, to: ROUTES.CATALOGO },
         { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },
-        { label: "Diagramas", icon: <MdOutlineAnalytics />, to: ROUTES.DIAGRAMAS },
-        { label: "Reportes", icon: <MdOutlineAnalytics />, to: ROUTES.REPORTES },
         { label: "Kardex", icon: <MdOutlineAnalytics />, to: ROUTES.KARDEX }
     ];
 
