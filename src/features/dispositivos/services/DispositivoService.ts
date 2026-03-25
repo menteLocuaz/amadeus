@@ -26,7 +26,7 @@ export interface DispositivoAPI {
 /** DTO para crear o actualizar — solo los campos que acepta la API */
 export interface CreateDispositivoDTO {
     nombre:      string;
-    tipo:        "IMPRESORA" | "DATAFONO" | "KIOSKO" | "MONITOR";
+    tipo:        "IMPRESORA" | "DATAFONO" | "KIOSKO" | "MONITOR" | "SCANNER" | "BASCULA" | "VISOR";
     ip:          string;
     id_estacion: string;
 }
