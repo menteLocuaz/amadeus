@@ -26,9 +26,10 @@ axiosClient.interceptors.response.use(
     if (error.response?.status === 401 || error.response?.status === 403) {
       console.warn('Sesión expirada o no autorizada. Limpiando estado...');
       
-      // Limpiamos el store globalmente desde fuera del componente
-      const { logout } = useAuthStore.getState();
-      logout();
+      // Usamos clearSession (solo limpia estado local, sin llamada a la API)
+      // para evitar disparar otro request desde dentro del interceptor
+      const { clearSession } = useAuthStore.getState();
+      clearSession();
 
       // Forzamos el salto al login si no estamos ya allí
       if (window.location.pathname !== '/') {

@@ -12,6 +12,9 @@ interface AuthState {
   setSucursalActiva: (id_sucursal: string, nombre_sucursal: string) => void;
 }
 
+// Guard para evitar que logout se llame múltiples veces en paralelo
+let _isLoggingOut = false;
+
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: false,
@@ -44,11 +47,15 @@ export const useAuthStore = create<AuthState>((set) => ({
   },
 
   logout: async () => {
+    // Si ya estamos en proceso de logout, ignorar llamadas adicionales
+    if (_isLoggingOut) return;
+    _isLoggingOut = true;
     try {
       await AuthService.logout();
     } finally {
       localStorage.removeItem('token');
       set({ user: null });
+      _isLoggingOut = false;
     }
   },
 

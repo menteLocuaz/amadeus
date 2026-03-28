@@ -133,7 +133,7 @@ export const InventoryService = {
      * Nota: el hook usePremiumInventory siempre pasa id_sucursal para aislar
      * el inventario de la sucursal del usuario autenticado.
      */
-    getAll: async (id_sucursal?: string): Promise<{ success: boolean; data: InventoryItem[] }> => {
+    getAll: async (id_sucursal?: string): Promise<{ status: string; data: InventoryItem[] }> => {
         const { data } = await axiosClient.get(ENDPOINTS.inventario.base, {
             params: id_sucursal ? { id_sucursal } : {}  // Omite el param si no hay sucursal
         });
@@ -145,7 +145,7 @@ export const InventoryService = {
      * Equivale a "inicializar" el producto en esa sucursal.
      * Retorna el registro creado con su `id` asignado por el backend.
      */
-    create: async (payload: InventarioCreateRequest): Promise<{ success: boolean; data: InventoryItem }> => {
+    create: async (payload: InventarioCreateRequest): Promise<{ status: string; data: InventoryItem }> => {
         const { data } = await axiosClient.post(ENDPOINTS.inventario.base, payload);
         return data;
     },
@@ -155,7 +155,7 @@ export const InventoryService = {
      * Nota: el `id` es el del registro de inventario, NO el del producto.
      * Para actualizar stock con trazabilidad en el Kardex, usar `createMovement`.
      */
-    update: async (id: string, payload: InventarioUpdateRequest): Promise<{ success: boolean; data: InventoryItem }> => {
+    update: async (id: string, payload: InventarioUpdateRequest): Promise<{ status: string; data: InventoryItem }> => {
         const { data } = await axiosClient.put(`${ENDPOINTS.inventario.base}/${id}`, payload);
         return data;
     },
@@ -168,7 +168,7 @@ export const InventoryService = {
      * Retorna `any` porque la estructura de respuesta del movimiento
      * puede variar según el tipo y aún no está tipificada completamente.
      */
-    createMovement: async (payload: MovimientoCreateRequest): Promise<{ success: boolean; data: any }> => {
+    createMovement: async (payload: MovimientoCreateRequest): Promise<{ status: string; data: any }> => {
         const { data } = await axiosClient.post(ENDPOINTS.inventario.movimientos, payload);
         return data;
     }

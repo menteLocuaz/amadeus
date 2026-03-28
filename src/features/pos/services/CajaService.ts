@@ -1,43 +1,36 @@
 import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
 
-export interface AperturaCajaDTO {
-    id_caja: string;
-    id_usuario: string;
-    monto_apertura: number;
-    turno?: string;
-    notas?: string;
-}
-
 export interface Caja {
     id: string;
     nombre: string;
     id_sucursal: string;
+    id_estacion?: string;
     estado: 'ABIERTA' | 'CERRADA';
 }
 
 export const CajaService = {
     /**
-     * Listar cajas físicas disponibles
+     * Listar todas las cajas
      */
     getCajas: async (): Promise<Caja[]> => {
-        const { data } = await axiosClient.get(ENDPOINTS.caja as any);
+        const { data } = await axiosClient.get(ENDPOINTS.cajas.base);
         return data.data || [];
     },
 
     /**
-     * Abrir una sesión de caja
+     * Obtener la caja vinculada a una estación POS
      */
-    abrirCaja: async (dto: AperturaCajaDTO): Promise<any> => {
-        const { data } = await axiosClient.post(`${ENDPOINTS.caja}/abrir`, dto);
-        return data;
-    },
-
-    /**
-     * Cerrar una sesión de caja con arqueo
-     */
-    cerrarCaja: async (id_sesion: string, monto_cierre: number): Promise<any> => {
-        const { data } = await axiosClient.post(`${ENDPOINTS.caja}/cerrar/${id_sesion}`, { monto_cierre });
-        return data;
+    getByEstacion: async (id_estacion: string): Promise<Caja | null> => {
+        try {
+            const { data } = await axiosClient.get(ENDPOINTS.cajas.byEstacion(id_estacion));
+            return data.data || data;
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                console.warn(`La estación ${id_estacion} no tiene una caja vinculada.`);
+                return null;
+            }
+            throw error;
+        }
     }
 };

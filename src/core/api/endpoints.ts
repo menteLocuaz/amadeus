@@ -6,6 +6,7 @@ export const ENDPOINTS = {
   },
   usuarios: {
     base: '/usuarios',
+    administrar: '/usuarios/administrar',
     byId: (id: string) => `/usuarios/${id}`,
   },
   roles: {
@@ -56,13 +57,33 @@ export const ENDPOINTS = {
     base: '/ordenes',
     updateStatus: (id: string) => `/ordenes/${id}/status`,
   },
+  agregadores: {
+    base: '/agregadores',
+    orden: '/agregadores/orden',
+  },
   facturas: {
     base: '/facturas',
+    completa: '/facturas/completa',
     impuestos: '/facturas/impuestos',
     formasPago: '/facturas/formas-pago',
   },
-  caja: '/caja',
-  pos: '/pos',
+  cajas: {
+    base: '/cajas',
+    byEstacion: (id: string) => `/cajas/estacion/${id}`,
+  },
+  periodos: {
+    base: '/periodos',
+    abrir: '/periodos/abrir',
+    cerrar: (id: string) => `/periodos/cerrar/${id}`,
+    activo: '/periodos/activo',
+  },
+  pos: {
+    base: '/pos',
+    abrir: '/pos/abrir',
+    desmontar: '/pos/desmontar',
+    actualizarValores: '/pos/actualizar-valores',
+    estado: (id_estacion: string) => `/pos/estado/${id_estacion}`,
+  },
   empresas: {
     base: '/empresas',
     byId: (id: string) => `/empresas/${id}`,

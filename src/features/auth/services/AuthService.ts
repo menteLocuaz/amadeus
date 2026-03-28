@@ -5,6 +5,8 @@ export interface RolItem {
   id_rol: string;
   nombre_rol: string;
   descripcion: string;
+  id_sucursal?: string;
+  id_status?: string;
 }
 
 export interface SucursalItem {
@@ -36,13 +38,24 @@ export interface UserMe {
 }
 
 export interface LoginResponse {
-  success: boolean;
+  status: 'success' | 'error';
   message: string;
   data: {
     token: string;
     usuario: UserMe;
-    expires_at: number;
+    expires_at: string;
   };
+}
+
+export interface AdminUserDTO {
+  email: string;
+  usu_nombre: string;
+  usu_dni: string;
+  usu_pin_pos: string;
+  id_sucursal: string;
+  id_rol: string;
+  id_status: string;
+  sucursales_acceso: string[];
 }
 
 export interface CreateUserDTO {
@@ -82,7 +95,7 @@ export const AuthService = {
 
   createUser: async (userData: CreateUserDTO) => {
     try {
-      const { data } = await axiosClient.post(ENDPOINTS.usuarios, userData);
+      const { data } = await axiosClient.post(ENDPOINTS.usuarios.base, userData);
       return data;
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Error al crear usuario';
@@ -90,13 +103,23 @@ export const AuthService = {
     }
   },
 
-  getRoles: async (): Promise<{ data: RolItem[] }> => {
+  administrarUser: async (userData: AdminUserDTO) => {
+    try {
+      const { data } = await axiosClient.post(ENDPOINTS.usuarios.administrar, userData);
+      return data;
+    } catch (error: unknown) {
+      const message = error instanceof Error ? error.message : 'Error en gestión integral de usuario';
+      throw new Error(message);
+    }
+  },
+
+  getRoles: async (): Promise<{ status: string; data: RolItem[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.roles.base);
     return data;
   },
 
-  getSucursales: async (): Promise<{ data: SucursalItem[] }> => {
-    const { data } = await axiosClient.get(ENDPOINTS.sucursales);
+  getSucursales: async (): Promise<{ status: string; data: SucursalItem[] }> => {
+    const { data } = await axiosClient.get(ENDPOINTS.sucursales.base);
     return data;
   },
 

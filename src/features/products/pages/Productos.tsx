@@ -76,6 +76,23 @@ const Productos: React.FC = () => {
         isLoading, isDeletingId, user, refresh, deleteProduct
     } = useProducts();
 
+    // maps for faster lookup
+    const sucursalMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        sucursales.forEach((s: any) => {
+            map[s.id_sucursal] = s.nombre_sucursal || s.nombre;
+        });
+        return map;
+    }, [sucursales]);
+
+    const estatusMap = useMemo(() => {
+        const map: Record<string, string> = {};
+        estatusList.forEach((e: any) => {
+            map[e.id_status || e.id] = e.std_descripcion || e.descripcion;
+        });
+        return map;
+    }, [estatusList]);
+
     // 2. UI State
     const [globalFilter, setGlobalFilter] = useState("");
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -147,6 +164,22 @@ const Productos: React.FC = () => {
         columnHelper.accessor("categoria.nombre", {
             header: "Categoría",
             cell: info => <Badge $color="#6366f122" style={{ color: '#6366f1' }}>{info.getValue() || "S/C"}</Badge>
+        }),
+        columnHelper.accessor("id_sucursal", {
+            header: "Sucursal",
+            cell: info => <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>{sucursalMap[info.getValue()] || "---"}</span>
+        }),
+        columnHelper.accessor("id_status", {
+            header: "Estado",
+            cell: info => {
+                const name = estatusMap[info.getValue()] || "ACTIVO";
+                const isInactive = name.toUpperCase().includes("INACTIVO") || name.toUpperCase().includes("CANCELADO");
+                return (
+                    <Badge $color={isInactive ? `${theme.danger}22` : `${theme.success}22`} style={{ color: isInactive ? theme.danger : theme.success }}>
+                        {name}
+                    </Badge>
+                );
+            }
         }),
         columnHelper.display({
             id: "acciones",

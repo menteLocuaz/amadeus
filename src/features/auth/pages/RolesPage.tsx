@@ -5,8 +5,8 @@ import { EstatusService } from "../services/EstatusService";
 import { FiPlus, FiTrash2 } from "react-icons/fi";
 
 interface EstatusItem {
-  id_status: string;
-  std_descripcion: string;
+  id: string;
+  descripcion: string;
 }
 
 const RolesPage: React.FC = () => {
@@ -41,7 +41,7 @@ const RolesPage: React.FC = () => {
       setSucursales(resSucursales.data || []);
       
       // El catálogo maestro agrupa por módulo ID (Módulo 3 = Usuario/Roles)
-      if (resCatalogo.success && resCatalogo.data["3"]) {
+      if (resCatalogo.status === 'success' && resCatalogo.data["3"]) {
         setEstatusList(resCatalogo.data["3"].items || []);
       }
     } catch (error) {
@@ -114,8 +114,8 @@ const RolesPage: React.FC = () => {
           >
             <option value="">Seleccione Estado</option>
             {estatusList.map(est => (
-              <option key={est.id_status} value={est.id_status}>
-                {est.std_descripcion}
+              <option key={est.id} value={est.id}>
+                {est.descripcion}
               </option>
             ))}
           </select>
@@ -132,6 +132,7 @@ const RolesPage: React.FC = () => {
             <tr>
               <th>Nombre del Rol</th>
               <th>Sucursal</th>
+              <th>Estado</th>
               <th>Acciones</th>
             </tr>
           </thead>
@@ -139,10 +140,13 @@ const RolesPage: React.FC = () => {
             {roles.map(rol => {
               // Buscar el nombre de la sucursal por su ID en la lista local
               const sucursal = sucursales.find(s => s.id_sucursal === rol.id_sucursal);
+              // Buscar el nombre del estado
+              const estatus = estatusList.find(e => e.id === rol.id_status);
               return (
                 <tr key={rol.id_rol}>
                   <td>{rol.nombre_rol}</td>
                   <td>{sucursal ? sucursal.nombre_sucursal : "N/A"}</td>
+                  <td>{estatus ? estatus.descripcion : "N/A"}</td>
                   <td className="actions">
                     <button onClick={() => handleDelete(rol.id_rol)}><FiTrash2 /></button>
                   </td>

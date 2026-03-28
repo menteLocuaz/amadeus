@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useTheme } from "styled-components";
 import { CategoryService, type Category } from "../../products/services/CategoryService";
 import { useAuthStore } from "../../auth/store/useAuthStore";
+import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiX, FiTag } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 
@@ -99,69 +100,70 @@ const SearchBar = ({ value, onChange, disabled }: { value: string; onChange: (v:
 
 export const Categoria: React.FC = () => {
   const theme = useTheme();
-  const [categorias, setCategorias] = useState<Category[]>([]);
+  const { categories, sucursales, fetchCatalogs, isLoading: isCatalogLoading } = useCatalogStore();
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
   const { user } = useAuthStore();
 
-  const [formData, setFormData] = useState({ nombre: "" });
+  const [formData, setFormData] = useState({ nombre: "", id_sucursal: "" });
 
   useEffect(() => {
-    loadData();
-  }, []);
+    fetchCatalogs();
+  }, [fetchCatalogs]);
 
-  const loadData = async () => {
-    setIsLoading(true);
-    try {
-      const res = await CategoryService.getAll();
-      setCategorias(res.data || []);
-    } catch (error) {
-      console.error("Error al cargar categorías:", error);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const sucursalMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    sucursales.forEach((s: any) => {
+      map[s.id_sucursal || s.id] = s.nombre_sucursal || s.nombre;
+    });
+    return map;
+  }, [sucursales]);
 
   const filteredCategories = useMemo(
-    () => categorias.filter((c) => c.nombre.toLowerCase().includes(search.toLowerCase())),
-    [categorias, search]
+    () => categories.filter((c: any) => c.nombre.toLowerCase().includes(search.toLowerCase())),
+    [categories, search]
   );
 
   const handleOpenModal = (cat?: Category) => {
     if (cat) {
       setEditingCategory(cat);
-      setFormData({ nombre: cat.nombre });
+      setFormData({ 
+        nombre: cat.nombre, 
+        id_sucursal: cat.id_sucursal || user?.id_sucursal || (sucursales.length > 0 ? (sucursales[0].id_sucursal || sucursales[0].id) : "") 
+      });
     } else {
       setEditingCategory(null);
-      setFormData({ nombre: "" });
+      setFormData({ 
+        nombre: "", 
+        id_sucursal: user?.id_sucursal || (sucursales.length > 0 ? (sucursales[0].id_sucursal || sucursales[0].id) : "") 
+      });
     }
     setIsModalOpen(true);
   };
 
   const handleSave = async () => {
     if (!formData.nombre.trim()) return alert("El nombre es obligatorio");
-    if (!user?.id_sucursal) return alert("Error: No se identificó la sucursal");
+    if (!formData.id_sucursal) return alert("Error: Debe seleccionar una sucursal");
 
     setIsSaving(true);
     try {
       if (editingCategory) {
         await CategoryService.update(editingCategory.id_categoria, {
           nombre: formData.nombre.trim(),
-          id_sucursal: user.id_sucursal,
+          id_sucursal: formData.id_sucursal,
         });
         alert("Categoría actualizada");
       } else {
         await CategoryService.create({
           nombre: formData.nombre.trim(),
-          id_sucursal: user.id_sucursal,
+          id_sucursal: formData.id_sucursal,
         });
         alert("Categoría creada");
       }
-      await loadData();
+      await fetchCatalogs(true);
       setIsModalOpen(false);
     } catch (error) {
       alert("Error al procesar la categoría");
@@ -176,7 +178,7 @@ export const Categoria: React.FC = () => {
     setIsDeletingId(id);
     try {
       await CategoryService.delete(id);
-      await loadData();
+      await fetchCatalogs(true);
       alert("Categoría eliminada");
     } catch (error) {
       alert("Error al eliminar");
@@ -184,6 +186,8 @@ export const Categoria: React.FC = () => {
       setIsDeletingId(null);
     }
   };
+
+  const isLoading = isCatalogLoading;
 
   return (
     <PageContainer>
@@ -204,13 +208,14 @@ export const Categoria: React.FC = () => {
             <thead>
               <tr>
                 <th>Nombre</th>
+                <th>Sucursal</th>
                 <th style={{ textAlign: "right" }}>Acciones</th>
               </tr>
             </thead>
             <tbody>
               {filteredCategories.length === 0 ? (
                 <tr>
-                  <td colSpan={2} style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>
+                  <td colSpan={3} style={{ textAlign: "center", padding: 40, opacity: 0.5 }}>
                     No se encontraron categorías.
                   </td>
                 </tr>
@@ -218,6 +223,11 @@ export const Categoria: React.FC = () => {
                 filteredCategories.map((cat) => (
                   <tr key={cat.id_categoria}>
                     <td style={{ fontWeight: 600 }}>{cat.nombre}</td>
+                    <td>
+                      <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+                        {sucursalMap[cat.id_sucursal] || "N/A"}
+                      </span>
+                    </td>
                     <td style={{ textAlign: "right" }}>
                       <ActionBtn
                         onClick={() => handleOpenModal(cat)}
@@ -264,22 +274,49 @@ export const Categoria: React.FC = () => {
               <input
                 placeholder="Ej: Bebidas, Dulces..."
                 value={formData.nombre}
-                onChange={(e) => setFormData({ nombre: e.target.value })}
+                onChange={(e) => setFormData({ ...formData, nombre: e.target.value })}
                 required
                 disabled={isSaving}
               />
             </FormGroup>
 
+            <FormGroup style={{ marginTop: 15 }}>
+              <label>Sucursal</label>
+              <select
+                value={formData.id_sucursal}
+                onChange={(e) => setFormData({ ...formData, id_sucursal: e.target.value })}
+                disabled={isSaving}
+                style={{
+                  width: "100%",
+                  padding: "12px",
+                  borderRadius: "10px",
+                  background: theme.bg2 || "#222",
+                  border: `1px solid ${theme.bg3 || "#444"}33`,
+                  color: theme.text || "#fff",
+                  outline: "none"
+                }}
+              >
+                <option value="">Seleccione una sucursal</option>
+                {sucursales.map((s: any) => (
+                  <option key={s.id_sucursal || s.id} value={s.id_sucursal || s.id}>
+                    {s.nombre_sucursal || s.nombre}
+                  </option>
+                ))}
+              </select>
+            </FormGroup>
+
             <div style={{ display: "flex", gap: 15, marginTop: 30 }}>
               <button
-                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: theme.bg2, color: theme.text, transition: "all 0.2s" }}
+                type="button"
+                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: theme.bg2 || "#333", color: theme.text || "#fff", transition: "all 0.2s" }}
                 onClick={() => setIsModalOpen(false)}
                 disabled={isSaving}
               >
                 Cancelar
               </button>
               <button
-                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: theme.primary, color: theme.bg, transition: "all 0.2s" }}
+                type="button"
+                style={{ flex: 1, padding: 14, borderRadius: 12, fontWeight: 700, cursor: isSaving ? "not-allowed" : "pointer", border: "none", background: theme.primary || "#FCA311", color: theme.bg || "#000", transition: "all 0.2s" }}
                 onClick={handleSave}
                 disabled={isSaving}
               >

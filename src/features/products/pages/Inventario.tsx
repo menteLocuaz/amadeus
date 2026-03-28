@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { FiSearch, FiBox, FiAlertTriangle, FiRefreshCw, FiLayers } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import { useInventario } from "../hooks/useInventario";
+import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 import { 
   PageContainer, TableCard, Table, Badge, Thumbnail 
 } from "../../../shared/components/UI";
@@ -9,9 +10,25 @@ import styled from "styled-components";
 
 const Inventario: React.FC = () => {
   const { 
-    products, isLoading, search, setSearch, 
+    products, isLoading: isProdLoading, search, setSearch, 
     filterStockBajo, setFilterStockBajo, refresh 
   } = useInventario();
+
+  const { sucursales, fetchCatalogs, isLoading: isCatalogLoading } = useCatalogStore();
+
+  useEffect(() => {
+    fetchCatalogs();
+  }, [fetchCatalogs]);
+
+  const sucursalMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    sucursales.forEach((s: any) => {
+      map[s.id_sucursal || s.id] = s.nombre_sucursal || s.nombre;
+    });
+    return map;
+  }, [sucursales]);
+
+  const isLoading = isProdLoading || isCatalogLoading;
 
   return (
     <PageContainer>
@@ -57,6 +74,7 @@ const Inventario: React.FC = () => {
               <tr>
                 <th>Producto</th>
                 <th>Categoría</th>
+                <th>Sucursal</th>
                 <th>Precio Venta</th>
                 <th>Existencias</th>
                 <th>Estado</th>
@@ -65,7 +83,7 @@ const Inventario: React.FC = () => {
             <tbody>
               {products.length === 0 ? (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center", padding: "50px", opacity: 0.5 }}>
+                  <td colSpan={6} style={{ textAlign: "center", padding: "50px", opacity: 0.5 }}>
                     No se encontraron productos en el inventario.
                   </td>
                 </tr>
@@ -82,6 +100,11 @@ const Inventario: React.FC = () => {
                       </ProductInfo>
                     </td>
                     <td>{p.categoria?.nombre || "General"}</td>
+                    <td>
+                      <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>
+                        {sucursalMap[p.id_sucursal] || "N/A"}
+                      </span>
+                    </td>
                     <td className="price">
                       {p.moneda?.nombre} {p.precio_venta?.toFixed(2)}
                     </td>

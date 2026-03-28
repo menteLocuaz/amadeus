@@ -60,7 +60,7 @@ export const useKardexData = (productId: string, startDate?: string, endDate?: s
 
             // Normaliza la respuesta: solo retorna datos si el servicio indica éxito;
             // de lo contrario devuelve [] para que la tabla muestre el estado "sin resultados"
-            return res.success ? res.data : [];
+            return res.status === 'success' ? res.data : [];
         },
 
         // La query solo se activa cuando productId tiene un valor truthy.

@@ -55,24 +55,24 @@ export interface RecepcionRequest {
 }
 
 export const PurchaseService = {
-  getOrders: async (id_sucursal?: string): Promise<{ success: boolean; data: Compra[] }> => {
+  getOrders: async (id_sucursal?: string): Promise<{ status: string; data: Compra[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.compras.base, {
       params: id_sucursal ? { id_sucursal } : {}
     });
     return data;
   },
 
-  getOrderById: async (id: string): Promise<{ success: boolean; data: Compra }> => {
+  getOrderById: async (id: string): Promise<{ status: string; data: Compra }> => {
     const { data } = await axiosClient.get(ENDPOINTS.compras.byId(id));
     return data;
   },
 
-  createOrder: async (payload: CompraCreateRequest): Promise<{ success: boolean; data: Compra }> => {
+  createOrder: async (payload: CompraCreateRequest): Promise<{ status: string; data: Compra }> => {
     const { data } = await axiosClient.post(ENDPOINTS.compras.base, payload);
     return data;
   },
 
-  receiveOrder: async (payload: RecepcionRequest): Promise<{ success: boolean; data: any }> => {
+  receiveOrder: async (payload: RecepcionRequest): Promise<{ status: string; data: any }> => {
     const { data } = await axiosClient.post(ENDPOINTS.compras.recepcion, payload);
     return data;
   },
@@ -84,7 +84,7 @@ export const PurchaseService = {
   },
 
   // Inventory list helper for pre-condition check
-  getInventory: async (): Promise<{ success: boolean; data: any[] }> => {
+  getInventory: async (): Promise<{ status: string; data: any[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.inventario.base);
     return data;
   }

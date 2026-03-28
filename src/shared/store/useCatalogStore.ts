@@ -51,7 +51,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
           ...c, 
           id_moneda: c.id_moneda || c.id_divisa || c.id 
         })),
-        statusList: resStatus.success 
+        statusList: resStatus.status === 'success' 
           ? (resStatus.data["2"]?.items || resStatus.data["1"]?.items || resStatus.data["13"]?.items || Object.values(resStatus.data).flatMap((v: any) => v.items || [])) 
           : (Array.isArray(resStatus) ? resStatus : []),
         sucursales: resSuc.data || resSuc || [],
