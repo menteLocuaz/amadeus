@@ -51,13 +51,31 @@ const Proveedores: React.FC = () => {
     const [errors, setErrors] = useState<Record<string, string>>({});
 
     // 4. Helpers
-    const getStatusName = (st: any) => st?.nombre || st?.std_descripcion || "";
+    // DESPUÉS — cubre las variantes más comunes de APIs en español/inglés
+    const getStatusName = (st: any) =>
+        st?.nombre
+        || st?.std_descripcion
+        || st?.descripcion
+        || st?.name
+        || st?.label
+        || "";
 
     const getStatusLabel = (p: Proveedor) => {
-        const label = getStatusName(p.status);
-        if (label) return label;
-        const found = statuses.find((s: any) => String(s.id_status) === String(p.id_status));
-        return getStatusName(found) || String(p.id_status || "");
+        // Primero intenta desde el objeto embebido
+        const fromObject = getStatusName(p.status);
+        if (fromObject) return fromObject;
+
+        // Fallback: buscar en la lista de statuses cargados
+        if (statuses.length > 0) {
+            const found = statuses.find(
+                (s: any) => String(s.id_status) === String(p.id_status)
+            );
+            const fromList = getStatusName(found);
+            if (fromList) return fromList;
+        }
+
+        // Último recurso: no mostrar el ID crudo, mostrar algo legible
+        return p.id_status ? `Estado ${p.id_status}` : "Sin estado";
     };
 
     const openCreate = () => {
@@ -100,7 +118,8 @@ const Proveedores: React.FC = () => {
 
         try {
             if (editing) {
-                await updateMutation.mutateAsync({ id: editing.id, payload: form });
+                const targetId = editing.id || editing.id_proveedor;
+                await updateMutation.mutateAsync({ id: targetId!, payload: form });
             } else {
                 await createMutation.mutateAsync(form);
             }
@@ -112,13 +131,13 @@ const Proveedores: React.FC = () => {
 
     const confirmDelete = async (id: string) => {
         const result = await Swal.fire({
-            title: '\u00bfEliminar proveedor?',
-            text: "Esta acci\u00f3n no se puede deshacer.",
+            title: 'Eliminar proveedor?',
+            text: "Esta accion no se puede deshacer.",
             icon: 'warning',
             showCancelButton: true,
             confirmButtonColor: '#EF4444',
             cancelButtonColor: '#FCA311',
-            confirmButtonText: 'S\u00ed, eliminar',
+            confirmButtonText: 'Eliminar',
             cancelButtonText: 'Cancelar'
         });
 
@@ -167,11 +186,13 @@ const Proveedores: React.FC = () => {
             header: "Estado",
             cell: info => {
                 const label = getStatusLabel(info.row.original);
-                return (
-                    <Badge $color={label.toLowerCase().includes('activ') ? '#22C55E' : '#EF4444'}>
-                        {label}
-                    </Badge>
-                );
+                const lower = label.toLowerCase();
+                const color = lower.includes("activ")
+                    ? "#22C55E"
+                    : lower.includes("inactiv") || lower.includes("bloq")
+                        ? "#EF4444"
+                        : "#888780"; // ← gris neutro si no se reconoce el estado
+                return <Badge $color={color}>{label}</Badge>;
             }
         }),
         columnHelper.display({
@@ -184,11 +205,11 @@ const Proveedores: React.FC = () => {
                     </ActionBtn>
                     <ActionBtn
                         $variant="delete"
-                        onClick={() => confirmDelete(info.row.original.id)}
+                        onClick={() => confirmDelete(info.row.original.id || info.row.original.id_proveedor!)}
                         title="Eliminar"
                         disabled={deleteMutation.isPending}
                     >
-                        {deleteMutation.isPending && deleteMutation.variables === info.row.original.id ? (
+                        {deleteMutation.isPending && (deleteMutation.variables === info.row.original.id || deleteMutation.variables === info.row.original.id_proveedor) ? (
                             <ClimbingBoxLoader color="#EF4444" size={5} />
                         ) : (
                             <FiTrash2 />

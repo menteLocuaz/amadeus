@@ -3,6 +3,7 @@ import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface Proveedor {
   id: string;
+  id_proveedor?: string;
   nombre: string;
   ruc: string;
   telefono?: string;

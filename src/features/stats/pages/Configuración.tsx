@@ -178,7 +178,7 @@ export const Configuración: React.FC = () => {
     () => [
       { id: "printers", title: "Impresoras", description: "Gestiona tus comprobantes de pago", Icon: FiPrinter, onClick: () => alert("Configurando Impresoras...") },
       { id: "medidas", title: "Unidades de Medida", description: "Gestiona las unidades (Kilo, Metro, etc.)", Icon: FiSliders, path: ROUTES.MEDIDAS },
-      { id: "company", title: "Empresa", description: "Configura la información de tu negocio", Icon: FiShoppingCart, onClick: () => alert("Configurando Empresa...") },
+      { id: "company", title: "Empresa", description: "Configura la información de tu negocio", Icon: FiShoppingCart, path: ROUTES.EMPRESAS },
       { id: "categories", title: "Categorías", description: "Organiza tus productos por grupos", Icon: FiTag, path: ROUTES.CATEGORIAS },
       { id: "catalogo", title: "Catalogo", description: "Consulta de productos, precios y stock", Icon: FiShoppingBag, path: ROUTES.INVENTARIO },
       { id: "currencies", title: "Monedas", description: "Configura divisas y tipos de cambio", Icon: FiDollarSign, path: ROUTES.MONEDAS },

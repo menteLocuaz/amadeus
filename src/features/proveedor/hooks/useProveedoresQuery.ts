@@ -98,8 +98,13 @@ export const useCreateProveedor = () => {
 export const useUpdateProveedor = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: ({ id, payload }: { id: string; payload: ProveedorUpdateRequest }) => 
-            ProveedorService.update(id, payload),
+        mutationFn: ({ id, payload }: { id: string; payload: ProveedorUpdateRequest }) => {
+            if (!id || id === 'undefined') {
+                console.error("ID de proveedor inválido capturado:", id);
+                return Promise.reject(new Error("Error: ID de proveedor no especificado. Por favor recargue la página."));
+            }
+            return ProveedorService.update(id, payload);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: proveedorKeys.all });
             Swal.fire({
@@ -125,7 +130,12 @@ export const useUpdateProveedor = () => {
 export const useDeleteProveedor = () => {
     const queryClient = useQueryClient();
     return useMutation({
-        mutationFn: (id: string) => ProveedorService.delete(id),
+        mutationFn: (id: string) => {
+            if (!id || id === 'undefined') {
+                return Promise.reject(new Error("Error: ID de proveedor no especificado."));
+            }
+            return ProveedorService.delete(id);
+        },
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: proveedorKeys.all });
             Swal.fire({

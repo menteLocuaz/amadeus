@@ -4,7 +4,7 @@ import { ENDPOINTS } from '../../../core/api/endpoints';
 export interface RolItem {
   id_rol: string;
   nombre_rol: string;
-  descripcion: string;
+  std_descripcion?: string; // Friendly description
   id_sucursal?: string;
   id_status?: string;
 }
