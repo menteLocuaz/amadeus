@@ -1,7 +1,7 @@
 import { create } from "zustand";
 import { CategoryService } from "../../features/products/services/CategoryService";
 import { MedidaService } from "../../features/products/services/MedidaService";
-import { MonedaService } from "../../features/products/services/MonedaService";
+import { MonedaService } from "../../features/Moneda/services/MonedaService";
 import { EstatusService } from "../../features/auth/services/EstatusService";
 import { SucursalService } from "../../features/proveedor/services/SucursalService";
 

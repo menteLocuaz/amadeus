@@ -3,8 +3,9 @@ import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface Moneda {
   id_moneda?: string;
-  id_divisa?: string; // Posible nombre real en la API
-  nombre: string;
+  id_divisa?: string;
+  nombre?: string;
+  nombre_moneda?: string; // Nombre real probable en la API
   id_sucursal: string;
   id_status: string;
   status?: {
@@ -16,7 +17,6 @@ export interface Moneda {
 export interface CreateMonedaDTO {
   nombre: string;
   id_sucursal: string;
-  id_status: string;
 }
 
 export const MonedaService = {

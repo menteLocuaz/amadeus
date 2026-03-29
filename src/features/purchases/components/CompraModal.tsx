@@ -16,7 +16,7 @@ import {
 import { type Product } from "../../products/services/ProductService";
 import { type Proveedor } from "../../proveedor/services/ProveedorService";
 import { type Sucursal } from "../../proveedor/services/SucursalService";
-import { type Moneda } from "../../products/services/MonedaService";
+import { type Moneda } from "../../Moneda/services/MonedaService";
 
 // ─────────────────────────────────────────────
 // CONSTANTES
