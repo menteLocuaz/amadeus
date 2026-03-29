@@ -118,7 +118,7 @@ export const useStatusQueries = () => {
     queryKey: ["status-catalog"],
     queryFn: async () => {
       const res = await EstatusService.getCatalogo();
-      if (res.success) {
+      if (res.status === 'success') {
         return res.data["2"]?.items || res.data["1"]?.items || [];
       }
       return [];

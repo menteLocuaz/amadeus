@@ -20,7 +20,7 @@ const RegisterPage: React.FC = () => {
 
   const [roles, setRoles] = useState<RolItem[]>([]);
   const [sucursales, setSucursales] = useState<SucursalItem[]>([]);
-  const [estatusList, setEstatusList] = useState<{ id_status: string; std_descripcion: string }[]>([]);
+  const [estatusList, setEstatusList] = useState<{ id: string; descripcion: string }[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -38,7 +38,7 @@ const RegisterPage: React.FC = () => {
         setSucursales(sucursalesRes.data || []);
 
         // El catálogo maestro agrupa por módulo ID (Módulo 3 = Usuario/Roles)
-        if (estatusRes.success && estatusRes.data["3"]) {
+        if (estatusRes.status === 'success' && estatusRes.data["3"]) {
           setEstatusList(estatusRes.data["3"].items || []);
         }
       } catch (err) {
@@ -196,8 +196,8 @@ const RegisterPage: React.FC = () => {
               <Select id="id_status" value={formData.id_status} onChange={handleChange} required>
                 <option value="">Seleccione Estado</option>
                 {estatusList.map(est => (
-                  <option key={est.id_status} value={est.id_status}>
-                    {est.std_descripcion}
+                  <option key={est.id} value={est.id}>
+                    {est.descripcion}
                   </option>
                 ))}
               </Select>

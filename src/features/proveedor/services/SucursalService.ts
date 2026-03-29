@@ -7,7 +7,7 @@ export interface Sucursal {
 }
 
 export const SucursalService = {
-  getAll: async (): Promise<{ success: boolean; data: Sucursal[] }> => {
+  getAll: async (): Promise<{ status: string; data: Sucursal[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.sucursales.base);
     return data;
   }

@@ -77,7 +77,7 @@ export const KardexService = {
         idProducto: string,
         fechaInicio?: string,
         fechaFin?: string
-    ): Promise<{ success: boolean; data: MovimientoKardex[] }> => {
+    ): Promise<{ status: string; data: MovimientoKardex[] }> => {
 
         // Construye los query params solo con los filtros que tienen valor
         const params = new URLSearchParams();
@@ -103,7 +103,7 @@ export const KardexService = {
             // El hook consumidor (useKardexData) mostrará el estado "sin resultados"
             // en lugar de lanzar una excepción al componente.
             console.warn("Kardex endpoint error:", error);
-            return { success: false, data: [] };
+            return { status: 'error', data: [] };
         }
     }
 };

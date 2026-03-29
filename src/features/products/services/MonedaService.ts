@@ -20,22 +20,22 @@ export interface CreateMonedaDTO {
 }
 
 export const MonedaService = {
-  getAll: async (): Promise<{ success: boolean; data: Moneda[] }> => {
+  getAll: async (): Promise<{ status: string; data: Moneda[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.monedas.base);
     return data;
   },
 
-  getById: async (id: string): Promise<{ success: boolean; data: Moneda }> => {
+  getById: async (id: string): Promise<{ status: string; data: Moneda }> => {
     const { data } = await axiosClient.get(ENDPOINTS.monedas.byId(id));
     return data;
   },
 
-  create: async (payload: CreateMonedaDTO): Promise<{ success: boolean; data: Moneda }> => {
+  create: async (payload: CreateMonedaDTO): Promise<{ status: string; data: Moneda }> => {
     const { data } = await axiosClient.post(ENDPOINTS.monedas.base, payload);
     return data;
   },
 
-  update: async (id: string, payload: CreateMonedaDTO): Promise<{ success: boolean; data: Moneda }> => {
+  update: async (id: string, payload: Partial<CreateMonedaDTO>): Promise<{ status: string; data: Moneda }> => {
     const { data } = await axiosClient.put(ENDPOINTS.monedas.byId(id), payload);
     return data;
   },

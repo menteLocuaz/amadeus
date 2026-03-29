@@ -81,7 +81,7 @@ const SearchBar = ({ value, onChange, disabled }: { value: string; onChange: (v:
 
 const Monedas: React.FC = () => {
   const [monedas, setMonedas] = useState<Moneda[]>([]);
-  const [estatusList, setEstatusList] = useState<{ id_status: string; std_descripcion: string }[]>([]);
+  const [estatusList, setEstatusList] = useState<{ id: string; descripcion: string }[]>([]);
   const [search, setSearch] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMoneda, setEditingMoneda] = useState<Moneda | null>(null);
@@ -119,7 +119,7 @@ const Monedas: React.FC = () => {
   const loadEstatus = async () => {
     try {
       const res = await EstatusService.getCatalogo();
-      if (res.success) {
+      if (res.status === 'success') {
         const list = res.data["1"]?.items || res.data["3"]?.items || [];
         setEstatusList(list);
       }
@@ -142,7 +142,7 @@ const Monedas: React.FC = () => {
       });
     } else {
       setEditingMoneda(null);
-      const defaultStatus = estatusList.find(e => e.std_descripcion.toLowerCase().includes("activ"))?.id_status || "";
+      const defaultStatus = estatusList.find(e => e.descripcion.toLowerCase().includes("activ"))?.id || "";
       setFormData({ nombre: "", id_status: defaultStatus });
     }
     setIsModalOpen(true);
@@ -200,8 +200,8 @@ const Monedas: React.FC = () => {
   };
 
   const getStatusDescription = (id: string) => {
-    const status = estatusList.find(e => e.id_status === id);
-    return status?.std_descripcion || "Desconocido";
+    const status = estatusList.find(e => e.id === id);
+    return status?.descripcion || "Desconocido";
   };
 
   const getBadgeColor = (id_status?: string) => {
@@ -305,8 +305,8 @@ const Monedas: React.FC = () => {
               >
                 <option value="">Seleccione Estado</option>
                 {estatusList.map(est => (
-                  <option key={est.id_status} value={est.id_status}>
-                    {est.std_descripcion}
+                  <option key={est.id} value={est.id}>
+                    {est.descripcion}
                   </option>
                 ))}
               </select>

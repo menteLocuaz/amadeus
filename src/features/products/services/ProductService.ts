@@ -40,22 +40,22 @@ export interface CreateProductDTO {
 }
 
 export const ProductService = {
-  getAll: async (): Promise<{ success: boolean; data: Product[] }> => {
+  getAll: async (): Promise<{ status: string; data: Product[] }> => {
     const { data } = await axiosClient.get(ENDPOINTS.productos.base);
     return data;
   },
 
-  getById: async (id: string): Promise<{ success: boolean; data: Product }> => {
+  getById: async (id: string): Promise<{ status: string; data: Product }> => {
     const { data } = await axiosClient.get(ENDPOINTS.productos.byId(id));
     return data;
   },
 
-  create: async (payload: CreateProductDTO): Promise<{ success: boolean; data: Product }> => {
+  create: async (payload: CreateProductDTO): Promise<{ status: string; data: Product }> => {
     const { data } = await axiosClient.post(ENDPOINTS.productos.base, payload);
     return data;
   },
 
-  update: async (id: string, payload: CreateProductDTO): Promise<{ success: boolean; data: Product }> => {
+  update: async (id: string, payload: Partial<CreateProductDTO>): Promise<{ status: string; data: Product }> => {
     const { data } = await axiosClient.put(ENDPOINTS.productos.byId(id), payload);
     return data;
   },

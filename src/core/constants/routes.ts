@@ -10,6 +10,7 @@ export const ROUTES = {
     PRODUCTOS: "/productos",
     POS: "/pos",
     POS_APERTURA: "/pos/apertura",
+    POS_SETUP: "/pos/setup",
     ESTADISTICAS: "/estadisticas",
     DIAGRAMAS: "/diagramas",
     REPORTES: "/reportes",

@@ -2,8 +2,11 @@ import React, { useEffect, useState } from "react";
 import styled from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
 import { FiSearch, FiTag } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
+import { usePOSStore } from "../store/usePOSStore";
 import { ProductService, type Product } from "../../products/services/ProductService";
+import { POSService } from "../services/POSService";
 import {
   ProductGrid, ProductCard, ProductImage
 } from "../../../shared/components/UI";
@@ -68,12 +71,51 @@ const RightSide = styled.div`
 `;
 
 const PosPage: React.FC = () => {
+  const navigate = useNavigate();
+  const { activePeriodo, setPeriodo, initialize } = usePOSStore();
+  
   const [products, setProducts] = useState<Product[]>([]);
   const [filtered, setFiltered] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const cart = useCart();
+
+  // 1. Validar sesión de POS al cargar
+  useEffect(() => {
+    const validatePOS = async () => {
+      initialize(); // Carga de localStorage
+      
+      const currentStation = usePOSStore.getState().id_estacion;
+      
+      if (!currentStation) {
+        navigate("/pos/apertura");
+        return;
+      }
+
+      // Si no tenemos el periodo en el store, verificar con el nuevo endpoint de estado
+      if (!activePeriodo) {
+        try {
+          const { caja, periodo } = await POSService.getEstado(currentStation);
+          
+          if (!caja) {
+            navigate("/pos/apertura");
+            return;
+          }
+
+          if (periodo) {
+            setPeriodo(periodo);
+          } else {
+            navigate("/pos/apertura");
+          }
+        } catch (err) {
+          console.error("Error validando POS:", err);
+          navigate("/pos/apertura");
+        }
+      }
+    };
+    validatePOS();
+  }, [navigate, initialize, activePeriodo, setPeriodo]);
 
   // Load products
   useEffect(() => {

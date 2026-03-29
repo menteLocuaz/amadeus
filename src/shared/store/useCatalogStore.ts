@@ -41,20 +41,26 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
         SucursalService.getAll()
       ]);
 
+      const sucursalesRaw = resSuc.data || (Array.isArray(resSuc) ? resSuc : []);
+
       set({
-        categories: resCats.data || resCats || [],
-        units: (resUnits.data || resUnits || []).map((u: any) => ({ 
+        categories: resCats.data || (Array.isArray(resCats) ? resCats : []),
+        units: (resUnits.data || (Array.isArray(resUnits) ? resUnits : [])).map((u: any) => ({ 
           ...u, 
           id_unidad: u.id_unidad || u.id_medida || u.id 
         })),
-        currencies: (resCurrs.data || resCurrs || []).map((c: any) => ({ 
+        currencies: (resCurrs.data || (Array.isArray(resCurrs) ? resCurrs : [])).map((c: any) => ({ 
           ...c, 
           id_moneda: c.id_moneda || c.id_divisa || c.id 
         })),
-        statusList: resStatus.success 
+        statusList: (resStatus.status === 'success')
           ? (resStatus.data["2"]?.items || resStatus.data["1"]?.items || resStatus.data["13"]?.items || Object.values(resStatus.data).flatMap((v: any) => v.items || [])) 
           : (Array.isArray(resStatus) ? resStatus : []),
-        sucursales: resSuc.data || resSuc || [],
+        sucursales: sucursalesRaw.map((s: any) => ({
+          ...s,
+          id_sucursal: s.id_sucursal || s.id,
+          nombre_sucursal: s.nombre_sucursal || s.nombre
+        })),
         isLoading: false,
         isInitialized: true
       });
