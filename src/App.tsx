@@ -12,15 +12,14 @@ import { useUIStore } from "./shared/store/useUIStore";
 function AppContent() {
   const { theme, toggleTheme, sidebarOpen } = useUIStore();
   const location = useLocation();
-  const { user, fetchMe } = useAuthStore();
+  const { user, token, fetchMe } = useAuthStore();
 
   // Restaurar sesión si hay token pero no usuario en el store (ej: refresh)
   useEffect(() => {
-    const token = localStorage.getItem("token");
     if (token && !user) {
       fetchMe();
     }
-  }, [user, fetchMe]);
+  }, [user, token, fetchMe]);
 
   const themeStyle = useMemo(() => (theme === "light" ? Light : Dark), [theme]);
   

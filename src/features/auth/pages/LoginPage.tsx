@@ -17,26 +17,19 @@ const LoginPage: React.FC = () => {
   const [selectedSucursal, setSelectedSucursal] = useState("");
   const [loadingSucursales, setLoadingSucursales] = useState(false);
 
-  const { login, clearSession, isLoading, error, user, setSucursalActiva } = useAuthStore();
+  const { login, clearSession, isLoading, error, setSucursalActiva } = useAuthStore();
   const navigate = useNavigate();
 
-  // Limpiar sesión al entrar al login solo si hay un token (evita bucles infinitos)
+  // Limpiar sesión al entrar al login (solo al montar el componente)
   React.useEffect(() => {
-    const token = localStorage.getItem("token");
-    if (token) {
-      clearSession();
-    }
-  }, [clearSession]);
+    clearSession();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      // El store ya se actualizó en background porque `login` hace `set({ user: usuario })`.
-      // Necesitamos leer el estado de JWT guardado por AuthService.
-      const userDataStr = localStorage.getItem('token'); // Solo para chequear auth
-      if (!userDataStr) return;
-
       // El store puede demorar un microciclo en sincronizarse si leemos "user" directo.
       // Así que verificaremos obteniendo el perfil de inmediato o con `useAuthStore.getState()`
       const currentUser = useAuthStore.getState().user;

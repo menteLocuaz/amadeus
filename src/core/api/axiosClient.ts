@@ -11,7 +11,7 @@ const axiosClient = axios.create({
 
 // Interceptor de Peticiones: Añade el token Bearer automáticamente
 axiosClient.interceptors.request.use((config) => {
-  const token = localStorage.getItem('token'); // Recupera el token guardado
+  const { token } = useAuthStore.getState(); // Recupera el token del store persistido
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
