@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ProductService, type Product } from "../services/ProductService";
 import { CategoryService } from "../services/CategoryService";
 import { MedidaService } from "../services/MedidaService";
-import { MonedaService } from "../services/MonedaService";
+import { MonedaService } from "../../Moneda/services/MonedaService";
 import { EstatusService } from "../../auth/services/EstatusService";
 import { InventoryService } from "../../inventory/services/InventoryService";
 import { useAuthStore } from "../../auth/store/useAuthStore";

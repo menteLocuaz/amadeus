@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { EstatusService } from '../../auth/services/EstatusService';
 import { SucursalService } from '../services/SucursalService';
 import { EmpresaService } from '../services/EmpresaService';
-import { MonedaService } from '../../products/services/MonedaService';
+import { MonedaService } from '../../Moneda/services/MonedaService';
 import { ProductService } from '../../products/services/ProductService';
 import { extractData } from './useProveedoresQuery';
 
