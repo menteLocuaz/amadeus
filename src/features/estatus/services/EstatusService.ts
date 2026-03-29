@@ -5,17 +5,17 @@ import { ENDPOINTS } from '../../../core/api/endpoints';
    DTOs exactos del modelo Go
 ────────────────────────────────────────────── */
 export interface EstatusResponse {
-    id_status:       string;
+    id_status: string;
     std_descripcion: string;
-    stp_tipo_estado: string;
-    mdl_id:          number;
-    created_at:      string;
-    updated_at:      string;
+    stp_tipo_estado: string | null;   // ← el backend puede omitirlo
+    mdl_id: number;
+    created_at: string;
+    updated_at: string;
 }
 
 export interface EstatusModuleGroup {
     modulo: string;
-    items:  EstatusResponse[];
+    items: EstatusResponse[];
 }
 
 /** Catálogo maestro: clave = mdl_id */
@@ -24,7 +24,7 @@ export type EstatusMasterCatalog = Record<number, EstatusModuleGroup>;
 export interface CreateEstatusDTO {
     std_descripcion: string;
     stp_tipo_estado: string;
-    mdl_id:          number;
+    mdl_id: number;
 }
 
 export type UpdateEstatusDTO = CreateEstatusDTO;
