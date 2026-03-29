@@ -14,13 +14,13 @@ import type { EstatusItem } from "../types";
 // ─── Props ─────────────────────────────────────────────────────────────────────
 
 interface RolesTableProps {
-    roles: RolItem[];
-    isDeletingId: string | null;
-    isBusy: boolean;             // bloquea botones si hay op. en curso
+    roles:             RolItem[];
+    isDeletingId:      string | null;
+    isBusy:            boolean;             // bloquea botones si hay op. en curso
     getSucursalNombre: (id: string) => string;
-    getEstatus: (id: string) => EstatusItem | undefined;
-    onEdit: (rol: RolItem) => void;
-    onDelete: (id: string) => void;
+    getEstatus:        (id: string) => EstatusItem | undefined;
+    onEdit:            (rol: RolItem) => void;
+    onDelete:          (id: string)  => void;
 }
 
 // ─── Component ─────────────────────────────────────────────────────────────────
@@ -68,13 +68,13 @@ export const RolesTable: React.FC<RolesTableProps> = ({
                             <td>
                                 {(() => {
                                     // Búsqueda del estatus en el catálogo normalizado
-                                    const statusId = String(rol.id_status || "");
+                                    const statusId = String(rol.std_descripcion || "");
                                     const estatus = getEstatus(statusId);
-
+                                    
                                     // Si no hay descripción en el objeto encontrado, usamos fallback al ID
                                     const label = estatus?.descripcion || (statusId ? `ID: ${statusId}` : "Sin estado");
                                     const activo = isEstatusActivo(estatus?.descripcion);
-
+                                    
                                     return (
                                         <Badge $color={activo ? "#22C55E" : (estatus ? "#EF4444" : "#888")}>
                                             {label}
