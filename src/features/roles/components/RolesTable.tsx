@@ -67,16 +67,19 @@ export const RolesTable: React.FC<RolesTableProps> = ({
                             {/* Estado — badge verde/rojo según estatus */}
                             <td>
                                 {(() => {
-                                    // Búsqueda del estatus en el catálogo normalizado
-                                    const statusId = String(rol.std_descripcion || "");
+                                    // Búsqueda del estatus en el catálogo normalizado usando el ID real
+                                    const statusId = String(rol.id_status || "");
                                     const estatus = getEstatus(statusId);
                                     
-                                    // Si no hay descripción en el objeto encontrado, usamos fallback al ID
-                                    const label = estatus?.descripcion || (statusId ? `ID: ${statusId}` : "Sin estado");
-                                    const activo = isEstatusActivo(estatus?.descripcion);
+                                    // Prioridad: 1. Descripción del catálogo, 2. Descripción del backend, 3. Fallback visual
+                                    const label = estatus?.descripcion || 
+                                                 rol.std_descripcion || 
+                                                 (statusId ? `ID: ${statusId}` : "Sin estado");
+                                                 
+                                    const activo = isEstatusActivo(estatus?.descripcion || rol.std_descripcion);
                                     
                                     return (
-                                        <Badge $color={activo ? "#22C55E" : (estatus ? "#EF4444" : "#888")}>
+                                        <Badge $color={activo ? "#22C55E" : (statusId ? "#EF4444" : "#888")}>
                                             {label}
                                         </Badge>
                                     );
