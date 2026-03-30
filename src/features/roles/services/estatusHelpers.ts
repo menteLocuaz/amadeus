@@ -13,8 +13,8 @@ export const extractEstatusList = (
     const seen   = new Set<string>();
     const result: EstatusItem[] = [];
 
-    // Priorizamos los módulos relevantes para roles (3 = Usuarios/Roles, etc.)
-    const preferredKeys = ["3", "1", "2", "4", "5", "13", "7"];
+    // Priorizamos los módulos relevantes para roles (1 = General, 3 = Usuarios/Roles, etc.)
+    const preferredKeys = ["1", "3", "2", "4", "5", "13", "7"];
     const orderedKeys   = [
         ...preferredKeys.filter(k => k in catalogoData),
         ...Object.keys(catalogoData).filter(k => !preferredKeys.includes(k)),
@@ -50,8 +50,8 @@ export const extractEstatusList = (
             }
         }
 
-        // Si el módulo "3" (Usuarios/Roles) tiene datos, nos detenemos para no mezclar
-        if (key === "3" && result.length > 0) break;
+        // Si el módulo preferido tiene datos, nos detenemos para no mezclar tipos de estados
+        if ((key === "1" || key === "3") && result.length > 0) break;
     }
 
     return result;

@@ -58,7 +58,9 @@ export const useRoles = () => {
             setRoles(roles);
             setSucursales(resSucursales.data ?? []);
 
-            if (resCatalogo.status === "success" && resCatalogo.data) {
+            const isSuccess = resCatalogo.status === "success" || (resCatalogo as any).success === true;
+
+            if (isSuccess && resCatalogo.data) {
                 setEstatusList(extractEstatusList(resCatalogo.data));
             }
         } catch (err) {
