@@ -2,9 +2,10 @@ import { Suspense, lazy } from "react";
 import { Routes, Route } from "react-router-dom";
 import ProtectedRoute from "../shared/components/ProtectedRoute";
 import NotFoundPage from "../shared/components/NotFoundPage";
+import MainLayout from "../shared/components/Layouts/MainLayout";
 import { ROUTES } from "../core/constants/routes";
 
-// Lazy load de páginas
+// --- Lazy load de páginas ---
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
 const Home = lazy(() => import("../features/stats/pages/Home"));
 const Estadisticas = lazy(() => import("../features/stats/pages/Estadistica"));
@@ -32,43 +33,56 @@ const EmpresaPage = lazy(() => import("../features/empresa/pages/Empresa"));
 const SucursalPage = lazy(() => import("../features/sucursal/pages/Sucursal"));
 const UsuarioPage = lazy(() => import("../features/usuario/pages/Usuariospage"));
 
+/**
+ * Sistema de Rutas Centralizado
+ * Implementa Carga Perezosa (Lazy Loading) para mejorar el rendimiento inicial.
+ * El uso de MainLayout desacopla el diseño de la lógica de App.tsx.
+ */
 export function MyRoutes() {
   return (
     <Suspense fallback={<div>Cargando...</div>}>
       <Routes>
-        {/* Rutas Públicas */}
+        {/* --- Rutas Públicas (Sin Layout de Dashboard) --- */}
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />
 
-        {/* Rutas Protegidas (Dashboard & Gestión) */}
+        {/* --- Rutas Protegidas --- */}
         <Route element={<ProtectedRoute />}>
-          <Route path={ROUTES.HOME} element={<Home />} />
-          <Route path={ROUTES.PRODUCTOS} element={<Productos />} />
-          <Route path={ROUTES.POS} element={<PosPage />} />
-          <Route path={ROUTES.ESTADISTICAS} element={<Estadisticas />} />
-          <Route path={ROUTES.DIAGRAMAS} element={<Diagramas />} />
-          <Route path={ROUTES.REPORTES} element={<Reportes />} />
-          <Route path={ROUTES.CONFIG} element={<Configuración />} />
-          <Route path={ROUTES.ROLES} element={<RolesPage />} />
-          <Route path={ROUTES.CATEGORIAS} element={<Categoria />} />
-          <Route path={ROUTES.MEDIDAS} element={<Medidas />} />
-          <Route path={ROUTES.MONEDAS} element={<Monedas />} />
-          <Route path={ROUTES.CATALOGO} element={<Catalogos />} />
-          <Route path={ROUTES.INVENTARIO} element={<Inventario />} />
-          <Route path={ROUTES.PROVEEDORES} element={<Proveedores />} />
-          <Route path={ROUTES.COMPRAS} element={<Compras />} />
-          <Route path={ROUTES.KARDEX} element={<Kardex />} />
-          <Route path={ROUTES.POS_APERTURA} element={<AperturaCaja />} />
+          {/* 
+            Anidamos las rutas dentro de MainLayout. 
+            Todas estas rutas heredarán automáticamente el Sidebar y el Contenedor.
+          */}
+          <Route element={<MainLayout />}>
+            <Route path={ROUTES.HOME} element={<Home />} />
+            <Route path={ROUTES.PRODUCTOS} element={<Productos />} />
+            <Route path={ROUTES.POS} element={<PosPage />} />
+            <Route path={ROUTES.ESTADISTICAS} element={<Estadisticas />} />
+            <Route path={ROUTES.DIAGRAMAS} element={<Diagramas />} />
+            <Route path={ROUTES.REPORTES} element={<Reportes />} />
+            <Route path={ROUTES.CONFIG} element={<Configuración />} />
+            <Route path={ROUTES.ROLES} element={<RolesPage />} />
+            <Route path={ROUTES.CATEGORIAS} element={<Categoria />} />
+            <Route path={ROUTES.MEDIDAS} element={<Medidas />} />
+            <Route path={ROUTES.MONEDAS} element={<Monedas />} />
+            <Route path={ROUTES.CATALOGO} element={<Catalogos />} />
+            <Route path={ROUTES.INVENTARIO} element={<Inventario />} />
+            <Route path={ROUTES.PROVEEDORES} element={<Proveedores />} />
+            <Route path={ROUTES.COMPRAS} element={<Compras />} />
+            <Route path={ROUTES.KARDEX} element={<Kardex />} />
+            <Route path={ROUTES.POS_APERTURA} element={<AperturaCaja />} />
+            <Route path={ROUTES.MECANICAS} element={<MecanicaManagement />} />
+            <Route path={ROUTES.DISPOSITIVOS} element={<DispositivoPage />} />
+            <Route path={ROUTES.ESTATUS} element={<EstatusPage />} />
+            <Route path={ROUTES.ESTACIONES} element={<EstacionPage />} />
+            <Route path={ROUTES.EMPRESAS} element={<EmpresaPage />} />
+            <Route path={ROUTES.SUCURSALES} element={<SucursalPage />} />
+            <Route path={ROUTES.USUARIOS} element={<UsuarioPage />} />
+          </Route>
+
+          {/* Ruta de selección de sistema (Public/Private sin Sidebar) */}
           <Route path={ROUTES.SELECT_SYSTEM} element={<SelectSystem />} />
-          <Route path={ROUTES.MECANICAS} element={<MecanicaManagement />} />
-          <Route path={ROUTES.DISPOSITIVOS} element={<DispositivoPage />} />
-          <Route path={ROUTES.ESTATUS} element={<EstatusPage />} />
-          <Route path={ROUTES.ESTACIONES} element={<EstacionPage />} />
-          <Route path={ROUTES.EMPRESAS} element={<EmpresaPage />} />
-          <Route path={ROUTES.SUCURSALES} element={<SucursalPage />} />
-          <Route path={ROUTES.USUARIOS} element={<UsuarioPage />} />
         </Route>
 
-        {/* Error 404 - Página no encontrada */}
+        {/* Error 404 */}
         <Route path="*" element={<NotFoundPage />} />
       </Routes>
     </Suspense>
