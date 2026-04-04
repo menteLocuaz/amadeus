@@ -1,152 +1,75 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
-import { useCatalogStore } from "../../../shared/store/useCatalogStore";
+import Swal from "sweetalert2";
+import { useShallow } from "zustand/react/shallow";
+import { useCatalogStore, selectUserStatusList, selectStatusMap } from "../../../shared/store/useCatalogStore";
+import { useUsuarioStore } from "../store/useUsuarioStore";
 import { UsuarioService, type UsuarioAPI } from "../services/UsuarioService";
-import { usuarioSchema, type UsuarioForm } from "../constants/usuarios";
-import { SucursalService, type SucursalAPI } from "../../sucursal/services/SucursalService";
 import { AuthService, type RolItem } from "../../auth/services/AuthService";
+import { usuarioSchema, type UsuarioForm } from "../constants/usuarios";
 
 export const useUsuarios = () => {
-    const statusList = useCatalogStore(state => state.statusList);
+    // ── Stores ────────────────────────────────────────────────────────────────
     const fetchCatalogs = useCatalogStore(state => state.fetchCatalogs);
+    const statusList    = useCatalogStore(useShallow(selectUserStatusList));
+    const statusMap     = useCatalogStore(useShallow(selectStatusMap));
+    const globalSucursales = useCatalogStore(state => state.sucursales);
 
-    const [isLoading, setIsLoading] = useState(true);
-    const [isSaving, setIsSaving] = useState(false);
-    const [usuarios, setUsuarios] = useState<UsuarioAPI[]>([]);
-    const [sucursales, setSucursales] = useState<SucursalAPI[]>([]);
-    const [roles, setRoles] = useState<RolItem[]>([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const [debouncedSearchTerm, setDebouncedSearchTerm] = useState("");
-    const [isModalOpen, setIsModalOpen] = useState(false);
+    const {
+        usuarios, isLoading, setLoading, setUsuarios, 
+        filters, setFilters, resetFilters, 
+        currentPage, setPage, pageSize, getFilteredUsuarios
+    } = useUsuarioStore();
+
+    // ── Local UI State ────────────────────────────────────────────────────────
+    const [viewMode, setViewMode] = useState<'list' | 'form'>('list');
     const [editingItem, setEditingItem] = useState<UsuarioAPI | null>(null);
-    const [apiError, setApiError] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [roles, setRoles] = useState<RolItem[]>([]);
 
-    const { register, handleSubmit, reset, formState: { errors } } = useForm<UsuarioForm>({
+    // ── Formulario ────────────────────────────────────────────────────────────
+    const {
+        register, handleSubmit, reset, control,
+        formState: { errors },
+        watch,
+        setValue
+    } = useForm<UsuarioForm>({
         resolver: yupResolver(usuarioSchema) as any,
-        context: { isEditing: !!editingItem }
+        context: { isEditing: !!editingItem },
     });
 
-    /* ── Debounce de Búsqueda ── */
-    useEffect(() => {
-        const timer = setTimeout(() => {
-            setDebouncedSearchTerm(searchTerm);
-        }, 300);
-        return () => clearTimeout(timer);
-    }, [searchTerm]);
-
+    // ── Fetching ──────────────────────────────────────────────────────────────
     const fetchData = useCallback(async () => {
-        setIsLoading(true);
-        setApiError(null);
+        setLoading(true);
         try {
-            await fetchCatalogs();
-            const [uList, sList, rRes] = await Promise.all([
+            await fetchCatalogs(true);
+            const [uList, rRes] = await Promise.all([
                 UsuarioService.getAll(),
-                SucursalService.getAll(),
-                AuthService.getRoles()
+                AuthService.getRoles(),
             ]);
             setUsuarios(uList);
-            setSucursales(sList);
-            setRoles(rRes.data || []);
+            setRoles(rRes.data ?? []);
         } catch (err) {
-            console.error("Error al sincronizar datos:", err);
-            setApiError("Error al sincronizar con el servidor.");
+            console.error("Error fetching data:", err);
+            Swal.fire("Error", "No se pudo sincronizar con el servidor.", "error");
         } finally {
-            setIsLoading(false);
+            setLoading(false);
         }
-    }, [fetchCatalogs]);
+    }, [fetchCatalogs, setLoading, setUsuarios]);
 
     useEffect(() => { fetchData(); }, [fetchData]);
 
-    const handleOpenModal = (item?: UsuarioAPI) => {
-        setApiError(null);
-        if (item) {
-            setEditingItem(item);
-            reset({
-                id_sucursal: item.id_sucursal,
-                id_rol: item.id_rol,
-                email: item.email,
-                usu_nombre: item.usu_nombre,
-                usu_dni: item.usu_dni,
-                usu_telefono: item.usu_telefono || "",
-                password: "", // No mostrar password al editar
-                id_status: item.id_status,
-            });
-        } else {
-            setEditingItem(null);
-            reset({
-                id_sucursal: "",
-                id_rol: "",
-                email: "",
-                usu_nombre: "",
-                usu_dni: "",
-                usu_telefono: "",
-                password: "",
-                id_status: "",
-            });
-        }
-        setIsModalOpen(true);
-    };
-
-    const handleCloseModal = () => {
-        setIsModalOpen(false);
-        setEditingItem(null);
-        setApiError(null);
-    };
-
-    const onSubmit = async (data: UsuarioForm) => {
-        setIsSaving(true);
-        setApiError(null);
-        try {
-            // Limpiar password si está vacío en edición
-            const payload = { ...data };
-            if (editingItem && !payload.password) {
-                delete payload.password;
-            }
-
-            if (editingItem) {
-                const updated = await UsuarioService.update(editingItem.id_usuario, payload as any);
-                setUsuarios(prev => prev.map(u =>
-                    u.id_usuario === editingItem.id_usuario ? { ...u, ...updated } : u
-                ));
-            } else {
-                const created = await UsuarioService.create(payload as any);
-                setUsuarios(prev => [created, ...prev]);
-            }
-            handleCloseModal();
-        } catch (err) {
-            const error = err as { response?: { data?: { message?: string } } };
-            setApiError(error.response?.data?.message || "Error al procesar la operación.");
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("¿Dar de baja este usuario?")) return;
-        try {
-            await UsuarioService.delete(id);
-            setUsuarios(prev => prev.filter(u => u.id_usuario !== id));
-        } catch {
-            alert("Error al eliminar.");
-        }
-    };
-
-    /* ── Datos Derivados ── */
-    const filtered = useMemo(() => {
-        const q = debouncedSearchTerm.toLowerCase().trim();
-        return (usuarios || []).filter(u =>
-            u.usu_nombre.toLowerCase().includes(q) ||
-            u.email.toLowerCase().includes(q) ||
-            u.usu_dni.includes(q)
-        );
-    }, [usuarios, debouncedSearchTerm]);
+    // ── Derivados ─────────────────────────────────────────────────────────────
+    const filtered = useMemo(() => getFilteredUsuarios(), [getFilteredUsuarios, usuarios, filters]);
+    const totalPages = Math.ceil(filtered.length / pageSize);
+    const paginated = filtered.slice((currentPage - 1) * pageSize, currentPage * pageSize);
 
     const sucursalMap = useMemo(() => {
         const map: Record<string, string> = {};
-        sucursales.forEach(s => { map[s.id_sucursal] = s.nombre_sucursal; });
+        globalSucursales.forEach((s: any) => { map[s.id_sucursal] = s.nombre_sucursal; });
         return map;
-    }, [sucursales]);
+    }, [globalSucursales]);
 
     const rolMap = useMemo(() => {
         const map: Record<string, string> = {};
@@ -154,36 +77,119 @@ export const useUsuarios = () => {
         return map;
     }, [roles]);
 
-    const statusMap = useMemo(() => {
-        const map: Record<string, string> = {};
-        statusList.forEach(s => {
-            if (s.id_status) map[s.id_status] = s.std_descripcion || s.nombre;
+    // ── Handlers ──────────────────────────────────────────────────────────────
+    const openCreate = () => {
+        setEditingItem(null);
+        reset({ 
+            nombre: "", apellido: "", email: "", username: "", 
+            usu_telefono: "", password: "", confirmPassword: "", 
+            id_sucursal: "", id_rol: "", id_status: "1" 
         });
-        return map;
-    }, [statusList]);
+        setViewMode('form');
+    };
+
+    const openEdit = (item: UsuarioAPI) => {
+        setEditingItem(item);
+        // Assuming nombre might contain full name if apellido is not separated in API yet
+        // In Image 2 they are separate. Let's try to split or just use what we have.
+        const nameParts = item.nombre.split(" ");
+        reset({
+            nombre: nameParts[0] || "",
+            apellido: nameParts.slice(1).join(" ") || "",
+            email: item.email || item.correo || "",
+            username: item.username,
+            usu_dni: item.usu_dni || "",
+            usu_telefono: item.usu_telefono ?? "",
+            usu_tarjeta_nfc: item.usu_tarjeta_nfc || "",
+            usu_pin_pos: item.usu_pin_pos || "",
+            nombre_ticket: item.nombre_ticket || "",
+            sucursales_acceso: item.sucursales_acceso || [],
+            password: "",
+            confirmPassword: "",
+            id_sucursal: item.id_sucursal,
+            id_rol: item.id_rol,
+            id_status: item.id_status
+        });
+        setViewMode('form');
+    };
+
+    const goBack = () => {
+        if (isSaving) return;
+        setViewMode('list');
+        setEditingItem(null);
+    };
+
+    const handleDelete = async (id: string) => {
+        const result = await Swal.fire({
+            title: "¿Estás seguro?",
+            text: "Esta acción dará de baja al usuario en el sistema.",
+            icon: "warning",
+            showCancelButton: true,
+            confirmButtonColor: "#7c3aed",
+            cancelButtonColor: "#ef4444",
+            confirmButtonText: "Sí, eliminar",
+            cancelButtonText: "Cancelar"
+        });
+
+        if (result.isConfirmed) {
+            try {
+                await UsuarioService.delete(id);
+                setUsuarios(usuarios.filter(u => u.id_usuario !== id));
+                Swal.fire("Eliminado", "El usuario ha sido eliminado correctamente.", "success");
+            } catch (err) {
+                Swal.fire("Error", "No se pudo eliminar el usuario.", "error");
+            }
+        }
+    };
+
+    const onSubmit = async (data: any) => {
+        setIsSaving(true);
+        try {
+            // Map inputs to API requirements
+            const payload = { 
+                ...data, 
+                usu_nombre: `${data.nombre} ${data.apellido}`.trim()
+            };
+
+            // Remove internal/confirm fields
+            delete payload.confirmPassword;
+            if (editingItem && !payload.password) delete payload.password;
+
+            if (editingItem) {
+                const updated = await UsuarioService.update(editingItem.id_usuario, payload);
+                // Ensure we update with the returned data or keep the expected structure
+                setUsuarios(usuarios.map(u => u.id_usuario === editingItem.id_usuario ? { ...u, ...updated, nombre: updated.usu_nombre || updated.nombre } : u));
+                Swal.fire("¡Éxito!", "Usuario actualizado correctamente.", "success");
+            } else {
+                const created = await UsuarioService.create(payload);
+                // The API might return usu_nombre, we map it to 'nombre' for UI consistency if needed
+                const newUser = { ...created, nombre: created.usu_nombre || created.nombre };
+                setUsuarios([newUser, ...usuarios]);
+                Swal.fire("¡Éxito!", "Usuario creado correctamente.", "success");
+            }
+            setViewMode('list');
+        } catch (err: any) {
+            Swal.fire("Error", err?.response?.data?.message ?? "Error en la operación.", "error");
+        } finally {
+            setIsSaving(false);
+        }
+    };
 
     return {
-        isLoading,
-        isSaving,
-        usuarios,
-        sucursales,
-        roles,
-        searchTerm,
-        isModalOpen,
-        editingItem,
-        apiError,
-        statusList,
-        statusMap,
-        sucursalMap,
-        rolMap,
-        errors,
-        filtered,
-        setSearchTerm,
-        handleOpenModal,
-        handleCloseModal,
-        handleDelete,
-        onSubmit,
-        register,
-        handleSubmit
+        // Data & State
+        usuarios, paginated, filteredCount: filtered.length,
+        isLoading, isSaving, viewMode, editingItem,
+        statusList, sucursales: globalSucursales, roles,
+        statusMap, sucursalMap, rolMap,
+        
+        // Filters & Pagination
+        filters, setFilters, resetFilters,
+        currentPage, totalPages, setPage,
+        
+        // Form
+        register, handleSubmit, control, errors, watch, setValue,
+        
+        // Actions
+        openCreate, openEdit, goBack, handleDelete, onSubmit
     };
 };
