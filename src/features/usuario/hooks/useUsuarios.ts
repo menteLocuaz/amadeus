@@ -48,7 +48,12 @@ export const useUsuarios = () => {
                 UsuarioService.getAll(),
                 AuthService.getRoles(),
             ]);
-            setUsuarios(uList);
+            // Normalize data: backend returns usu_nombre, UI uses nombre
+            const normalized = uList.map((u: any) => ({
+                ...u,
+                nombre: u.usu_nombre || u.nombre || "Sin Nombre"
+            }));
+            setUsuarios(normalized);
             setRoles(rRes.data ?? []);
         } catch (err) {
             console.error("Error fetching data:", err);
@@ -80,24 +85,26 @@ export const useUsuarios = () => {
     // ── Handlers ──────────────────────────────────────────────────────────────
     const openCreate = () => {
         setEditingItem(null);
+        // Find a default active status if available
+        const defaultStatus = statusList.find(s => s.std_descripcion.toLowerCase() === 'activo')?.id_status || statusList[0]?.id_status || "";
         reset({ 
             nombre: "", apellido: "", email: "", username: "", 
             usu_telefono: "", password: "", confirmPassword: "", 
-            id_sucursal: "", id_rol: "", id_status: "1" 
+            id_sucursal: "", id_rol: "", id_status: defaultStatus 
         });
         setViewMode('form');
     };
 
     const openEdit = (item: UsuarioAPI) => {
         setEditingItem(item);
-        // Assuming nombre might contain full name if apellido is not separated in API yet
-        // In Image 2 they are separate. Let's try to split or just use what we have.
-        const nameParts = item.nombre.split(" ");
+        // Handle name splitting safely
+        const displayName = item.nombre || item.usu_nombre || "";
+        const nameParts = displayName.split(" ");
         reset({
             nombre: nameParts[0] || "",
             apellido: nameParts.slice(1).join(" ") || "",
             email: item.email || item.correo || "",
-            username: item.username,
+            username: item.username || "",
             usu_dni: item.usu_dni || "",
             usu_telefono: item.usu_telefono ?? "",
             usu_tarjeta_nfc: item.usu_tarjeta_nfc || "",

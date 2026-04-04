@@ -1,57 +1,50 @@
 import { useMemo, useEffect } from "react";
-import { BrowserRouter, useLocation } from "react-router-dom";
-import styled, { ThemeProvider } from "styled-components";
+import { BrowserRouter } from "react-router-dom";
+import { ThemeProvider } from "styled-components";
 import { MyRoutes } from "./routes/routes";
-import { Sidebar } from "./shared/components/UI";
 import { Light, Dark } from "./core/styles/Themes";
-import { ThemeContext } from "./core/context/ThemeContext";
-import { ROUTES } from "./core/constants/routes";
 import { useAuthStore } from "./features/auth/store/useAuthStore";
 import { useUIStore } from "./shared/store/useUIStore";
 
+/**
+ * AppContent Component
+ * Se encarga de la configuración global de UI y autenticación.
+ * 
+ * Mejoras aplicadas:
+ * 1. Eliminación de ThemeContext redundante (ahora centralizado en Zustand).
+ * 2. Desacoplamiento de Layouts (movidos a MainLayout.tsx).
+ * 3. Simplificación del renderizado.
+ */
 function AppContent() {
-  const { theme, toggleTheme, sidebarOpen } = useUIStore();
-  const location = useLocation();
+  const { theme } = useUIStore();
   const { user, token, fetchMe } = useAuthStore();
 
-  // Restaurar sesión si hay token pero no usuario en el store (ej: refresh)
+  // --- Sincronización de Sesión ---
+  // Si el usuario refresca la página pero tiene un token válido, recuperamos sus datos.
   useEffect(() => {
     if (token && !user) {
       fetchMe();
     }
   }, [user, token, fetchMe]);
 
+  // --- Gestión de Temas ---
+  // Memoizamos el objeto de tema de styled-components para evitar re-renders innecesarios.
   const themeStyle = useMemo(() => (theme === "light" ? Light : Dark), [theme]);
-  
-  // No mostrar sidebar en login, registro ni en la selección de sistema
-  const isPublicPage = [ROUTES.LOGIN, ROUTES.REGISTER, ROUTES.SELECT_SYSTEM].includes(location.pathname as any);
-
-  // Adaptamos el setter del contexto para que use el store si algún componente lo requiere aún
-  const setThemeFromContext = (value: any) => {
-    if (typeof value === 'function') {
-      const nextTheme = value(theme);
-      if (nextTheme !== theme) toggleTheme();
-    } else if (value !== theme) {
-      toggleTheme();
-    }
-  };
 
   return (
-    <ThemeContext.Provider value={{ theme, setTheme: setThemeFromContext }}>
-      <ThemeProvider theme={themeStyle}>
-        <Container $sidebarOpen={sidebarOpen} $hideSidebar={isPublicPage}>
-          {!isPublicPage && (
-            <Sidebar />
-          )}
-          <ContentArea>
-            <MyRoutes />
-          </ContentArea>
-        </Container>
-      </ThemeProvider>
-    </ThemeContext.Provider>
+    <ThemeProvider theme={themeStyle}>
+      {/* 
+        MyRoutes ahora gestiona internamente qué páginas llevan Sidebar 
+        mediante el componente MainLayout. 
+      */}
+      <MyRoutes />
+    </ThemeProvider>
   );
 }
 
+/**
+ * Entry Point Principal
+ */
 function App() {
   return (
     <BrowserRouter>
@@ -59,22 +52,5 @@ function App() {
     </BrowserRouter>
   );
 }
-
-// Styled Components con props transitorias ($) para evitar que lleguen al DOM
-const Container = styled.div<{ $sidebarOpen: boolean; $hideSidebar: boolean }>`
-  display: grid;
-  grid-template-columns: ${({ $sidebarOpen, $hideSidebar }) => 
-    $hideSidebar ? "1fr" : ($sidebarOpen ? "300px auto" : "90px auto")};
-  background: ${({ theme }) => theme.bgtotal};
-  color: ${({ theme }) => theme.text};
-  transition: grid-template-columns 0.3s ease;
-  height: 100vh;
-  overflow: hidden;
-`;
-
-const ContentArea = styled.main`
-  padding: 20px;
-  overflow-y: auto;
-`;
 
 export default App;
