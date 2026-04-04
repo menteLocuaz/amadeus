@@ -6,7 +6,6 @@ import { ROUTES } from "../core/constants/routes";
 
 // Lazy load de páginas
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
-const RegisterPage = lazy(() => import("../features/auth/pages/RegisterPage"));
 const Home = lazy(() => import("../features/stats/pages/Home"));
 const Estadisticas = lazy(() => import("../features/stats/pages/Estadistica"));
 const Productos = lazy(() => import("../features/products/pages/Productos"));
@@ -31,7 +30,7 @@ const EstatusPage = lazy(() => import("../features/estatus/pages/Estatuspage"));
 const EstacionPage = lazy(() => import("../features/estacion/pages/Estacion"));
 const EmpresaPage = lazy(() => import("../features/empresa/pages/Empresa"));
 const SucursalPage = lazy(() => import("../features/sucursal/pages/Sucursal"));
-const UsuarioPage = lazy(() => import("../features/usuario/pages/Usuario"));
+const UsuarioPage = lazy(() => import("../features/usuario/pages/Usuariospage"));
 
 export function MyRoutes() {
   return (
@@ -43,7 +42,6 @@ export function MyRoutes() {
         {/* Rutas Protegidas (Dashboard & Gestión) */}
         <Route element={<ProtectedRoute />}>
           <Route path={ROUTES.HOME} element={<Home />} />
-          <Route path={ROUTES.REGISTER} element={<RegisterPage />} />
           <Route path={ROUTES.PRODUCTOS} element={<Productos />} />
           <Route path={ROUTES.POS} element={<PosPage />} />
           <Route path={ROUTES.ESTADISTICAS} element={<Estadisticas />} />
