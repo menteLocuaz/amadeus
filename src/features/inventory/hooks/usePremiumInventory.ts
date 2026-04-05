@@ -88,7 +88,7 @@ export const usePremiumInventory = () => {
             // Peticiones en paralelo para minimizar el tiempo de carga total
             const [resProd, resInv] = await Promise.all([
                 ProductService.getAll(),
-                InventoryService.getAll(sucursalId)
+                InventoryService.getBySucursal(sucursalId)
             ]);
 
             /**

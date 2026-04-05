@@ -13,12 +13,12 @@ export default function Home() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (!user) {
+    if (!user && !isLoading) {
       fetchMe().catch(() => {
         navigate("/");
       });
     }
-  }, [user, fetchMe, navigate]);
+  }, [user, fetchMe, navigate, isLoading]);
 
   useEffect(() => {
     if (!isLoading && error && !user) {

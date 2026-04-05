@@ -109,18 +109,23 @@ export const ProductModal: React.FC<Props> = ({
                 : undefined,
         };
 
-        try {
-            if (editingProduct) {
-                const id = String(editingProduct.id_producto ?? (editingProduct as any).id ?? "");
-                await updateMutation.mutateAsync({ id, payload });
-            } else {
-                await createMutation.mutateAsync(payload);
+        const options = {
+            onSuccess: () => {
+                onSuccess();
+                onClose();
+            },
+            onError: (error: any) => {
+                console.error("Error guardando producto:", error);
+                const msg = error?.response?.data?.message || error?.message || "Error desconocido";
+                alert(`Error al guardar: ${msg}`);
             }
-            onSuccess();
-            onClose();
-        } catch (error: any) {
-            console.error("Error guardando producto:", error);
-            alert("Error al guardar: " + (error?.response?.data?.message || error?.message || "Error desconocido"));
+        };
+
+        if (editingProduct) {
+            const id = String(editingProduct.id_producto ?? (editingProduct as any).id ?? "");
+            updateMutation.mutate({ id, payload }, options);
+        } else {
+            createMutation.mutate(payload, options);
         }
     };
 

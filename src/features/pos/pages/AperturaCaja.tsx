@@ -8,7 +8,7 @@ import { ClimbingBoxLoader } from "react-spinners";
 import {
     FiCalendar, FiClock, FiDollarSign, FiUser,
     FiSun, FiSunset, FiMoon,
-    FiFileText, FiCheckCircle, FiMonitor, FiSettings, FiAlertTriangle, FiAlertCircle
+    FiFileText, FiCheckCircle, FiMonitor, FiSettings, FiAlertTriangle,
 } from "react-icons/fi";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { usePOSStore } from "../store/usePOSStore";
@@ -16,10 +16,10 @@ import { type Caja } from "../services/CajaService";
 import { PeriodoService } from "../services/PeriodoService";
 import { POSService } from "../services/POSService";
 import { EstacionService, type EstacionAPI } from "../../estacion/services/EstacionService";
-import { 
-    PageContainer, 
-    TableCard, 
-    FormGroup as UIFormGroup, 
+import {
+    PageContainer,
+    TableCard,
+    FormGroup as UIFormGroup,
     Badge as UIBadge,
     ModalOverlay,
     ModalContent
@@ -263,7 +263,7 @@ const AperturaCaja: React.FC = () => {
     const navigate = useNavigate();
     const { user } = useAuthStore();
     const { id_estacion, estacionNombre, setEstacion, setPeriodo, initialize } = usePOSStore();
-    
+
     const [estaciones, setEstaciones] = useState<EstacionAPI[]>([]);
     const [caja, setCaja] = useState<Caja | null>(null);
     const [loading, setLoading] = useState(true);
@@ -295,8 +295,10 @@ const AperturaCaja: React.FC = () => {
     });
 
     useEffect(() => {
-        if (user?.usu_nombre) setValue("cajero", user.usu_nombre);
-    }, [user, setValue]);
+        if (user?.usu_nombre && watch("cajero") !== user.usu_nombre) {
+            setValue("cajero", user.usu_nombre);
+        }
+    }, [user, setValue, watch]);
 
     // Cargar estaciones si no hay una seleccionada
     useEffect(() => {
@@ -412,8 +414,8 @@ const AperturaCaja: React.FC = () => {
                             <form onSubmit={handleSubmit(onSubmit)} noValidate>
                                 <InfoBar>
                                     <FiMonitor /> Estación: <strong>{estacionNombre}</strong>
-                                    <button 
-                                        type="button" 
+                                    <button
+                                        type="button"
                                         onClick={() => usePOSStore.getState().clearEstacion()}
                                         style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
                                     >
@@ -494,25 +496,25 @@ const AperturaCaja: React.FC = () => {
 
                                 <input type="hidden" {...register("id_caja")} />
                                 {!caja && !loading && (
-                                   <div style={{ 
-                                       padding: '12px', 
-                                       borderRadius: '8px', 
-                                       background: 'rgba(239, 68, 68, 0.1)', 
-                                       color: '#EF4444', 
-                                       fontSize: '0.85rem',
-                                       display: 'flex',
-                                       alignItems: 'center',
-                                       gap: '10px',
-                                       marginBottom: '20px',
-                                       border: '1px solid rgba(239, 68, 68, 0.2)'
-                                   }}>
-                                       <FiAlertTriangle size={20} />
-                                       <span>Esta terminal no está autorizada para realizar ventas. Contacte al administrador para vincular esta estación a una caja.</span>
-                                   </div>
+                                    <div style={{
+                                        padding: '12px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(239, 68, 68, 0.1)',
+                                        color: '#EF4444',
+                                        fontSize: '0.85rem',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '10px',
+                                        marginBottom: '20px',
+                                        border: '1px solid rgba(239, 68, 68, 0.2)'
+                                    }}>
+                                        <FiAlertTriangle size={20} />
+                                        <span>Esta terminal no está autorizada para realizar ventas. Contacte al administrador para vincular esta estación a una caja.</span>
+                                    </div>
                                 )}
 
                                 <BtnPrimary type="submit" disabled={isSubmitting || !caja}>
-                                   {isSubmitting ? <ClimbingBoxLoader color="#000" size={12} /> : "Abrir Caja"}
+                                    {isSubmitting ? <ClimbingBoxLoader color="#000" size={12} /> : "Abrir Caja"}
                                 </BtnPrimary>                            </form>
                         )}
                     </CardBody>

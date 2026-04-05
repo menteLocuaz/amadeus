@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
 import styled, { useTheme } from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
-import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiImage, FiPackage, FiRefreshCw } from "react-icons/fi";
+import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiImage, FiPackage, FiRefreshCw, FiMapPin } from "react-icons/fi";
 import {
     useReactTable,
     getCoreRowModel,
@@ -166,8 +166,13 @@ const Productos: React.FC = () => {
             cell: info => <Badge $color="#6366f122" style={{ color: '#6366f1' }}>{info.getValue() || "S/C"}</Badge>
         }),
         columnHelper.accessor("id_sucursal", {
-            header: "Sucursal",
-            cell: info => <span style={{ fontSize: "0.85rem", opacity: 0.8 }}>{sucursalMap[info.getValue()] || "---"}</span>
+            header: "Sucursal Origen",
+            cell: info => (
+                <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: "0.85rem", opacity: 0.8 }}>
+                    <FiMapPin size={14} color={theme.primary} />
+                    {sucursalMap[info.getValue()] || "Sede Central"}
+                </div>
+            )
         }),
         columnHelper.accessor("id_status", {
             header: "Estado",

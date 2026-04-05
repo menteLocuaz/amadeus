@@ -20,7 +20,7 @@ export const useProductQueries = () => {
 
       const [resProd, resInv] = await Promise.all([
         ProductService.getAll(),
-        InventoryService.getAll(sucursalId)
+        InventoryService.getBySucursal(sucursalId)
       ]);
       
       const extract = (res: any) => {
@@ -142,18 +142,18 @@ export const useProductMutations = () => {
 
   const createMutation = useMutation({
     mutationFn: (payload: any) => ProductService.create(payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
     },
   });
 
   const updateMutation = useMutation({
     mutationFn: ({ id, payload }: { id: string; payload: any }) => ProductService.update(id, payload),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["products"] });
-      queryClient.invalidateQueries({ queryKey: ["inventory"] });
-      queryClient.invalidateQueries({ queryKey: ["kardex"] });
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({ queryKey: ["products"] });
+      await queryClient.invalidateQueries({ queryKey: ["inventory"] });
+      await queryClient.invalidateQueries({ queryKey: ["kardex"] });
     },
   });
 
