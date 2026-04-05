@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { FiX, FiSave } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import { useTheme } from "styled-components";
@@ -33,10 +33,15 @@ export const ProductModal: React.FC<Props> = ({
 }) => {
     const theme = useTheme();
     const { createMutation, updateMutation } = useProductMutations();
+
+    // true si el usuario escribió el SKU manualmente en esta sesión del modal
+    const skuManualRef = useRef(false);
     
     const [formData, setFormData] = useState({
         nombre: "",
         descripcion: "",
+        codigo_barras: "",
+        sku: "",
         precio_compra: 0,
         precio_venta: 0,
         stock: 0,
@@ -49,13 +54,30 @@ export const ProductModal: React.FC<Props> = ({
         id_sucursal: "",
     });
 
+    // Genera SKU a partir del nombre: "Cerveza Lager 355ml" → "CER-LAG-355"
+    const generateSku = (nombre: string): string =>
+        nombre
+            .trim()
+            .toUpperCase()
+            .split(/\s+/)
+            .filter(Boolean)
+            .map(w => w.replace(/[^A-Z0-9]/g, '').slice(0, 3))
+            .filter(Boolean)
+            .join('-')
+            .slice(0, 20);
+
     useEffect(() => {
         if (!isOpen) return;
+
+        // Al abrir el modal, reseteamos la bandera de edición manual de SKU
+        skuManualRef.current = false;
 
         if (editingProduct) {
             setFormData({
                 nombre: editingProduct.nombre || "",
                 descripcion: editingProduct.descripcion || "",
+                codigo_barras: editingProduct.codigo_barras || "",
+                sku: editingProduct.sku || "",
                 precio_compra: editingProduct.precio_compra ?? 0,
                 precio_venta: editingProduct.precio_venta ?? 0,
                 stock: editingProduct.stock ?? 0,
@@ -75,6 +97,8 @@ export const ProductModal: React.FC<Props> = ({
             setFormData({
                 nombre: "",
                 descripcion: "",
+                codigo_barras: "",
+                sku: "",
                 precio_compra: 0,
                 precio_venta: 0,
                 stock: 0,
@@ -90,35 +114,58 @@ export const ProductModal: React.FC<Props> = ({
     }, [isOpen, editingProduct, estatusList, currencies, userIdSucursal]);
 
     const handleChange = (key: keyof typeof formData, value: any) => {
-        setFormData((prev) => ({ ...prev, [key]: value }));
+        if (key === 'sku') skuManualRef.current = true;
+        setFormData((prev) => {
+            const next = { ...prev, [key]: value };
+            // Auto-generar SKU al escribir el nombre, solo en producto nuevo y sin edición manual
+            if (key === 'nombre' && !editingProduct && !skuManualRef.current) {
+                next.sku = generateSku(value);
+            }
+            return next;
+        });
     };
 
     const handleSave = async () => {
-        if (!formData.nombre.trim()) return alert("El nombre del producto es obligatorio.");
-        if (!formData.id_sucursal) return alert("Debe seleccionar una sucursal.");
+        if (!formData.nombre.trim())  return alert("El nombre del producto es obligatorio.");
+        if (!formData.id_sucursal)    return alert("Debe seleccionar una sucursal.");
+        if (!formData.id_categoria)   return alert("Debe seleccionar una categoría.");
+        if (!formData.id_unidad)      return alert("Debe seleccionar una unidad de medida.");
 
+        // Construye el payload limpiando campos opcionales vacíos.
+        // El backend rechaza con 400 si recibe "" en campos que espera ausentes o nulos.
         const payload = {
-            ...formData,
-            nombre: formData.nombre.trim(),
-            descripcion: formData.descripcion.trim(),
+            nombre:        formData.nombre.trim(),
+            descripcion:   formData.descripcion.trim(),
             precio_compra: Number(formData.precio_compra),
-            precio_venta: Number(formData.precio_venta),
-            stock: Number(formData.stock),
-            fecha_vencimiento: formData.fecha_vencimiento
-                ? new Date(formData.fecha_vencimiento).toISOString()
-                : undefined,
+            precio_venta:  Number(formData.precio_venta),
+            stock:         Number(formData.stock),
+            id_categoria:  formData.id_categoria,
+            id_moneda:     formData.id_moneda,
+            id_unidad:     formData.id_unidad,
+            id_status:     formData.id_status,
+            id_sucursal:   formData.id_sucursal,
+            // Campos opcionales: se omiten si están vacíos en lugar de enviar ""
+            ...(formData.codigo_barras.trim()  && { codigo_barras:     formData.codigo_barras.trim() }),
+            ...(formData.sku.trim()            && { sku:               formData.sku.trim() }),
+            ...(formData.imagen.trim()         && { imagen:            formData.imagen.trim() }),
+            ...(formData.fecha_vencimiento     && { fecha_vencimiento: new Date(formData.fecha_vencimiento).toISOString() }),
+        };
+
+        // Extrae el mensaje de error del backend sea cual sea la forma de la respuesta
+        const extractErrorMsg = (error: any): string => {
+            const d = error?.response?.data;
+            if (!d) return error?.message ?? 'Error desconocido';
+            if (typeof d === 'string') return d;
+            return d.message ?? d.error ?? JSON.stringify(d);
         };
 
         const options = {
-            onSuccess: () => {
-                onSuccess();
-                onClose();
-            },
+            onSuccess: () => { onSuccess(); onClose(); },
             onError: (error: any) => {
-                console.error("Error guardando producto:", error);
-                const msg = error?.response?.data?.message || error?.message || "Error desconocido";
-                alert(`Error al guardar: ${msg}`);
-            }
+                console.error('Payload enviado:', payload);
+                console.error('Respuesta del servidor:', error?.response?.data);
+                alert(`Error al guardar: ${extractErrorMsg(error)}`);
+            },
         };
 
         if (editingProduct) {
@@ -164,6 +211,26 @@ export const ProductModal: React.FC<Props> = ({
                 placeholder="Detalles del producto..."
               />
             </FormGroup>
+
+            <div style={{ display: "flex", gap: 12 }}>
+              <FormGroup style={{ flex: 1 }}>
+                <label>Código de Barras</label>
+                <input
+                  value={formData.codigo_barras}
+                  onChange={(e) => handleChange("codigo_barras", e.target.value)}
+                  placeholder="750..."
+                />
+              </FormGroup>
+
+              <FormGroup style={{ flex: 1 }}>
+                <label>SKU</label>
+                <input
+                  value={formData.sku}
+                  onChange={(e) => handleChange("sku", e.target.value)}
+                  placeholder="ABC-123"
+                />
+              </FormGroup>
+            </div>
 
             <div style={{ display: "flex", gap: 12 }}>
               <FormGroup style={{ flex: 1 }}>

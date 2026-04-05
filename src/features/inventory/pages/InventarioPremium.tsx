@@ -28,11 +28,16 @@ import {
     useInitializeInventory, 
     useUpdateInventory, 
     useCreateMovement, 
+    useInventoryValuation,
+    useInventoryRotation,
     type MergedInventoryItem 
 } from "../hooks/usePremiumInventory";
 
 // Modals
-import { InitInventoryModal, UpdateInventoryModal, MovementModal } from "../components/InventoryModals";
+import {
+    InitInventoryModal, UpdateInventoryModal, MovementModal,
+    type InitPayload, type UpdatePayload, type MovementPayload,
+} from "../components/InventoryModals";
 
 const columnHelper = createColumnHelper<MergedInventoryItem>();
 
@@ -46,6 +51,11 @@ const InventarioPremium: React.FC = () => {
     const updateMutation = useUpdateInventory();
     const moveMutation = useCreateMovement();
 
+    // Analysis Queries
+    const [valMethod, setValMethod] = useState<'peps' | 'ueps' | 'promedio'>('promedio');
+    const { data: valuationData } = useInventoryValuation(valMethod);
+    const { data: rotationData } = useInventoryRotation();
+
     // 2. UI State
     const [globalFilter, setGlobalFilter] = useState("");
     const [catFilter, setCatFilter] = useState("all");
@@ -56,10 +66,23 @@ const InventarioPremium: React.FC = () => {
         const totalProducts = items.length;
         const lowStock = items.filter(i => i.stock_actual > 0 && i.stock_actual <= i.stock_minimo).length;
         const outOfStock = items.filter(i => i.stock_actual <= 0).length;
-        const totalValue = items.reduce((acc, curr) => acc + (curr.stock_actual * curr.precio_compra), 0);
+        const totalValue = valuationData?.data?.total_valor || items.reduce((acc, curr) => acc + (curr.stock_actual * curr.precio_compra), 0);
 
         return { totalProducts, lowStock, outOfStock, totalValue };
-    }, [items]);
+    }, [items, valuationData]);
+
+    // Mapa id_producto → clase ABC, O(1) por lookup en lugar de Array.includes O(n)
+    const rotationMap = useMemo<Map<string, 'A' | 'B' | 'C'>>(() => {
+        const map = new Map<string, 'A' | 'B' | 'C'>();
+        const d = rotationData?.data;
+        if (!d) return map;
+        (d.A ?? []).forEach(id => map.set(id, 'A'));
+        (d.B ?? []).forEach(id => map.set(id, 'B'));
+        (d.C ?? []).forEach(id => map.set(id, 'C'));
+        return map;
+    }, [rotationData]);
+
+    const getRotationClass = (id: string) => rotationMap.get(id) ?? null;
 
     // 4. Memoized Data for Filters
     const categories = useMemo(() => 
@@ -78,19 +101,32 @@ const InventarioPremium: React.FC = () => {
     const columns = useMemo(() => [
         columnHelper.accessor("nombre", {
             header: "Producto",
-            cell: info => (
-                <ProductCell>
-                    {info.row.original.imagen ? (
-                        <ProductImg src={info.row.original.imagen} alt="" />
-                    ) : (
-                        <ProductImgPlaceholder><FiPackage /></ProductImgPlaceholder>
-                    )}
-                    <div>
-                        <ProductName>{info.getValue()}</ProductName>
-                        <ProductSku>{info.row.original.id_producto}</ProductSku>
-                    </div>
-                </ProductCell>
-            )
+            cell: info => {
+                const rotation = getRotationClass(info.row.original.id_producto);
+                return (
+                    <ProductCell>
+                        {info.row.original.imagen ? (
+                            <ProductImg src={info.row.original.imagen} alt="" />
+                        ) : (
+                            <ProductImgPlaceholder><FiPackage /></ProductImgPlaceholder>
+                        )}
+                        <div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                                <ProductName>{info.getValue()}</ProductName>
+                                {rotation && (
+                                    <Badge 
+                                        $color={rotation === 'A' ? '#ef444422' : rotation === 'B' ? '#f59e0b22' : '#10b98122'} 
+                                        style={{ color: rotation === 'A' ? '#ef4444' : rotation === 'B' ? '#f59e0b' : '#10b981', fontSize: '0.65rem', padding: '1px 5px' }}
+                                    >
+                                        Clase {rotation}
+                                    </Badge>
+                                )}
+                            </div>
+                            <ProductSku>{info.row.original.id_producto}</ProductSku>
+                        </div>
+                    </ProductCell>
+                );
+            }
         }),
         columnHelper.accessor("categoria_nombre", {
             header: "Categoría",
@@ -139,7 +175,7 @@ const InventarioPremium: React.FC = () => {
                 const item = info.row.original;
                 return (
                     <div style={{ textAlign: "right", display: "flex", gap: "8px", justifyContent: "flex-end" }}>
-                        {!item.id ? (
+                        {!item.id_inventario ? (
                             <Button style={{ padding: '4px 12px', fontSize: '0.85rem' }} onClick={() => setActionState({ type: 'init', item })}>
                                 Inicializar
                             </Button>
@@ -157,7 +193,8 @@ const InventarioPremium: React.FC = () => {
                 );
             }
         })
-    ], []);
+    // rotationMap incluido porque getRotationClass lo usa en la celda de "nombre"
+    ], [rotationMap]);
 
 
     const table = useReactTable({
@@ -170,17 +207,11 @@ const InventarioPremium: React.FC = () => {
         getPaginationRowModel: getPaginationRowModel(),
     });
 
-    const handleActionComplete = async (payload: any) => {
-        if (!actionState) return;
-        if (actionState.type === 'init') {
-            await initMutation.mutateAsync(payload);
-        } else if (actionState.type === 'update') {
-            await updateMutation.mutateAsync(payload);
-        } else if (actionState.type === 'movement') {
-            await moveMutation.mutateAsync(payload);
-        }
-        setActionState(null);
-    };
+    // Cada modal llama onSave con un payload tipado distinto;
+    // mutateAsync lanza en caso de error → el modal permanece abierto (Swal muestra el error).
+    const handleInit     = async (payload: InitPayload)     => { await initMutation.mutateAsync(payload);   setActionState(null); };
+    const handleUpdate   = async (payload: UpdatePayload)   => { await updateMutation.mutateAsync(payload); setActionState(null); };
+    const handleMovement = async (payload: MovementPayload) => { await moveMutation.mutateAsync(payload);   setActionState(null); };
 
     return (
         <PageContainer>
@@ -231,7 +262,17 @@ const InventarioPremium: React.FC = () => {
                     <div className="icon"><FiTrendingUp /></div>
                     <div className="content">
                         <h3>${stats.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
-                        <p>Valorización</p>
+                        <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                            {(['promedio', 'peps', 'ueps'] as const).map(m => (
+                                <ValMethodBtn 
+                                    key={m} 
+                                    $active={valMethod === m}
+                                    onClick={() => setValMethod(m)}
+                                >
+                                    {m.toUpperCase()}
+                                </ValMethodBtn>
+                            ))}
+                        </div>
                     </div>
                 </StatCard>
             </StatsGrid>
@@ -290,25 +331,25 @@ const InventarioPremium: React.FC = () => {
 
             {actionState?.type === 'init' && (
                 <InitInventoryModal 
-                    item={actionState.item} 
-                    onClose={() => setActionState(null)} 
-                    onSave={handleActionComplete}
+                    item={actionState.item}
+                    onClose={() => setActionState(null)}
+                    onSave={handleInit}
                     saving={initMutation.isPending}
                 />
             )}
             {actionState?.type === 'update' && (
-                <UpdateInventoryModal 
-                    item={actionState.item} 
-                    onClose={() => setActionState(null)} 
-                    onSave={handleActionComplete}
+                <UpdateInventoryModal
+                    item={actionState.item}
+                    onClose={() => setActionState(null)}
+                    onSave={handleUpdate}
                     saving={updateMutation.isPending}
                 />
             )}
             {actionState?.type === 'movement' && (
-                <MovementModal 
-                    item={actionState.item} 
-                    onClose={() => setActionState(null)} 
-                    onSave={handleActionComplete}
+                <MovementModal
+                    item={actionState.item}
+                    onClose={() => setActionState(null)}
+                    onSave={handleMovement}
                     saving={moveMutation.isPending}
                 />
             )}
@@ -378,6 +419,24 @@ const FilterChip = styled.button<{ $active: boolean }>`
     transition: 0.2s;
 
     &:hover {
+        background: rgba(255,255,255,0.05);
+    }
+`;
+
+const ValMethodBtn = styled.button<{ $active: boolean }>`
+    padding: 2px 6px;
+    border-radius: 4px;
+    border: 1px solid ${props => props.$active ? '#10b981' : 'rgba(255,255,255,0.1)'};
+    background: ${props => props.$active ? '#10b98122' : 'transparent'};
+    color: ${props => props.$active ? '#10b981' : 'inherit'};
+    cursor: pointer;
+    font-size: 0.6rem;
+    font-weight: 700;
+    transition: 0.2s;
+    opacity: ${props => props.$active ? 1 : 0.5};
+
+    &:hover {
+        opacity: 1;
         background: rgba(255,255,255,0.05);
     }
 `;

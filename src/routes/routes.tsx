@@ -4,6 +4,17 @@ import ProtectedRoute from "../shared/components/ProtectedRoute";
 import NotFoundPage from "../shared/components/NotFoundPage";
 import MainLayout from "../shared/components/Layouts/MainLayout";
 import { ROUTES } from "../core/constants/routes";
+import { ClimbingBoxLoader } from "react-spinners";
+
+const PageLoader = () => (
+  <div style={{
+    display: "flex", flexDirection: "column", alignItems: "center",
+    justifyContent: "center", height: "100vh", gap: 16, opacity: 0.7,
+  }}>
+    <ClimbingBoxLoader color="#FCA311" size={14} />
+    <span style={{ fontSize: "0.85rem", fontWeight: 600, letterSpacing: 1 }}>Cargando...</span>
+  </div>
+);
 
 // --- Lazy load de páginas ---
 const LoginPage = lazy(() => import("../features/auth/pages/LoginPage"));
@@ -40,7 +51,7 @@ const UsuarioPage = lazy(() => import("../features/usuario/pages/Usuariospage"))
  */
 export function MyRoutes() {
   return (
-    <Suspense fallback={<div>Cargando...</div>}>
+    <Suspense fallback={<PageLoader />}>
       <Routes>
         {/* --- Rutas Públicas (Sin Layout de Dashboard) --- */}
         <Route path={ROUTES.LOGIN} element={<LoginPage />} />

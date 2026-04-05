@@ -127,8 +127,11 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
 // ─── Selectores ────────────────────────────────────────────────────────────────
 
-export const selectUserStatusList = (state: CatalogState) => 
+export const selectUserStatusList = (state: CatalogState) =>
     state.statusList.filter(s => s.mdl_id === 3);
+
+export const selectProductStatusList = (state: CatalogState) =>
+    state.statusList.filter(s => s.mdl_id === 4);
 
 export const selectStatusMap = (state: CatalogState) => {
     const map: Record<string, string> = {};
