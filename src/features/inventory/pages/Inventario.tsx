@@ -22,15 +22,15 @@ import {
 } from "../../../shared/components/UI";
 
 // Hooks & Services
-import { useInventoryItems, useAdjustStock } from "../hooks/useInventoryQuery";
+import { useInventoryItems, useRegisterMovement } from "../hooks/useInventoryQuery";
 import { type InventoryItem } from "../services/InventoryService";
 
-const columnHelper = createColumnHelper<InventoryItem>();
+const columnHelper = createColumnHelper<any>();
 
 const Inventario: React.FC = () => {
     // 1. Data Fetching with React Query
     const { data: items = [], isLoading, refetch, isFetching } = useInventoryItems();
-    const { mutateAsync: adjustStock, isPending: isSaving } = useAdjustStock();
+    const { mutateAsync: adjustStock, isPending: isSaving } = useRegisterMovement();
 
     // 2. Local State for Filters & UI
     const [globalFilter, setGlobalFilter] = useState("");
@@ -39,12 +39,12 @@ const Inventario: React.FC = () => {
 
     // 3. Memoized Data for Filters
     const categories = useMemo(() => 
-        ["all", ...new Set(items.map(i => i.producto?.categoria?.nombre).filter(Boolean))], 
+        ["all", ...new Set(items.map(i => (i as any).producto?.categoria?.nombre).filter(Boolean))], 
     [items]);
 
     const filteredData = useMemo(() => {
         if (catFilter === "all") return items;
-        return items.filter(item => item.producto?.categoria?.nombre === catFilter);
+        return items.filter(item => (item as any).producto?.categoria?.nombre === catFilter);
     }, [items, catFilter]);
 
     // 4. TanStack Table Configuration

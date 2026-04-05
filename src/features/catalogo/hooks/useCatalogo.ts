@@ -60,7 +60,7 @@ export const useCatalogo = () => {
              */
             const stData = stRes?.data || stRes;
             if (stData && typeof stData === 'object' && !Array.isArray(stData)) {
-                setStatuses(stData["4"]?.items || stData["2"]?.items || stData["1"]?.items || extractData(stRes));
+                setStatuses((stData["4"]?.items || stData["2"]?.items || stData["1"]?.items || extractData(stRes)) as unknown as Estatus[]);
             } else {
                 setStatuses(extractData(stRes));
             }

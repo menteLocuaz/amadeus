@@ -21,7 +21,7 @@ export const useProductStore = create<ProductState>((set) => ({
     set({ isLoading: true, error: null });
     try {
       const data = await ProductService.getAll();
-      set({ products: data, isLoading: false });
+      set({ products: data as unknown as Product[], isLoading: false });
     } catch (err: unknown) {
       const errorMessage = err instanceof Error ? err.message : 'Error al cargar productos';
       set({ error: errorMessage, isLoading: false });
@@ -31,9 +31,9 @@ export const useProductStore = create<ProductState>((set) => ({
   addProduct: async (newProduct) => {
     set({ isLoading: true });
     try {
-      const created = await ProductService.create(newProduct);
+      const created = await ProductService.create(newProduct as any);
       set((state) => ({ 
-        products: [...state.products, created], 
+        products: [...state.products, created as unknown as Product], 
         isLoading: false 
       }));
     } catch (err: unknown) {

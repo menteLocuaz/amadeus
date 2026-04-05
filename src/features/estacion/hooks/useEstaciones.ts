@@ -194,9 +194,9 @@ export const useEstaciones = () => {
      */
     const activeStatusList = useMemo(() =>
         statusList.filter(s =>
-            s.stp_tipo_estado === "ACTIVO" ||
-            s.stp_tipo_estado === "INACTIVO" ||
-            s.stp_tipo_estado === "TERMINAL"
+            (s as any).std_tipo_estado === "ACTIVO" ||
+            (s as any).std_tipo_estado === "INACTIVO" ||
+            (s as any).std_tipo_estado === "TERMINAL"
         ),
         [statusList]
     );
@@ -224,7 +224,7 @@ export const useEstaciones = () => {
     const statusMap = useMemo(() => {
         const map: Record<string, string> = {};
         statusList.forEach(s => {
-            if (s.id_status) map[s.id_status] = s.std_descripcion || s.nombre;
+            if (s.id_status) map[s.id_status] = s.std_descripcion || (s as any).nombre;
         });
         return map;
     }, [statusList]);
