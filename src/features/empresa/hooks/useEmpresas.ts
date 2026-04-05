@@ -112,7 +112,7 @@ export const useEmpresas = () => {
     const statusMap = useMemo(() => {
         const map: Record<string, string> = {};
         statusList.forEach(s => {
-            if (s.id_status) map[s.id_status] = s.std_descripcion || s.nombre;
+            if (s.id_status) map[s.id_status] = s.std_descripcion || (s as any).nombre;
         });
         return map;
     }, [statusList]);

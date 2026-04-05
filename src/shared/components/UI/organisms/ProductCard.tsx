@@ -25,5 +25,5 @@ export const ProductCard = memo(styled.button`
   }
 
   .name { font-weight: 700; font-size: 0.95rem; color: ${text}; }
-  .price { color: ${p => p.theme?.green500 || "#22C55E"}; font-weight: 800; font-size: 1.1rem; }
+  .price { color: ${p => (p.theme as any)?.green500 || "#22C55E"}; font-weight: 800; font-size: 1.1rem; }
 `);
