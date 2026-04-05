@@ -5,6 +5,7 @@ import FontLogin from "../../../assets/login.jpg";
 import { useAuthStore } from "../store/useAuthStore";
 import { AuthService } from "../services/AuthService";
 import { ClimbingBoxLoader } from "react-spinners";
+import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 
 const LoginPage: React.FC = () => {
   const [email, setEmail] = useState("");
@@ -18,6 +19,7 @@ const LoginPage: React.FC = () => {
   const [loadingSucursales, setLoadingSucursales] = useState(false);
 
   const { login, clearSession, isLoading, error, setSucursalActiva } = useAuthStore();
+  const fetchCatalogs = useCatalogStore(s => s.fetchCatalogs);
   const navigate = useNavigate();
 
   // Limpiar sesión al entrar al login (solo al montar el componente)
@@ -30,11 +32,13 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     const success = await login(email, password);
     if (success) {
-      // El store puede demorar un microciclo en sincronizarse si leemos "user" directo.
-      // Así que verificaremos obteniendo el perfil de inmediato o con `useAuthStore.getState()`
       const currentUser = useAuthStore.getState().user;
-      
       const hasSucursal = currentUser?.id_sucursal || currentUser?.sucursal?.id_sucursal || (currentUser as any)?.sucursal?.id;
+
+      // Precarga catálogos en segundo plano mientras el usuario navega.
+      // No esperamos el resultado: el objetivo es que los datos lleguen antes
+      // de que el usuario abra la primera página que los necesite.
+      fetchCatalogs(true);
 
       if (hasSucursal) {
         navigate("/select-system");

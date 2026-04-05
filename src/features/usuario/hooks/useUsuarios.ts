@@ -152,30 +152,43 @@ export const useUsuarios = () => {
     const onSubmit = async (data: any) => {
         setIsSaving(true);
         try {
-            // Map inputs to API requirements
-            const payload = { 
-                ...data, 
-                usu_nombre: `${data.nombre} ${data.apellido}`.trim()
+            // Construimos el payload exacto que espera el Backend de Go
+            const payload: any = {
+                id_sucursal: data.id_sucursal,
+                id_rol: data.id_rol,
+                id_status: data.id_status,
+                username: data.username,
+                email: data.email,
+                usu_nombre: `${data.nombre} ${data.apellido}`.trim(),
+                usu_dni: data.usu_dni,
+                usu_telefono: data.usu_telefono || "",
+                usu_pin_pos: data.usu_pin_pos || "",
+                usu_tarjeta_nfc: data.usu_tarjeta_nfc || "",
+                nombre_ticket: data.nombre_ticket || "",
+                sucursales_acceso: data.sucursales_acceso || []
             };
 
-            // Remove internal/confirm fields
-            delete payload.confirmPassword;
-            if (editingItem && !payload.password) delete payload.password;
+            // Solo incluimos el password si se proporcionó (obligatorio en creación, opcional en edición)
+            if (data.password) {
+                payload.password = data.password;
+            }
 
             if (editingItem) {
                 const updated = await UsuarioService.update(editingItem.id_usuario, payload);
-                // Ensure we update with the returned data or keep the expected structure
-                setUsuarios(usuarios.map(u => u.id_usuario === editingItem.id_usuario ? { ...u, ...updated, nombre: updated.usu_nombre || updated.nombre } : u));
+                // Normalizamos la respuesta para la UI
+                const normalized = { ...updated, nombre: updated.usu_nombre || updated.nombre };
+                setUsuarios(usuarios.map(u => u.id_usuario === editingItem.id_usuario ? normalized : u));
                 Swal.fire("¡Éxito!", "Usuario actualizado correctamente.", "success");
             } else {
                 const created = await UsuarioService.create(payload);
-                // The API might return usu_nombre, we map it to 'nombre' for UI consistency if needed
-                const newUser = { ...created, nombre: created.usu_nombre || created.nombre };
-                setUsuarios([newUser, ...usuarios]);
+                // Normalizamos la respuesta para la UI
+                const normalized = { ...created, nombre: created.usu_nombre || created.nombre };
+                setUsuarios([normalized, ...usuarios]);
                 Swal.fire("¡Éxito!", "Usuario creado correctamente.", "success");
             }
             setViewMode('list');
         } catch (err: any) {
+            console.error("Error en onSubmit:", err);
             Swal.fire("Error", err?.response?.data?.message ?? "Error en la operación.", "error");
         } finally {
             setIsSaving(false);

@@ -6,6 +6,8 @@ export interface Product {
   id?: string;
   nombre: string;
   descripcion: string;
+  codigo_barras?: string;
+  sku?: string;
   precio_compra: number;
   precio_venta: number;
   stock: number;
@@ -27,6 +29,8 @@ export interface Product {
 export interface CreateProductDTO {
   nombre: string;
   descripcion: string;
+  codigo_barras?: string;
+  sku?: string;
   precio_compra: number;
   precio_venta: number;
   stock: number;
@@ -62,5 +66,10 @@ export const ProductService = {
 
   delete: async (id: string): Promise<void> => {
     await axiosClient.delete(ENDPOINTS.productos.byId(id));
+  },
+
+  buscar: async (codigo: string): Promise<{ status: string; data: Product }> => {
+    const { data } = await axiosClient.get(ENDPOINTS.productos.buscar(codigo));
+    return data;
   }
 };

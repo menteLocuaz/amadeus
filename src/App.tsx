@@ -17,15 +17,15 @@ import { useUIStore } from "./shared/store/useUIStore";
  */
 function AppContent() {
   const { theme } = useUIStore();
-  const { user, token, fetchMe } = useAuthStore();
+  const { user, token, fetchMe, isLoading } = useAuthStore();
 
   // --- Sincronización de Sesión ---
-  // Si el usuario refresca la página pero tiene un token válido, recuperamos sus datos.
   useEffect(() => {
-    if (token && !user) {
-      fetchMe();
+    // Solo intentamos recuperar si hay token y explícitamente no tenemos usuario ni estamos cargando
+    if (token && !user && !isLoading) {
+      fetchMe().catch(err => console.error("Error recuperando sesión:", err));
     }
-  }, [user, token, fetchMe]);
+  }, [token, !!user, fetchMe, isLoading]); // Dependencia en el booleano !!user para estabilidad de referencia
 
   // --- Gestión de Temas ---
   // Memoizamos el objeto de tema de styled-components para evitar re-renders innecesarios.

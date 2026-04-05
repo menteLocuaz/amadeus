@@ -9,10 +9,17 @@ export const useProducts = () => {
   const { user } = useAuthStore();
 
   // --- Store de Catálogos (Centralizado) ---
-  const { 
-    categories, units, currencies, statusList, sucursales,
-    fetchCatalogs, isLoading: isCatalogLoading 
+  const {
+    categories, units, currencies, sucursales, statusList,
+    fetchCatalogs, isLoading: isCatalogLoading
   } = useCatalogStore();
+
+  // Solo estatus del módulo 4 (Productos) — el backend valida coherencia de módulo.
+  // useMemo en lugar de selector con .filter() para evitar nueva referencia en cada render.
+  const productStatuses = useMemo(
+    () => statusList.filter(s => s.mdl_id === 4),
+    [statusList]
+  );
 
   // --- Query de Productos (Dinámico con React Query) ---
   const { data: products = [], isLoading: isProdLoading, refetch } = useProductQueries();
@@ -43,7 +50,7 @@ export const useProducts = () => {
     units,
     currencies,
     sucursales,
-    estatusList: statusList,
+    estatusList: productStatuses,
     search,
     setSearch,
     isLoading,

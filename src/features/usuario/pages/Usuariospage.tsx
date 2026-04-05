@@ -59,23 +59,36 @@ const UsuariosPage: React.FC = () => {
 
   // Generación de Username automático basado en Nombre y Apellido
   useEffect(() => {
-    if (viewMode === 'form' && !editingItem && (wName || wLast)) {
-      const firstLetter = wName.charAt(0).toLowerCase();
-      const lastName = wLast.split(' ')[0].toLowerCase();
-      const generated = `${firstLetter}${lastName}`
-        .normalize("NFD")
-        .replace(/[\u0300-\u036f]/g, "")
-        .replace(/[^a-z0-9]/g, "");
-      setValue("username", generated, { shouldValidate: true });
+    if (viewMode === 'form' && !editingItem) {
+      const timeout = setTimeout(() => {
+        if (wName || wLast) {
+          const firstLetter = wName.charAt(0).toLowerCase();
+          const lastName = wLast.split(' ')[0].toLowerCase();
+          const generated = `${firstLetter}${lastName}`
+            .normalize("NFD")
+            .replace(/[\u0300-\u036f]/g, "")
+            .replace(/[^a-z0-9]/g, "");
+          
+          // Solo actualizamos si el valor realmente cambió para evitar bucles
+          if (watch("username") !== generated) {
+            setValue("username", generated, { shouldValidate: true });
+          }
+        }
+      }, 300); // Pequeño debounce para estabilidad
+      return () => clearTimeout(timeout);
     }
-  }, [wName, wLast, viewMode, editingItem, setValue]);
+  }, [wName, wLast, viewMode, !!editingItem, setValue, watch]);
 
   // Sincronización de PIN con DNI
   useEffect(() => {
     if (viewMode === 'form' && !editingItem && wDni) {
-      setValue("usu_pin_pos", wDni.slice(0, 8), { shouldValidate: true });
+      const generatedPin = wDni.slice(0, 8);
+      // Solo actualizamos si el valor actual es distinto para evitar bucles de re-renderizado
+      if (watch("usu_pin_pos") !== generatedPin) {
+        setValue("usu_pin_pos", generatedPin, { shouldValidate: true });
+      }
     }
-  }, [wDni, viewMode, editingItem, setValue]);
+  }, [wDni, viewMode, !!editingItem, setValue, watch]);
 
   // --- Renderizado Condicional: Carga ---
   if (isLoading && viewMode === 'list') {

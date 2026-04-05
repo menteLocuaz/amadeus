@@ -26,6 +26,7 @@ export const ENDPOINTS = {
   productos: {
     base: '/productos',
     byId: (id: string) => `/productos/${id}`,
+    buscar: (codigo: string) => `/productos/buscar/${codigo}`,
   },
   categorias: {
     base: '/categorias',
@@ -50,8 +51,14 @@ export const ENDPOINTS = {
   },
   inventario: {
     base: '/inventario',
+    byId: (id: string) => `/inventario/${id}`,
+    bySucursal: (id: string) => `/inventario/sucursal/${id}`,
+    alertas: '/inventario/alertas',
     movimientos: '/inventario/movimientos',
+    movimientosMasivo: '/inventario/movimientos/masivo',
     movimientosByProduct: (id: string) => `/inventario/movimientos/${id}`,
+    valuacion: '/inventario/valuacion',
+    rotacion: '/inventario/rotacion',
   },
   ordenes: {
     base: '/ordenes',

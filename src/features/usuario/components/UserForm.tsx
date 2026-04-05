@@ -59,6 +59,11 @@ const UserForm: React.FC<UserFormProps> = ({
                 <div className="input-wrap"><input {...register("email")} placeholder="nombre@empresa.com" /></div>
                 {errors.email && <div className="err"><FiX /> {errors.email.message}</div>}
               </InputGroup>
+              <InputGroup $error={!!errors.usu_telefono}>
+                <label>Teléfono / Celular</label>
+                <div className="input-wrap"><input {...register("usu_telefono")} placeholder="+502 5555-4444" /></div>
+                {errors.usu_telefono && <div className="err"><FiX /> {errors.usu_telefono.message}</div>}
+              </InputGroup>
             </div>
           </Section>
 

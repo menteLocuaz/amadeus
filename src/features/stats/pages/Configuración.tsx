@@ -18,9 +18,9 @@ import {
   FiCpu,
   FiActivity,
   FiMonitor,
+  FiBookmark,  // reemplaza GiTicket  (~6.8 MB menos de índice a parsear)
+  FiHome,      // reemplaza RiStore2Line (~2.1 MB menos)
 } from "react-icons/fi";
-import { RiStore2Line } from "react-icons/ri";
-import { GiTicket } from "react-icons/gi";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../core/constants/routes";
 
@@ -122,7 +122,10 @@ const Tile = styled.button`
   box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   cursor: pointer;
   text-align: left;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
+              background 0.2s ease,
+              border-color 0.2s ease,
+              box-shadow 0.2s ease;
   width: 100%;
 
   &:hover {
@@ -186,10 +189,10 @@ export const Configuración: React.FC = () => {
       { id: "suppliers", title: "Proveedores", description: "Administra tu lista de proveedores", Icon: FiTruck, path: ROUTES.PROVEEDORES },
       { id: "purchases", title: "Compras", description: "Órdenes de compra y abastecimiento", Icon: FiShoppingBag, path: ROUTES.COMPRAS },
       { id: "payments", title: "Métodos de pago", description: "Configura cajas y formas de cobro", Icon: FiCreditCard, onClick: () => alert("Configurando Pagos...") },
-      { id: "branches", title: "Sucursales", description: "Administra múltiples puntos de venta", Icon: RiStore2Line, onClick: () => alert("Configurando Sucursales...") },
+      { id: "branches", title: "Sucursales", description: "Administra múltiples puntos de venta", Icon: FiHome, onClick: () => alert("Configurando Sucursales...") },
       { id: "roles", title: "Roles", description: "Configura perfiles y permisos de acceso", Icon: FiUsers, path: ROUTES.ROLES || "/roles" },
       { id: "warehouse", title: "Almacén", description: "Movimientos de stock y bodegas", Icon: FiMapPin, onClick: () => alert("Configurando Almacén...") },
-      { id: "tickets", title: "Tickets", description: "Diseño de comprobantes y cupones", Icon: GiTicket, onClick: () => alert("Configurando Tickets...") },
+      { id: "tickets", title: "Tickets", description: "Diseño de comprobantes y cupones", Icon: FiBookmark, onClick: () => alert("Configurando Tickets...") },
       { id: "invoices",    title: "Facturación",     description: "Parámetros fiscales y comprobantes",                         Icon: FiSettings, onClick: () => alert("Configurando Facturación...") },
       { id: "dispositivos",title: "Dispositivos POS", description: "Impresoras, Datáfonos y Kioskos vinculados a las estaciones", Icon: FiCpu,      path: ROUTES.DISPOSITIVOS },
       { id: "estaciones",  title: "Estaciones POS",   description: "Administra los terminales físicos de venta por sucursal",      Icon: FiMonitor,  path: ROUTES.ESTACIONES },

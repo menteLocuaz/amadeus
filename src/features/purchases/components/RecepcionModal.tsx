@@ -20,7 +20,7 @@ interface RecepcionModalProps {
     onClose: () => void;
     onConfirm: (payload: any) => void;
 }
-const theme = useTheme();
+
 export const RecepcionModal: React.FC<RecepcionModalProps> = ({
     open,
     order,
@@ -30,6 +30,7 @@ export const RecepcionModal: React.FC<RecepcionModalProps> = ({
     onClose,
     onConfirm
 }) => {
+    const theme = useTheme() as any;
     const [idStatus, setIdStatus] = useState("");
     const [items, setItems] = useState<any[]>([]);
 
@@ -42,10 +43,6 @@ export const RecepcionModal: React.FC<RecepcionModalProps> = ({
                 const prodId = d.id_producto;
                 const prodFromList = products.find(p => (p.id || p.id_producto) === prodId);
 
-                // Name resolution priority: 
-                // 1. FullOrder detail product name
-                // 2. Global products list name
-                // 3. Fallback to "Producto"
                 const productName = d.producto?.nombre || d.producto?.std_descripcion || d.producto?.descripcion || prodFromList?.nombre || "Producto";
 
                 return {
@@ -54,12 +51,11 @@ export const RecepcionModal: React.FC<RecepcionModalProps> = ({
                     nombre: productName,
                     unidad: d.producto?.unidad?.nombre || prodFromList?.unidad?.nombre,
                     cantidad_pedida: d.cantidad_pedida,
-                    cantidad_recibida: d.cantidad_pedida, // Default to full reception
+                    cantidad_recibida: d.cantidad_pedida,
                     precio_unitario: d.precio_unitario || 0
                 };
             }));
 
-            // Default to "RECIBIDO" status if found
             const recibido = statuses.find(s => (s.nombre || "").toLowerCase().includes("recib"));
             if (recibido) setIdStatus(recibido.id_status);
         }
@@ -101,14 +97,6 @@ export const RecepcionModal: React.FC<RecepcionModalProps> = ({
                 cantidad_recibida: Number(i.cantidad_recibida)
             }))
         };
-
-        console.log("👉 PAYLOAD DE RECEPCIÓN GENERADO:", JSON.stringify(payload, null, 2));
-
-        const invalidItems = payload.items.filter(i => !i.id_detalle_compra || !i.id_producto);
-        if (invalidItems.length > 0) {
-            console.error("🔍 Detalles del ítem original que falló:", items.filter(i => !i.id_detalle_compra || !i.id_producto));
-            return alert("Error de validación interna: Falta el UUID de 'id_detalle_compra' o 'id_producto' en uno o más ítems. Abre la consola (F12) para ver más detalles.");
-        }
 
         onConfirm(payload);
     };
@@ -273,4 +261,3 @@ export const RecepcionModal: React.FC<RecepcionModalProps> = ({
         </ModalOverlay>
     );
 };
-
