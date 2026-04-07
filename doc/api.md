@@ -258,10 +258,18 @@ Todos los campos son requeridos.
 | POST | `/movimientos/masivo` | Registrar movimientos para múltiples productos |
 | GET | `/movimientos/{id_producto}` | Historial (Kardex) de un producto (paginado) |
 | GET | `/alertas?id_sucursal={uuid}` | Productos con stock ≤ stock_mínimo |
-| GET | `/valuacion?id_sucursal={uuid}&metodo={peps\|ueps\|promedio}` | Valor contable del inventario |
+| GET | `/alertas/detalle` | Reporte detallado de stock crítico |
+| GET | `/valuacion?id_sucursal={uuid}&metodo={peps|ueps|promedio}` | Valor contable del inventario |
 | GET | `/rotacion?id_sucursal={uuid}` | Análisis ABC de rotación |
+| GET | `/rotacion/detalle?fecha_inicio={f}&fecha_fin={f}` | Rotación detallada en rango de fechas |
+| GET | `/composicion-categoria` | Distribución de valor y stock por categoría |
+| POST | `/historico/snapshot` | Capturar estado actual para análisis histórico |
+| GET | `/historico?fecha_inicio={f}&fecha_fin={f}` | Evolución histórica del valor del inventario |
+| GET | `/perdidas?fecha_inicio={f}&fecha_fin={f}` | Pérdidas por merma y caducidad |
+| GET | `/margen?fecha_inicio={f}&fecha_fin={f}` | Margen de ganancia real por sucursal |
 
-> Si `id_sucursal` se omite en alertas/valuacion/rotacion, se toma del token JWT.
+> Si `id_sucursal` se omite en reportes/alertas, se toma del token JWT.
+> Las fechas deben estar en formato RFC3339 (ej. `2024-01-01T00:00:00Z`).
 
 **Body POST /inventario:**
 ```json
@@ -545,12 +553,24 @@ CRUD estándar: `GET /`, `POST /`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}`.
 
 ---
 
+## 24. Dashboard (`/dashboard`) 🔒
+
+| Método | Ruta | Descripción |
+|--------|------|-------------|
+| GET | `/resumen` | Resumen general de KPIs (ventas, stock, caja) |
+| GET | `/antiguedad-deuda` | Reporte de cuentas por cobrar/pagar por antigüedad |
+| GET | `/composicion-categoria` | Análisis de ventas por categoría |
+| GET | `/mermas` | Reporte consolidado de pérdidas |
+
+---
+
 ## Flujos típicos del frontend
 
 ### Carga inicial
 1. `POST /auth/login` → guardar token
 2. `GET /estatus/catalogo` → mapear IDs de estado a etiquetas legibles
 3. `GET /periodos/activo` → validar que hay un período contable abierto
+4. `GET /dashboard/resumen` → mostrar vista principal con métricas clave
 
 ### Venta con agregador (delivery)
 1. `POST /ordenes` → crear orden
@@ -561,6 +581,8 @@ CRUD estándar: `GET /`, `POST /`, `GET /{id}`, `PUT /{id}`, `DELETE /{id}`.
 1. `POST /compras` → crear orden de compra
 2. `POST /compras/recepcion` → recibir ítems → actualiza stock e inventario automáticamente
 
-### Ajuste de inventario
-- `POST /inventario/movimientos` con `tipo_movimiento: "AJUSTE"` para correcciones individuales
-- `POST /inventario/movimientos/masivo` para múltiples productos a la vez
+### Control de Inventario
+- `GET /inventario/alertas/detalle` para ver productos críticos al iniciar el día.
+- `POST /inventario/movimientos/masivo` para ingresos rápidos sin orden de compra.
+- `GET /inventario/rotacion` para optimizar el stock basado en demanda real.
+- `POST /inventario/historico/snapshot` al final del mes para reportes contables.
