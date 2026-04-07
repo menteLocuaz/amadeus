@@ -103,4 +103,10 @@ export const ENDPOINTS = {
     base: '/dispositivos-pos',
     byId: (id: string) => `/dispositivos-pos/${id}`,
   },
+  dashboard: {
+    resumen: '/dashboard/resumen',
+    antiguedadDeuda: '/dashboard/antiguedad-deuda',
+    composicionCategoria: '/dashboard/composicion-categoria',
+    mermas: '/dashboard/mermas',
+  },
 } as const;
