@@ -11,7 +11,6 @@ import { MdOutlineAnalytics, MdLogout, MdPointOfSale, MdBusiness } from "react-i
 import { FiMapPin, FiUsers, FiShoppingBag } from "react-icons/fi";
 import { useAuthStore } from "../../../../features/auth/store/useAuthStore";
 import { useUIStore } from "../../../store/useUIStore";
-import { v } from "../../../../core/styles/Variables";
 import { ROUTES } from "../../../../core/constants/routes";
 import logo from "../../../../assets/react.svg";
 
@@ -121,19 +120,21 @@ const NavSection = ({ links, sidebarOpen }: { links: NavLinkItem[], sidebarOpen:
 
 // --- Estilos ---
 const Container = styled.div<{ $isOpen: boolean }>`
+  font-family: inherit;
   background: ${({ theme }) => theme.bg};
   color: ${({ theme }) => theme.text};
   position: sticky;
   top: 0;
   height: 100vh;
-  padding: 20px 0;
-  transition: all 0.3s ease;
+  padding: 16px 0 0 0;
+  transition: width 0.2s ease-in-out;
   z-index: 1000;
-  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
-
+  border-right: 1px solid rgba(150, 150, 150, 0.15); /* Whisper-quiet border */
   display: flex;
   flex-direction: column;
-  /* overflow movido a ScrollableContent para no tapar el botón */
+  
+  /* Subtle depth */
+  box-shadow: 1px 0 0 rgba(0,0,0,0.02);
 `;
 
 const ScrollableContent = styled.div`
@@ -142,94 +143,138 @@ const ScrollableContent = styled.div`
   flex-direction: column;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: 0 0 20px 0;
+  padding: 0 0 16px 0;
 
-  /* Custom Scrollbar */
-  &::-webkit-scrollbar {
-    width: 6px;
-  }
-  &::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  &::-webkit-scrollbar-thumb {
-    background: ${({ theme }) => theme.bg3};
-    border-radius: 10px;
+  &::-webkit-scrollbar { width: 4px; }
+  &::-webkit-scrollbar-track { background: transparent; }
+  &::-webkit-scrollbar-thumb { 
+    background: rgba(150, 150, 150, 0.2); 
+    border-radius: 4px; 
   }
 `;
 
 const CollapseButton = styled.button<{ $isOpen: boolean }>`
   position: absolute;
-  top: ${v.xxlSpacing};
-  right: -16px;
-  width: 32px;
-  height: 32px;
+  top: 24px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: ${({ theme }) => theme.bgtgderecha};
-  color: inherit;
-  border: 1px solid ${({ theme }) => theme.bg3};
+  background: ${({ theme }) => theme.bg};
+  color: ${({ theme }: any) => theme.textMuted || theme.text};
+  border: 1px solid rgba(150, 150, 150, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
   transform: ${({ $isOpen }) => ($isOpen ? "rotate(0deg)" : "rotate(180deg)")};
-  transition: all 0.3s ease;
-  &:hover { background: ${({ theme }) => theme.bg3}; }
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  z-index: 10;
+  opacity: 0; /* Hidden by default */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+
+  ${Container}:hover & {
+    opacity: 1; /* Shows only when hovering near the sidebar */
+  }
+
+  &:hover { 
+    background: ${({ theme }) => theme.bg3};
+    transform: ${({ $isOpen }) => ($isOpen ? "rotate(0deg) scale(1.05)" : "rotate(180deg) scale(1.05)")};
+  }
+  
+  svg { font-size: 12px; }
 `;
 
 const LogoSection = styled.div<{ $isOpen: boolean }>`
   display: flex;
   align-items: center;
-  justify-content: center;
   gap: 12px;
-  padding: ${({ $isOpen }) => ($isOpen ? "0 20px 30px" : "0 0 30px")};
+  padding: ${({ $isOpen }) => ($isOpen ? "12px 20px 24px" : "12px 0 24px")};
   width: 100%;
+  justify-content: center;
   
   .img-content {
     display: flex;
     justify-content: center;
     align-items: center;
-    img { width: 35px; }
-    transform: ${({ $isOpen }) => ($isOpen ? "scale(1)" : "scale(1.15)")};
-    transition: transform 0.3s ease;
+    img { width: 28px; opacity: 0.9; }
+    transition: transform 0.2s ease;
   }
   
-  h2 { font-size: 1.2rem; margin: 0; display: ${({ $isOpen }) => ($isOpen ? "block" : "none")}; }
+  h2 { 
+    font-size: 1rem; 
+    font-weight: 600;
+    margin: 0; 
+    display: ${({ $isOpen }) => ($isOpen ? "block" : "none")};
+    color: ${({ theme }) => theme.text};
+    letter-spacing: -0.01em;
+  }
 `;
 
 const LinksWrapper = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 0 12px;
+
   .link-container {
-    padding: 0 10px;
-    margin: 4px 0;
+    width: 100%;
   }
 
   .link-item {
     display: flex;
     align-items: center;
     width: 100%;
-    padding: 12px 15px;
+    padding: 10px 12px;
     text-decoration: none;
-    color: inherit;
-    border-radius: 8px;
-    transition: background 0.2s;
+    color: ${({ theme }: any) => theme.textMuted || theme.text};
+    border-radius: 6px;
+    transition: all 0.15s ease;
     white-space: nowrap;
-    background: none;
+    background: transparent;
     border: none;
     font-family: inherit;
-    font-size: inherit;
+    font-size: 0.85rem;
+    font-weight: 500;
     cursor: pointer;
     text-align: left;
+    position: relative;
+    opacity: 0.85;
 
-    &:hover { background: ${({ theme }) => theme.bg3}; }
+    &:hover { 
+      background: rgba(150, 150, 150, 0.08); 
+      opacity: 1;
+    }
+    
     &.active {
-      color: ${({ theme }) => theme.bg4};
-      background: ${({ theme }) => theme.bg2};
+      color: ${({ theme }) => theme.text};
+      background: rgba(150, 150, 150, 0.12); /* Inset feel */
       font-weight: 600;
+      opacity: 1;
+      
+      /* Hardware Status Indicator */
+      &::before {
+        content: '';
+        position: absolute;
+        left: 4px;
+        top: 50%;
+        transform: translateY(-50%);
+        height: 14px;
+        width: 3px;
+        border-radius: 2px;
+        background: ${({ theme }) => theme.text};
+        box-shadow: 0 0 8px rgba(255,255,255,0.1);
+      }
     }
 
     .icon-box {
-      min-width: 40px;
+      min-width: 32px;
       display: flex;
-      font-size: 24px;
+      font-size: 18px;
+    }
+    
+    span {
+      padding-top: 1px;
     }
   }
 `;
@@ -237,25 +282,32 @@ const LinksWrapper = styled.div`
 const Divider = styled.hr`
   border: none;
   height: 1px;
-  background: ${({ theme }) => theme.bg3};
-  margin: 15px 20px;
+  background: rgba(150, 150, 150, 0.15);
+  margin: 16px 16px;
 `;
 
 const ThemeToggle = styled.div<{ $isOpen: boolean }>`
   display: flex;
   align-items: center;
   justify-content: ${({ $isOpen }) => ($isOpen ? "space-between" : "center")};
-  padding: ${({ $isOpen }) => ($isOpen ? "10px 20px" : "10px 0")};
+  padding: ${({ $isOpen }) => ($isOpen ? "16px 20px" : "16px 0")};
+  margin-top: auto;
+  border-top: 1px solid rgba(150, 150, 150, 0.1);
   
-  .title { font-weight: 600; font-size: 0.9rem; }
+  .title { 
+    font-weight: 500; 
+    font-size: 0.75rem; 
+    color: ${({ theme }: any) => theme.textMuted || theme.text};
+    opacity: 0.8;
+  }
 `;
 
 const ToggleWrapper = styled.div`
   .switch {
     position: relative;
     display: inline-block;
-    width: 46px;
-    height: 24px;
+    width: 36px;
+    height: 20px;
     
     input { opacity: 0; width: 0; height: 0; }
     
@@ -263,22 +315,28 @@ const ToggleWrapper = styled.div`
       position: absolute;
       cursor: pointer;
       top: 0; left: 0; right: 0; bottom: 0;
-      background-color: #ccc;
-      transition: .4s;
-      border-radius: 34px;
+      background-color: rgba(150, 150, 150, 0.2);
+      transition: .2s ease;
+      border-radius: 20px; /* Soft pill */
+      border: 1px solid rgba(150, 150, 150, 0.1);
 
       &:before {
         position: absolute;
         content: "";
-        height: 18px; width: 18px;
-        left: 3px; bottom: 3px;
-        background-color: white;
-        transition: .4s;
+        height: 14px; width: 14px;
+        left: 2px; bottom: 2px;
+        background-color: ${({ theme }) => theme.text};
+        transition: .2s ease;
         border-radius: 50%;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
       }
     }
 
-    input:checked + .slider { background-color: #2196F3; }
-    input:checked + .slider:before { transform: translateX(22px); }
+    input:checked + .slider { 
+      background-color: rgba(150, 150, 150, 0.3);
+    }
+    input:checked + .slider:before { 
+      transform: translateX(16px); 
+    }
   }
 `;

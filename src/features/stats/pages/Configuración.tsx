@@ -18,157 +18,218 @@ import {
   FiCpu,
   FiActivity,
   FiMonitor,
-  FiBookmark,  // reemplaza GiTicket  (~6.8 MB menos de índice a parsear)
-  FiHome,      // reemplaza RiStore2Line (~2.1 MB menos)
+  FiBookmark,
+  FiHome,
+  FiChevronRight,
 } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { ROUTES } from "../../../core/constants/routes";
 
 /* -------------------------------- Types --------------------------------- */
-type ConfigItem = {
+type Category = "Ventas" | "Inventario" | "Entidades" | "Sistema";
+
+interface ConfigItem {
   id: string;
   title: string;
   description: string;
+  category: Category;
   Icon: IconType;
   path?: string;
   onClick?: () => void;
-};
+}
 
 /* ------------------------------ Styled UI ------------------------------- */
-const Page = styled.div`
-  padding: 28px;
-  max-width: 1200px;
+const PageContainer = styled.div`
+  padding: 40px;
+  max-width: 1400px;
   margin: 0 auto;
+  min-height: 100vh;
 `;
 
 const Header = styled.header`
+  margin-bottom: 48px;
   display: flex;
-  align-items: center;
-  gap: 16px;
-  margin-bottom: 30px;
-  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: flex-end;
+  border-bottom: 1px solid ${({ theme }) => theme.bg3}33;
+  padding-bottom: 24px;
 
-  @media (max-width: 640px) {
+  @media (max-width: 768px) {
     flex-direction: column;
     align-items: flex-start;
+    gap: 24px;
   }
 `;
 
-const TitleSection = styled.div`
+const TitleArea = styled.div`
   h2 {
-    margin: 0;
-    font-size: 2rem;
+    font-size: 2.2rem;
     font-weight: 800;
-    color: ${({ theme }) => theme.bg4};
+    letter-spacing: -0.02em;
+    color: ${({ theme }) => theme.text};
+    margin: 0 0 8px 0;
   }
-  span {
-    font-size: 0.95rem;
+  p {
+    font-size: 1rem;
     color: ${({ theme }) => theme.texttertiary};
+    max-width: 500px;
+    line-height: 1.5;
   }
 `;
 
-const Search = styled.div`
-  margin-left: auto;
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: ${({ theme }) => theme.bg};
-  border: 1px solid ${({ theme }) => theme.bg3}33;
-  padding: 10px 16px;
-  border-radius: 12px;
-  min-width: 280px;
-  transition: all 0.2s ease;
+const SearchWrapper = styled.div`
+  position: relative;
+  width: 100%;
+  max-width: 360px;
 
-  &:focus-within {
-    border-color: ${({ theme }) => theme.bg4};
-    box-shadow: 0 0 0 2px ${({ theme }) => theme.bg4}22;
+  svg {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: ${({ theme }) => theme.bg4};
+    font-size: 1.1rem;
+    pointer-events: none;
   }
 
   input {
-    border: none;
-    outline: none;
-    font-size: 1rem;
-    background: transparent;
     width: 100%;
+    padding: 14px 16px 14px 48px;
+    background: ${({ theme }) => theme.bg2};
+    border: 1px solid ${({ theme }) => theme.bg3}66;
+    border-radius: 12px;
     color: ${({ theme }) => theme.text};
-    &::placeholder { color: ${({ theme }) => theme.texttertiary}; opacity: 0.5; }
+    font-size: 0.95rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+
+    &:focus {
+      outline: none;
+      border-color: ${({ theme }) => theme.bg4};
+      background: ${({ theme }) => theme.bg};
+      box-shadow: 0 0 0 4px ${({ theme }) => theme.bg4}15;
+    }
+
+    &::placeholder {
+      color: ${({ theme }) => theme.texttertiary}88;
+    }
+  }
+`;
+
+const Section = styled.section`
+  margin-bottom: 48px;
+`;
+
+const SectionHeader = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+
+  h3 {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: ${({ theme }) => theme.texttertiary};
   }
 
-  svg {
-    color: ${({ theme }) => theme.bg4};
-    font-size: 1.2rem;
-  }
-
-  @media (max-width: 640px) {
-    margin-left: 0;
-    width: 100%;
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: ${({ theme }) => theme.bg3}22;
   }
 `;
 
 const Grid = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 16px;
 `;
 
-const Tile = styled.button`
+const ModuleCard = styled.button`
+  all: unset;
   display: flex;
-  gap: 16px;
   align-items: center;
-  padding: 24px;
+  gap: 16px;
+  padding: 20px;
   background: ${({ theme }) => theme.bg};
+  border: 1px solid ${({ theme }) => theme.bg3}33;
   border-radius: 16px;
-  border: 1px solid ${({ theme }) => theme.bg3}22;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.05);
   cursor: pointer;
-  text-align: left;
-  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1),
-              background 0.2s ease,
-              border-color 0.2s ease,
-              box-shadow 0.2s ease;
-  width: 100%;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
 
   &:hover {
-    transform: translateY(-5px);
     background: ${({ theme }) => theme.bg2};
-    border-color: ${({ theme }) => theme.bg4};
-    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+    border-color: ${({ theme }) => theme.bg4}88;
+    transform: translateY(-2px);
+    
+    .arrow-icon {
+      transform: translateX(4px);
+      opacity: 1;
+    }
   }
 
   &:active {
-    transform: translateY(-2px);
+    transform: translateY(0);
   }
 `;
 
-const IconWrap = styled.div`
-  width: 56px;
-  height: 56px;
-  border-radius: 14px;
-  display: grid;
-  place-items: center;
+const IconBox = styled.div`
+  width: 48px;
+  height: 48px;
+  border-radius: 12px;
   background: ${({ theme }) => theme.bg2};
-  color: ${({ theme }) => theme.bg4};
-  font-size: 24px;
-  flex-shrink: 0;
-  border: 1px solid ${({ theme }) => theme.bg3}11;
-`;
-
-const TileText = styled.div`
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: ${({ theme }) => theme.bg4};
+  border: 1px solid ${({ theme }) => theme.bg3}22;
+  flex-shrink: 0;
 `;
 
-const TileTitle = styled.div`
-  font-weight: 700;
-  font-size: 1.1rem;
-  color: ${({ theme }) => theme.text};
+const Content = styled.div`
+  flex: 1;
+  min-width: 0;
+
+  h4 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: ${({ theme }) => theme.text};
+    margin-bottom: 4px;
+  }
+
+  p {
+    font-size: 0.85rem;
+    color: ${({ theme }) => theme.texttertiary};
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
 `;
 
-const TileDesc = styled.div`
-  font-size: 0.85rem;
+const ArrowIcon = styled(FiChevronRight)`
+  font-size: 1.2rem;
+  color: ${({ theme }) => theme.bg4};
+  opacity: 0.3;
+  transition: all 0.2s ease;
+  margin-left: 8px;
+`;
+
+const EmptyState = styled.div`
+  grid-column: 1 / -1;
+  padding: 80px 0;
+  text-align: center;
   color: ${({ theme }) => theme.texttertiary};
-  line-height: 1.4;
+  
+  svg {
+    font-size: 3rem;
+    margin-bottom: 16px;
+    opacity: 0.2;
+  }
 `;
 
 /* ------------------------------- Component ------------------------------- */
@@ -178,84 +239,112 @@ export const Configuración: React.FC = () => {
 
   const items: ConfigItem[] = useMemo(
     () => [
-      { id: "printers", title: "Impresoras", description: "Gestiona tus comprobantes de pago", Icon: FiPrinter, onClick: () => alert("Configurando Impresoras...") },
-      { id: "medidas", title: "Unidades de Medida", description: "Gestiona las unidades (Kilo, Metro, etc.)", Icon: FiSliders, path: ROUTES.MEDIDAS },
-      { id: "company", title: "Empresa", description: "Configura la información de tu negocio", Icon: FiShoppingCart, path: ROUTES.EMPRESAS },
-      { id: "categories", title: "Categorías", description: "Organiza tus productos por grupos", Icon: FiTag, path: ROUTES.CATEGORIAS },
-      { id: "catalogo", title: "Catalogo", description: "Consulta de productos, precios y stock", Icon: FiShoppingBag, path: ROUTES.INVENTARIO },
-      { id: "currencies", title: "Monedas", description: "Configura divisas y tipos de cambio", Icon: FiDollarSign, path: ROUTES.MONEDAS },
-      { id: "products", title: "Productos", description: "Registro y control de inventario", Icon: FiBox, path: ROUTES.PRODUCTOS || "/productos" },
-      { id: "clients", title: "Clientes", description: "Directorio y estados de cuenta", Icon: FiUsers, onClick: () => alert("Configurando Clientes...") },
-      { id: "suppliers", title: "Proveedores", description: "Administra tu lista de proveedores", Icon: FiTruck, path: ROUTES.PROVEEDORES },
-      { id: "purchases", title: "Compras", description: "Órdenes de compra y abastecimiento", Icon: FiShoppingBag, path: ROUTES.COMPRAS },
-      { id: "payments", title: "Métodos de pago", description: "Configura cajas y formas de cobro", Icon: FiCreditCard, onClick: () => alert("Configurando Pagos...") },
-      { id: "branches", title: "Sucursales", description: "Administra múltiples puntos de venta", Icon: FiHome, onClick: () => alert("Configurando Sucursales...") },
-      { id: "roles", title: "Roles", description: "Configura perfiles y permisos de acceso", Icon: FiUsers, path: ROUTES.ROLES || "/roles" },
-      { id: "warehouse", title: "Almacén", description: "Movimientos de stock y bodegas", Icon: FiMapPin, onClick: () => alert("Configurando Almacén...") },
-      { id: "tickets", title: "Tickets", description: "Diseño de comprobantes y cupones", Icon: FiBookmark, onClick: () => alert("Configurando Tickets...") },
-      { id: "invoices",    title: "Facturación",     description: "Parámetros fiscales y comprobantes",                         Icon: FiSettings, onClick: () => alert("Configurando Facturación...") },
-      { id: "dispositivos",title: "Dispositivos POS", description: "Impresoras, Datáfonos y Kioskos vinculados a las estaciones", Icon: FiCpu,      path: ROUTES.DISPOSITIVOS },
-      { id: "estaciones",  title: "Estaciones POS",   description: "Administra los terminales físicos de venta por sucursal",      Icon: FiMonitor,  path: ROUTES.ESTACIONES },
-      { id: "estatus",     title: "Estatus",          description: "Catálogo de estados del sistema agrupados por módulo",     Icon: FiActivity, path: ROUTES.ESTATUS },
+      // --- Ventas ---
+      { id: "printers", category: "Ventas", title: "Impresoras", description: "Configuración de tickets y comandas", Icon: FiPrinter, onClick: () => alert("Módulo de Impresoras") },
+      { id: "payments", category: "Ventas", title: "Métodos de Pago", description: "Cajas y pasarelas de pago", Icon: FiCreditCard, onClick: () => alert("Módulo de Pagos") },
+      { id: "dispositivos", category: "Ventas", title: "Dispositivos POS", description: "Datáfonos y periféricos", Icon: FiCpu, path: ROUTES.DISPOSITIVOS },
+      { id: "estaciones", category: "Ventas", title: "Estaciones POS", description: "Terminales físicos por sucursal", Icon: FiMonitor, path: ROUTES.ESTACIONES },
+      { id: "tickets", category: "Ventas", title: "Diseño Tickets", description: "Personalización de comprobantes", Icon: FiBookmark, onClick: () => alert("Módulo de Tickets") },
+      { id: "invoices", category: "Ventas", title: "Facturación", description: "Parámetros de ley y correlativos", Icon: FiSettings, onClick: () => alert("Módulo de Facturación") },
+
+      // --- Inventario ---
+      { id: "products", category: "Inventario", title: "Productos", description: "Gestión centralizada de stock", Icon: FiBox, path: ROUTES.PRODUCTOS },
+      { id: "categories", category: "Inventario", title: "Categorías", description: "Organización jerárquica", Icon: FiTag, path: ROUTES.CATEGORIAS },
+      { id: "catalogo", category: "Inventario", title: "Catálogo General", description: "Vista rápida de precios y stock", Icon: FiShoppingBag, path: ROUTES.INVENTARIO },
+      { id: "medidas", category: "Inventario", title: "Unidades", description: "Kilos, metros, unidades y más", Icon: FiSliders, path: ROUTES.MEDIDAS },
+      { id: "warehouse", category: "Inventario", title: "Almacenes", description: "Control de bodegas y transferencias", Icon: FiMapPin, onClick: () => alert("Módulo de Almacén") },
+
+      // --- Entidades ---
+      { id: "suppliers", category: "Entidades", title: "Proveedores", description: "Directorio y órdenes de compra", Icon: FiTruck, path: ROUTES.PROVEEDORES },
+      { id: "clients", category: "Entidades", title: "Clientes", description: "Cartera y fidelización", Icon: FiUsers, onClick: () => alert("Módulo de Clientes") },
+      { id: "branches", category: "Entidades", title: "Sucursales", description: "Puntos de venta operativos", Icon: FiHome, onClick: () => alert("Módulo de Sucursales") },
+
+      // --- Sistema ---
+      { id: "company", category: "Sistema", title: "Mi Empresa", description: "Datos fiscales y comerciales", Icon: FiShoppingCart, path: ROUTES.EMPRESAS },
+      { id: "currencies", category: "Sistema", title: "Monedas", description: "Divisas y tipos de cambio", Icon: FiDollarSign, path: ROUTES.MONEDAS },
+      { id: "roles", category: "Sistema", title: "Roles y Permisos", description: "Control de acceso de usuarios", Icon: FiUsers, path: ROUTES.ROLES },
+      { id: "estatus", category: "Sistema", title: "Estatus", description: "Estados lógicos del sistema", Icon: FiActivity, path: ROUTES.ESTATUS },
     ],
     []
   );
 
-  const filtered = useMemo(
-    () => items.filter(i => (i.title + i.description).toLowerCase().includes(query.trim().toLowerCase())),
-    [items, query]
-  );
+  const filtered = useMemo(() => {
+    const q = query.toLowerCase().trim();
+    return items.filter(
+      (i) =>
+        i.title.toLowerCase().includes(q) ||
+        i.description.toLowerCase().includes(q) ||
+        i.category.toLowerCase().includes(q)
+    );
+  }, [items, query]);
+
+  const grouped = useMemo(() => {
+    const groups: Record<Category, ConfigItem[]> = {
+      Ventas: [],
+      Inventario: [],
+      Entidades: [],
+      Sistema: [],
+    };
+    filtered.forEach((item) => groups[item.category].push(item));
+    return groups;
+  }, [filtered]);
 
   const handleAction = (item: ConfigItem) => {
-    if (item.path) {
-      navigate(item.path);
-    } else if (item.onClick) {
-      item.onClick();
-    }
+    if (item.path) navigate(item.path);
+    else if (item.onClick) item.onClick();
   };
 
   return (
-    <Page>
+    <PageContainer>
       <Header>
-        <TitleSection>
-          <h2>Configuración</h2>
-          <span>Administra los módulos y parámetros de tu sistema</span>
-        </TitleSection>
+        <TitleArea>
+          <h2>Centro de Control</h2>
+          <p>Ajusta el núcleo operativo, gestiona entidades maestras y personaliza la lógica de tu negocio.</p>
+        </TitleArea>
 
-        <Search>
+        <SearchWrapper>
           <FiSearch />
           <input
-            placeholder="Buscar configuración..."
+            type="text"
+            placeholder="Buscar por módulo o función..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
           />
-        </Search>
+        </SearchWrapper>
       </Header>
 
-      <Grid>
-        {filtered.map(item => (
-          <Tile
-            key={item.id}
-            onClick={() => handleAction(item)}
-            title={item.title}
-          >
-            <IconWrap>
-              <item.Icon />
-            </IconWrap>
-            <TileText>
-              <TileTitle>{item.title}</TileTitle>
-              <TileDesc>{item.description}</TileDesc>
-            </TileText>
-          </Tile>
-        ))}
+      {(Object.entries(grouped) as [Category, ConfigItem[]][]).map(
+        ([cat, modules]) =>
+          modules.length > 0 && (
+            <Section key={cat}>
+              <SectionHeader>
+                <h3>{cat}</h3>
+              </SectionHeader>
+              <Grid>
+                {modules.map((item) => (
+                  <ModuleCard key={item.id} onClick={() => handleAction(item)}>
+                    <IconBox>
+                      <item.Icon />
+                    </IconBox>
+                    <Content>
+                      <h4>{item.title}</h4>
+                      <p>{item.description}</p>
+                    </Content>
+                    <ArrowIcon className="arrow-icon" />
+                  </ModuleCard>
+                ))}
+              </Grid>
+            </Section>
+          )
+      )}
 
-        {filtered.length === 0 && (
-          <div style={{ gridColumn: "1/-1", padding: 60, textAlign: "center" }}>
-            <p style={{ fontSize: "1.2rem", opacity: 0.5 }}>No se encontraron módulos con esa descripción.</p>
-          </div>
-        )}
-      </Grid>
-    </Page>
+      {filtered.length === 0 && (
+        <EmptyState>
+          <FiSearch />
+          <p>No se encontraron módulos para "{query}"</p>
+        </EmptyState>
+      )}
+    </PageContainer>
   );
 };
 

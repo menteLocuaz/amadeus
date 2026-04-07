@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from "react";
-import styled, { useTheme } from "styled-components";
+import styled, { useTheme, keyframes } from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
 import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiImage, FiPackage, FiRefreshCw, FiMapPin } from "react-icons/fi";
 import {
@@ -24,6 +24,46 @@ import {
 
 const columnHelper = createColumnHelper<Product>();
 
+// --- Luminous Motion & Editorial Animations ---
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const StaggeredRow = styled.tr<{ $index?: number }>`
+  animation: ${fadeInUp} 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: ${({ $index }) => ($index || 0) * 0.05}s;
+  opacity: 0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.primary}08 !important;
+    transform: scale(1.002) translateX(4px);
+    box-shadow: -4px 0 0 ${({ theme }) => theme.primary};
+  }
+`;
+
+const BoldHeader = styled(HeaderTitle)`
+  h1 {
+    font-family: 'Outfit', 'Space Grotesk', system-ui, sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    background: linear-gradient(135deg, ${({ theme }) => theme.text}, ${({ theme }) => theme.primary});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  p {
+    font-weight: 500;
+    opacity: 0.7;
+    margin-top: 8px;
+    font-size: 1.05rem;
+  }
+`;
+
 /* --- Styled Components --- */
 const ProductCell = styled.div`
     display: flex;
@@ -43,7 +83,7 @@ const ProductImgPlaceholder = styled.div`
     width: 40px;
     height: 40px;
     border-radius: 8px;
-    background: ${({ theme }) => theme.bg3}22;
+    background: rgba(150, 150, 150, 0.1);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -57,9 +97,17 @@ const ProductName = styled.div`
 `;
 
 const ProductSku = styled.div`
-    font-size: 0.75rem;
-    opacity: 0.5;
-    font-family: monospace;
+    font-weight: 600;
+    font-size: 0.8rem;
+    color: ${({ theme }) => theme.primary};
+    background: ${({ theme }) => theme.primary}15;
+    padding: 2px 8px;
+    border-radius: 4px;
+    display: inline-block;
+    margin-top: 4px;
+    letter-spacing: 0.05em;
+    opacity: 0.9;
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
 `;
 
 const PriceText = styled.div`
@@ -226,13 +274,13 @@ const Productos: React.FC = () => {
 
     return (
         <PageContainer>
-            <PageHeader>
-                <HeaderTitle>
+            <PageHeader style={{ paddingBottom: '2rem' }}>
+                <BoldHeader>
                     <h1>
-                        <FiPackage color={theme.primary} /> Productos
+                        <FiPackage color={theme.primary} /> Inventario Central
                     </h1>
-                    <p>Administra tu catálogo de artículos y su inventario</p>
-                </HeaderTitle>
+                    <p>Administración Glassmorphic de SKUs y Existencias</p>
+                </BoldHeader>
                 <Toolbar>
                     <SearchBox>
                         <FiSearch />
@@ -251,7 +299,7 @@ const Productos: React.FC = () => {
                 </Toolbar>
             </PageHeader>
 
-            <TableCard>
+            <TableCard style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(252, 163, 17, 0.08)', border: '1px solid rgba(252, 163, 17, 0.2)', background: theme.bg + 'F0', backdropFilter: 'blur(10px)' }}>
                 {isLoading ? (
                     <div style={{ padding: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
                         <ClimbingBoxLoader color={theme.primary} />
@@ -279,21 +327,21 @@ const Productos: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    table.getRowModel().rows.map(row => (
-                                        <tr key={row.id}>
+                                    table.getRowModel().rows.map((row, idx) => (
+                                        <StaggeredRow key={row.id} $index={idx}>
                                             {row.getVisibleCells().map(cell => (
                                                 <td key={cell.id}>
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                                 </td>
                                             ))}
-                                        </tr>
+                                        </StaggeredRow>
                                     ))
                                 )}
                             </tbody>
                         </Table>
 
                         {/* Pagination */}
-                        <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255,255,255,0.05)' }}>
+                        <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(150,150,150,0.15)' }}>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <Button
                                     $variant="ghost"
