@@ -256,8 +256,8 @@ export const Configuración: React.FC = () => {
 
       // --- Entidades ---
       { id: "suppliers", category: "Entidades", title: "Proveedores", description: "Directorio y órdenes de compra", Icon: FiTruck, path: ROUTES.PROVEEDORES },
-      { id: "clients", category: "Entidades", title: "Clientes", description: "Cartera y fidelización", Icon: FiUsers, onClick: () => alert("Módulo de Clientes") },
-      { id: "branches", category: "Entidades", title: "Sucursales", description: "Puntos de venta operativos", Icon: FiHome, onClick: () => alert("Módulo de Sucursales") },
+      { id: "clients", category: "Entidades", title: "Clientes", description: "Cartera y fidelización", Icon: FiUsers, path: ROUTES.CLIENTES },
+      { id: "branches", category: "Entidades", title: "Sucursales", description: "Puntos de venta operativos", Icon: FiHome, path: ROUTES.SUCURSALES },
 
       // --- Sistema ---
       { id: "company", category: "Sistema", title: "Mi Empresa", description: "Datos fiscales y comerciales", Icon: FiShoppingCart, path: ROUTES.EMPRESAS },

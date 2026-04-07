@@ -10,19 +10,39 @@ import { getTipoColor } from "../constants";
 
 const StatsRow = styled.div`
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
-    gap: 14px;
-    margin-bottom: 28px;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 20px;
+    margin-bottom: 32px;
 `;
 
 const StatCard = styled.div<{ $color: string }>`
     background: ${({ theme }) => theme.bg};
-    border: 1px solid ${({ $color }) => $color}33;
-    border-left: 4px solid ${({ $color }) => $color};
-    border-radius: 14px;
-    padding: 16px 20px;
-    h3 { margin: 0; font-size: 1.8rem; font-weight: 900; color: ${({ $color }) => $color}; }
-    p  { margin: 4px 0 0; font-size: 0.78rem; opacity: 0.6; text-transform: uppercase; }
+    border: 1px solid ${({ theme }) => theme.bg3}11;
+    border-radius: 12px;
+    padding: 24px;
+    transition: all 0.3s ease;
+
+    &:hover {
+        transform: translateY(-4px);
+        box-shadow: 0 12px 24px rgba(0,0,0,0.04);
+        border-color: ${props => props.$color}44;
+    }
+
+    h3 { 
+        margin: 0; 
+        font-size: 2rem; 
+        font-weight: 800; 
+        color: ${({ $color }) => $color}; 
+        line-height: 1;
+    }
+    p { 
+        margin: 8px 0 0; 
+        font-size: 0.7rem; 
+        opacity: 0.5; 
+        font-weight: 700;
+        text-transform: uppercase; 
+        letter-spacing: 0.1em;
+    }
 `;
 
 // ─── Props ─────────────────────────────────────────────────────────────────────

@@ -19,6 +19,7 @@ export const ROUTES = {
     CATEGORIAS: "/categorias",
     MEDIDAS: "/medidas",
     MONEDAS: "/monedas",
+    CLIENTES: "/clientes",
     INVENTARIO: "/inventario",
     CATALOGO: "/catalogo",
     PROVEEDORES: "/proveedores",

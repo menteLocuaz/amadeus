@@ -31,69 +31,67 @@ const fadeInUp = keyframes`
 
 const StaggeredRow = styled.tr<{ $index?: number }>`
   animation: ${fadeInUp} 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: ${({ $index }) => ($index || 0) * 0.05}s;
+  animation-delay: ${({ $index }) => ($index || 0) * 0.03}s;
   opacity: 0;
   transition: all 0.2s ease;
   
-  &:hover {
-    background: ${({ theme }) => theme.primary}08 !important;
-    transform: scale(1.002) translateX(4px);
-    box-shadow: -4px 0 0 ${({ theme }) => theme.primary};
+  &:hover td {
+    background: ${({ theme }) => theme.bg2}15;
   }
 `;
 
 const BoldHeader = styled(HeaderTitle)`
   h1 {
-    font-family: 'Syne', system-ui, sans-serif;
+    font-family: 'Space Grotesk', sans-serif;
     font-size: 2.5rem;
     font-weight: 800;
-    letter-spacing: -0.05em;
-    background: linear-gradient(135deg, ${({ theme }) => theme.text}, ${({ theme }) => theme.primary});
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.04em;
+    color: ${({ theme }) => theme.text};
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
   }
   p {
     font-weight: 500;
-    opacity: 0.7;
-    margin-top: 8px;
-    font-size: 1.05rem;
+    opacity: 0.5;
+    margin-top: 12px;
+    font-size: 1.1rem;
   }
 `;
 
 /** Texto de precio con color primario del tema */
 const PriceText = styled.span`
-  font-weight: 800;
-  color: ${({ theme }) => theme.primary};
+  font-weight: 700;
+  color: ${({ theme }) => theme.text};
 `;
 /** Indicador visual de estado activo/inactivo con punto animado */
 const StatusIndicator = styled.div<{ $active: boolean }>`
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 12px;
-  border-radius: 20px;
+  padding: 4px 12px;
+  border-radius: 100px;
   background: ${({ $active, theme }) => ($active ? `${theme.success}15` : `${theme.danger}15`)};
   color: ${({ $active, theme }) => ($active ? theme.success : theme.danger)};
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
   
   .dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: currentColor;
-    box-shadow: 0 0 8px currentColor;
   }
 `;
 const FilterRow = styled.div`
-  padding: 16px 20px; 
+  padding: 24px; 
   display: flex; 
   flex-wrap: wrap; 
-  gap: 16px; 
-  border-bottom: 1px solid rgba(150, 150, 150, 0.15); 
+  gap: 24px; 
+  border-bottom: 1px solid ${({ theme }) => theme.bg3}11; 
+  background: ${({ theme }) => theme.bg2}08;
 `;
 /** Contenedor centrado para el estado de carga */
 const LoaderWrap = styled.div`
@@ -101,16 +99,23 @@ const LoaderWrap = styled.div`
   display: flex; 
   flex-direction: column; 
   align-items: center; 
-  gap: 20px;
-  p { opacity: 0.6; font-weight: 600; color: ${({ theme }) => theme.text}; }
+  gap: 24px;
+  p { 
+    opacity: 0.5; 
+    font-weight: 700; 
+    color: ${({ theme }) => theme.text}; 
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    font-size: 0.8rem;
+  }
 `;
 /** Mensaje cuando no hay resultados */
 const EmptyState = styled.div`
   text-align: center; 
-  padding: 80px 20px; 
-  opacity: 0.5;
+  padding: 80px 24px; 
+  opacity: 0.4;
   color: ${({ theme }) => theme.text};
-  font-weight: 500;
+  font-weight: 600;
 `;
 
 const InventarioCatalogo: React.FC = () => {
@@ -139,9 +144,9 @@ const InventarioCatalogo: React.FC = () => {
     // Devuelve el color de fondo del badge de stock según la cantidad disponible
     // Se añade "22" al hex del color para obtener ~13% de opacidad
     const getStockColor = (qty: number, min: number = 5) => {
-        if (qty <= 0) return `${theme.danger}22`;   // Agotado → rojo translúcido
-        if (qty <= min) return `${theme.warning}22`; // Stock bajo → amarillo translúcido
-        return `${theme.success}22`;                 // Stock normal → verde translúcido
+        if (qty <= 0) return `${theme.danger}15`;   // Agotado → rojo translúcido
+        if (qty <= min) return `${theme.warning}15`; // Stock bajo → amarillo translúcido
+        return `${theme.success}15`;                 // Stock normal → verde translúcido
     };
 
     // Devuelve el color del texto del badge de stock (mismo criterio que getStockColor)
@@ -153,9 +158,8 @@ const InventarioCatalogo: React.FC = () => {
 
     return (
         <PageContainer>
-            {/* ── Encabezado: título + barra de búsqueda + botón de recarga ── */}
             {/* ── Encabezado BOLD Editorial ── */}
-            <PageHeader style={{ paddingBottom: '2rem' }}>
+            <PageHeader style={{ marginBottom: '40px' }}>
                 <BoldHeader>
                     <h1><FiShoppingBag color={theme.primary} /> El Catálogo</h1>
                     <p>Colección curada de existencias y precios en tiempo real</p>
@@ -177,12 +181,17 @@ const InventarioCatalogo: React.FC = () => {
                 </Toolbar>
             </PageHeader>
 
-            <TableCard style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(252, 163, 17, 0.08)', border: '1px solid rgba(252, 163, 17, 0.2)', background: theme.bg + 'F0', backdropFilter: 'blur(10px)' }}>
+            <TableCard style={{ 
+                borderRadius: '16px', 
+                boxShadow: '0 10px 40px rgba(0,0,0,0.04)', 
+                border: `1px solid ${theme.bg3}11`,
+                overflow: 'hidden'
+            }}>
                 {/* ── Fila de filtros: categoría, sucursal y nivel de stock ── */}
                 <FilterRow>
                     {/* Filtro por categoría: usa id_categoria o id como fallback de clave */}
-                    <FormGroup style={{ width: "220px", marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6, fontWeight: 700 }}>Categoría</label>
+                    <FormGroup style={{ width: "240px", marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5, fontWeight: 700, letterSpacing: '0.1em' }}>Categoría</label>
                         <select value={selectedCat} onChange={(e) => setSelectedCat(e.target.value)}>
                             <option value="all">Todas las Categorías</option>
                             {categories.map(c => {
@@ -194,8 +203,8 @@ const InventarioCatalogo: React.FC = () => {
                     </FormGroup>
 
                     {/* Filtro por sucursal: usa id_sucursal o id como fallback de clave */}
-                    <FormGroup style={{ width: "220px", marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6, fontWeight: 700 }}>Sucursal</label>
+                    <FormGroup style={{ width: "240px", marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5, fontWeight: 700, letterSpacing: '0.1em' }}>Sucursal</label>
                         <select value={selectedSuc} onChange={(e) => setSelectedSuc(e.target.value)}>
                             <option value="all">Todas las Sucursales</option>
                             {sucursales.map(s => {
@@ -208,8 +217,8 @@ const InventarioCatalogo: React.FC = () => {
                     </FormGroup>
 
                     {/* Filtro por nivel de stock: "all" | "low" (1-5) | "out" (0) */}
-                    <FormGroup style={{ width: "200px", marginBottom: 0 }}>
-                        <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.6, fontWeight: 700 }}>Nivel de Stock</label>
+                    <FormGroup style={{ width: "220px", marginBottom: 0 }}>
+                        <label style={{ fontSize: '0.7rem', textTransform: 'uppercase', opacity: 0.5, fontWeight: 700, letterSpacing: '0.1em' }}>Nivel de Stock</label>
                         <select value={stockFilter} onChange={(e) => setStockFilter(e.target.value)}>
                             <option value="all">Todos los niveles</option>
                             <option value="low">Stock Bajo (≤ 5)</option>
@@ -236,7 +245,7 @@ const InventarioCatalogo: React.FC = () => {
                                 <th>Precio Venta</th>
                                 <th>Stock</th>
                                 <th>Estado</th>
-                                <th style={{ textAlign: "right" }}>Ver</th>
+                                <th style={{ textAlign: "right" }}>Acciones</th>
                             </tr>
                         </thead>
                         <tbody>
@@ -255,22 +264,26 @@ const InventarioCatalogo: React.FC = () => {
                                     <StaggeredRow key={p.id || p.id_producto} $index={idx}>
                                         {/* Columna Producto: miniatura + nombre */}
                                         <td>
-                                            <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
+                                            <div style={{ display: "flex", alignItems: "center", gap: "16px" }}>
                                                 {/* Imagen del producto; placeholder si no tiene imagen asignada */}
                                                 <Thumbnail src={p.imagen || "https://placehold.co/50x50?text=No+Img"} />
-                                                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{p.nombre}</div>
+                                                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{p.nombre}</div>
                                             </div>
                                         </td>
                                         {/* Columna SKU: identificador único del producto */}
                                         <td>
-                                          <Badge style={{fontFamily: 'JetBrains Mono', background: `${theme.primary}15`, color: theme.primary, letterSpacing: '0.05em'}}>
+                                          <Badge style={{fontFamily: 'JetBrains Mono', background: `${theme.primary}10`, color: theme.primary, letterSpacing: '0.02em', fontSize: '0.65rem'}}>
                                             {p.id_producto || "N/A"}
                                           </Badge>
                                         </td>
                                         {/* Columna Categoría: relación anidada del backend */}
-                                        <td>{p.categoria?.nombre || "General"}</td>
+                                        <td>
+                                          <Badge $color={`${theme.primary}44`} style={{color: theme.textsecondary, fontSize: '0.65rem'}}>
+                                            {p.categoria?.nombre || "General"}
+                                          </Badge>
+                                        </td>
                                         {/* Columna Sucursal: resuelta por el helper del hook */}
-                                        <td>{getSucursalLabel(p)}</td>
+                                        <td style={{ fontSize: '0.85rem', opacity: 0.7 }}>{getSucursalLabel(p)}</td>
                                         {/* Columna Precio: moneda + precio formateado a 2 decimales */}
                                         <td>
                                             <PriceText style={{ fontFamily: 'JetBrains Mono' }}>
@@ -281,7 +294,7 @@ const InventarioCatalogo: React.FC = () => {
                                         <td>
                                             <Badge
                                                 $color={getStockColor(p.stock || 0)}
-                                                style={{ color: getStockTextColor(p.stock || 0), display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', fontFamily: 'JetBrains Mono' }}
+                                                style={{ color: getStockTextColor(p.stock || 0), display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 12px', fontFamily: 'JetBrains Mono', fontSize: '0.8rem' }}
                                             >
                                                 {p.stock} {p.unidad?.nombre || "u"}
                                                 {/* Ícono de advertencia visible solo cuando el stock es crítico */}
@@ -298,7 +311,7 @@ const InventarioCatalogo: React.FC = () => {
                                         </td>
                                         {/* Columna Ver: abre el modal de detalle con el producto seleccionado */}
                                         <td style={{ textAlign: "right" }}>
-                                            <ActionBtn onClick={() => setViewProduct(p)} title="Ver detalles" style={{boxShadow: `0 4px 12px ${theme.primary}33`}}>
+                                            <ActionBtn onClick={() => setViewProduct(p)} title="Ver detalles">
                                                 <FiEye />
                                             </ActionBtn>
                                         </td>

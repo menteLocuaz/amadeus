@@ -40,6 +40,10 @@ export const ENDPOINTS = {
     base: '/monedas',
     byId: (id: string) => `/monedas/${id}`,
   },
+  clientes: {
+    base: '/clientes',
+    byId: (id: string) => `/clientes/${id}`,
+  },
   proveedores: {
     base: '/proveedores',
     byId: (id: string) => `/proveedores/${id}`,
@@ -102,5 +106,11 @@ export const ENDPOINTS = {
   dispositivosPos: {
     base: '/dispositivos-pos',
     byId: (id: string) => `/dispositivos-pos/${id}`,
+  },
+  dashboard: {
+    resumen: '/dashboard/resumen',
+    antiguedadDeuda: '/dashboard/antiguedad-deuda',
+    composicionCategoria: '/dashboard/composicion-categoria',
+    mermas: '/dashboard/mermas',
   },
 } as const;

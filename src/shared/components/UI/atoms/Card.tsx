@@ -5,16 +5,16 @@ const borderColor = (p: any) => p.theme?.bg3 ? `${p.theme.bg3}33` : "rgba(255,25
 
 export const Card = styled.div<{ $p?: string }>`
   background: ${cardBg};
-  border-radius: 20px;
+  border-radius: 12px;
   padding: ${p => p.$p ?? "24px"};
   border: 1px solid ${borderColor};
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 `;
 
 export const TableCard = styled.div`
   background: ${({ theme }) => theme.bg};
-  border-radius: 20px;
-  border: 1px solid ${({ theme }) => theme.bg3}22;
+  border-radius: 12px;
+  border: 1px solid ${({ theme }) => theme.bg3}15;
   overflow: hidden;
-  box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.02);
 `;
