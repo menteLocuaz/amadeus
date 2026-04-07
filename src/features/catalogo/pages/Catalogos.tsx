@@ -6,7 +6,7 @@
 
 import React, { useState } from "react";
 import { FiSearch, FiEye, FiRefreshCw, FiAlertTriangle, FiShoppingBag } from "react-icons/fi";
-import styled, { useTheme } from "styled-components";
+import styled, { useTheme, keyframes } from "styled-components";
 
 // Componentes UI compartidos
 import {
@@ -22,6 +22,46 @@ import { useCatalogo } from "../hooks/useCatalogo";
 import { type Product } from "../../products/services/ProductService";
 // Modal que muestra el detalle completo de un producto seleccionado
 import { CatalogoModal } from "../components/CatalogoModal";
+
+// --- Frontend Design Animations & Components ---
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const StaggeredRow = styled.tr<{ $index?: number }>`
+  animation: ${fadeInUp} 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: ${({ $index }) => ($index || 0) * 0.05}s;
+  opacity: 0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.primary}08 !important;
+    transform: scale(1.002) translateX(4px);
+    box-shadow: -4px 0 0 ${({ theme }) => theme.primary};
+  }
+`;
+
+const BoldHeader = styled(HeaderTitle)`
+  h1 {
+    font-family: 'Syne', system-ui, sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    background: linear-gradient(135deg, ${({ theme }) => theme.text}, ${({ theme }) => theme.primary});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  p {
+    font-weight: 500;
+    opacity: 0.7;
+    margin-top: 8px;
+    font-size: 1.05rem;
+  }
+`;
 
 /** Texto de precio con color primario del tema */
 const PriceText = styled.span`
@@ -48,14 +88,12 @@ const StatusIndicator = styled.div<{ $active: boolean }>`
     box-shadow: 0 0 8px currentColor;
   }
 `;
-/** Fila de filtros con separador inferior */
 const FilterRow = styled.div`
-  padding: 20px; 
+  padding: 16px 20px; 
   display: flex; 
   flex-wrap: wrap; 
-  gap: 15px; 
-  border-bottom: 1px solid ${({ theme }) => theme.bg3}22; 
-  background: ${({ theme }) => theme.bg}05;
+  gap: 16px; 
+  border-bottom: 1px solid rgba(150, 150, 150, 0.15); 
 `;
 /** Contenedor centrado para el estado de carga */
 const LoaderWrap = styled.div`
@@ -116,11 +154,12 @@ const InventarioCatalogo: React.FC = () => {
     return (
         <PageContainer>
             {/* ── Encabezado: título + barra de búsqueda + botón de recarga ── */}
-            <PageHeader>
-                <HeaderTitle>
-                    <h1><FiShoppingBag color={theme.primary} /> Inventario & Catálogo</h1>
-                    <p>Consulta de existencias, precios y disponibilidad en tiempo real.</p>
-                </HeaderTitle>
+            {/* ── Encabezado BOLD Editorial ── */}
+            <PageHeader style={{ paddingBottom: '2rem' }}>
+                <BoldHeader>
+                    <h1><FiShoppingBag color={theme.primary} /> El Catálogo</h1>
+                    <p>Colección curada de existencias y precios en tiempo real</p>
+                </BoldHeader>
 
                 <Toolbar>
                     <SearchBox>
@@ -138,7 +177,7 @@ const InventarioCatalogo: React.FC = () => {
                 </Toolbar>
             </PageHeader>
 
-            <TableCard>
+            <TableCard style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(252, 163, 17, 0.08)', border: '1px solid rgba(252, 163, 17, 0.2)', background: theme.bg + 'F0', backdropFilter: 'blur(10px)' }}>
                 {/* ── Fila de filtros: categoría, sucursal y nivel de stock ── */}
                 <FilterRow>
                     {/* Filtro por categoría: usa id_categoria o id como fallback de clave */}
@@ -212,25 +251,29 @@ const InventarioCatalogo: React.FC = () => {
                                 </tr>
                             ) : (
                                 // Renderizado de filas: p.id es el UUID, p.id_producto es el SKU legible
-                                products.map((p) => (
-                                    <tr key={p.id || p.id_producto}>
+                                products.map((p, idx) => (
+                                    <StaggeredRow key={p.id || p.id_producto} $index={idx}>
                                         {/* Columna Producto: miniatura + nombre */}
                                         <td>
                                             <div style={{ display: "flex", alignItems: "center", gap: "15px" }}>
                                                 {/* Imagen del producto; placeholder si no tiene imagen asignada */}
                                                 <Thumbnail src={p.imagen || "https://placehold.co/50x50?text=No+Img"} />
-                                                <div style={{ fontWeight: 700, fontSize: '0.95rem' }}>{p.nombre}</div>
+                                                <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>{p.nombre}</div>
                                             </div>
                                         </td>
                                         {/* Columna SKU: identificador único del producto */}
-                                        <td><Badge>{p.id_producto || "N/A"}</Badge></td>
+                                        <td>
+                                          <Badge style={{fontFamily: 'JetBrains Mono', background: `${theme.primary}15`, color: theme.primary, letterSpacing: '0.05em'}}>
+                                            {p.id_producto || "N/A"}
+                                          </Badge>
+                                        </td>
                                         {/* Columna Categoría: relación anidada del backend */}
                                         <td>{p.categoria?.nombre || "General"}</td>
                                         {/* Columna Sucursal: resuelta por el helper del hook */}
                                         <td>{getSucursalLabel(p)}</td>
                                         {/* Columna Precio: moneda + precio formateado a 2 decimales */}
                                         <td>
-                                            <PriceText>
+                                            <PriceText style={{ fontFamily: 'JetBrains Mono' }}>
                                                 {p.moneda?.nombre || "$"} {(p.precio_venta || 0).toFixed(2)}
                                             </PriceText>
                                         </td>
@@ -238,7 +281,7 @@ const InventarioCatalogo: React.FC = () => {
                                         <td>
                                             <Badge
                                                 $color={getStockColor(p.stock || 0)}
-                                                style={{ color: getStockTextColor(p.stock || 0), display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px' }}
+                                                style={{ color: getStockTextColor(p.stock || 0), display: 'inline-flex', alignItems: 'center', gap: 6, padding: '4px 10px', fontFamily: 'JetBrains Mono' }}
                                             >
                                                 {p.stock} {p.unidad?.nombre || "u"}
                                                 {/* Ícono de advertencia visible solo cuando el stock es crítico */}
@@ -255,11 +298,11 @@ const InventarioCatalogo: React.FC = () => {
                                         </td>
                                         {/* Columna Ver: abre el modal de detalle con el producto seleccionado */}
                                         <td style={{ textAlign: "right" }}>
-                                            <ActionBtn onClick={() => setViewProduct(p)} title="Ver detalles">
+                                            <ActionBtn onClick={() => setViewProduct(p)} title="Ver detalles" style={{boxShadow: `0 4px 12px ${theme.primary}33`}}>
                                                 <FiEye />
                                             </ActionBtn>
                                         </td>
-                                    </tr>
+                                    </StaggeredRow>
                                 ))
                             )}
                         </tbody>

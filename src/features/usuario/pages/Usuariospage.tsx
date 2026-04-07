@@ -1,6 +1,8 @@
 import React, { useEffect } from "react";
 import { ClimbingBoxLoader } from "react-spinners";
-import { FiPlus, FiUsers, FiArrowLeft } from "react-icons/fi";
+import { FiPlus, FiUsers, FiArrowLeft, FiHome } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
+import { useTheme } from "styled-components";
 
 // Componentes UI Compartidos
 import { 
@@ -9,7 +11,6 @@ import {
 
 // Hooks y Lógica
 import { useUsuarios } from "../hooks/useUsuarios";
-import { USER_COLORS as C } from "../constants/usuarios";
 
 // Sub-componentes Locales (Refactorizados)
 import UserStats from "../components/UserStats";
@@ -33,6 +34,9 @@ import {
  * se delega en sub-componentes especializados.
  */
 const UsuariosPage: React.FC = () => {
+  const navigate = useNavigate();
+  const theme = useTheme();
+
   const {
     // Estado de Datos
     paginated, filteredCount, sucursales, roles, statusList,
@@ -95,7 +99,7 @@ const UsuariosPage: React.FC = () => {
     return (
       <PageContainer>
         <LoaderWrap>
-          <ClimbingBoxLoader color={C.accent} size={15} />
+          <ClimbingBoxLoader color={theme.primary} size={15} />
           <p>Sincronizando Usuarios...</p>
         </LoaderWrap>
       </PageContainer>
@@ -105,8 +109,7 @@ const UsuariosPage: React.FC = () => {
   return (
     <PageContainer>
       <ContentWrapper>
-        
-        {/* HEADER DINÁMICO */}
+        {/* HEADER TECHNICAL LEDGER */}
         <PageHeader>
           <HeaderTitle>
             <h1><FiUsers /> Gestión de Colaboradores</h1>
@@ -114,11 +117,16 @@ const UsuariosPage: React.FC = () => {
           </HeaderTitle>
           <Toolbar>
             {viewMode === 'list' ? (
-              <ActionBtn $variant="primary" onClick={openCreate}>
-                <FiPlus /> Nuevo Usuario
-              </ActionBtn>
+              <>
+                <ActionBtn onClick={() => navigate('/')} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)', border: '1px solid currentColor', borderRadius: '4px', background: 'transparent' }}>
+                  <FiHome /> Volver al Inicio
+                </ActionBtn>
+                <ActionBtn $variant="primary" onClick={openCreate} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)', border: '1px solid transparent', borderRadius: '4px' }}>
+                  <FiPlus /> Registrar Nuevo
+                </ActionBtn>
+              </>
             ) : (
-              <ActionBtn onClick={goBack}>
+              <ActionBtn onClick={goBack} style={{ boxShadow: '0 1px 2px rgba(0,0,0,0.05)', border: '1px solid currentColor', borderRadius: '4px', background: 'transparent' }}>
                 <FiArrowLeft /> Volver al Listado
               </ActionBtn>
             )}
@@ -135,7 +143,7 @@ const UsuariosPage: React.FC = () => {
             />
 
             {/* LISTADO PRINCIPAL */}
-            <MainCard>
+            <MainCard style={{ borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', border: '1px solid rgba(150, 150, 150, 0.15)' }}>
               <UserFilters 
                 filters={filters}
                 setFilters={setFilters}
@@ -158,12 +166,13 @@ const UsuariosPage: React.FC = () => {
                 current={currentPage} 
                 total={totalPages} 
                 onPageChange={setPage} 
+                theme={theme}
               />
             </MainCard>
           </>
         ) : (
           /* FORMULARIO DE EDICIÓN/CREACIÓN */
-          <MainCard>
+          <MainCard style={{ borderRadius: '6px', boxShadow: '0 1px 3px rgba(0,0,0,0.02)', border: '1px solid rgba(150, 150, 150, 0.15)' }}>
             <UserForm 
               register={register}
               handleSubmit={handleSubmit}
@@ -186,9 +195,9 @@ const UsuariosPage: React.FC = () => {
 /**
  * Componente de Paginación Interno para limpieza visual
  */
-const Pagination = ({ current, total, onPageChange }: any) => (
-  <div style={{ padding: 24, borderTop: `1px solid ${C.border}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-    <span style={{ fontSize: 13, color: C.textMuted, fontWeight: 600 }}>
+const Pagination = ({ current, total, onPageChange, theme }: any) => (
+  <div style={{ padding: 24, borderTop: `1px solid ${theme.bg3}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+    <span style={{ fontSize: 13, color: theme.texttertiary || theme.text, fontWeight: 600 }}>
       Página {current} de {total || 1}
     </span>
     <div style={{ display: 'flex', gap: 10 }}>

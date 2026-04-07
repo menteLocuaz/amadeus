@@ -40,6 +40,48 @@ import { type Compra } from "../services/PurchaseService";
 
 const columnHelper = createColumnHelper<Compra>();
 
+import styled, { keyframes } from "styled-components";
+
+// --- Frontend Design Animations & Components ---
+const fadeInUp = keyframes`
+  from { opacity: 0; transform: translateY(15px); }
+  to { opacity: 1; transform: translateY(0); }
+`;
+
+const StaggeredRow = styled.tr<{ $index?: number }>`
+  animation: ${fadeInUp} 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  animation-delay: ${({ $index }) => ($index || 0) * 0.05}s;
+  opacity: 0;
+  transition: all 0.2s ease;
+  
+  &:hover {
+    background: ${({ theme }) => theme.primary}08 !important;
+    transform: scale(1.002) translateX(4px);
+    box-shadow: -4px 0 0 ${({ theme }) => theme.primary};
+  }
+`;
+
+const BoldHeader = styled(HeaderTitle)`
+  h1 {
+    font-family: 'Outfit', 'Space Grotesk', system-ui, sans-serif;
+    font-size: 2.5rem;
+    font-weight: 800;
+    letter-spacing: -0.05em;
+    background: linear-gradient(135deg, ${({ theme }) => theme.text}, ${({ theme }) => theme.primary});
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  p {
+    font-weight: 500;
+    opacity: 0.7;
+    margin-top: 8px;
+    font-size: 1.05rem;
+  }
+`;
+
 const Compras: React.FC = () => {
     const theme = useTheme();
     // 1. Data Fetching
@@ -117,8 +159,8 @@ const Compras: React.FC = () => {
         columnHelper.accessor("numero_orden", {
             header: "N\u00ba de Orden",
             cell: info => (
-                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <FiShoppingBag opacity={0.5} />
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, fontFamily: 'JetBrains Mono', fontWeight: 600, color: theme.primary, background: `${theme.primary}15`, padding: '4px 10px', borderRadius: '4px', letterSpacing: '0.05em', width: 'fit-content' }}>
+                    <FiShoppingBag opacity={0.8} />
                     <strong>{info.getValue()}</strong>
                 </div>
             )
@@ -138,7 +180,7 @@ const Compras: React.FC = () => {
         columnHelper.accessor("total", {
             header: "Total",
             cell: info => (
-                <div style={{ fontWeight: 800 }}>
+                <div style={{ fontWeight: 800, fontSize: '1.1rem', fontFamily: 'JetBrains Mono', color: theme.text }}>
                     ${(info.getValue() || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                 </div>
             )
@@ -171,7 +213,7 @@ const Compras: React.FC = () => {
                                 <FiTruck /> Recibir
                             </Button>
                         )}
-                        <ActionBtn title="Detalles" onClick={() => { }}>
+                        <ActionBtn title="Detalles" onClick={() => { }} style={{boxShadow: `0 4px 12px ${theme.primary}33`}}>
                             <FiPackage />
                         </ActionBtn>
                     </div>
@@ -195,11 +237,11 @@ const Compras: React.FC = () => {
 
     return (
         <PageContainer>
-            <PageHeader>
-                <HeaderTitle>
-                    <h1><FiShoppingBag color={theme.primary} /> Gestionn de Compras</h1>
-                    <p>Administra ordenes de compra y recepcion de mercancia</p>
-                </HeaderTitle>
+            <PageHeader style={{ paddingBottom: '2rem' }}>
+                <BoldHeader>
+                    <h1><FiShoppingBag color={theme.primary} /> Logística & Compras</h1>
+                    <p>Ledger operacional de órdenes entrantes y recepciones</p>
+                </BoldHeader>
 
                 <Toolbar>
                     <SearchBox>
@@ -219,7 +261,7 @@ const Compras: React.FC = () => {
                 </Toolbar>
             </PageHeader>
 
-            <TableCard>
+            <TableCard style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(252, 163, 17, 0.08)', border: '1px solid rgba(252, 163, 17, 0.2)', background: theme.bg + 'F0', backdropFilter: 'blur(10px)' }}>
                 {isLoading ? (
                     <div style={{ padding: 100, display: "flex", flexDirection: 'column', alignItems: "center", gap: 20 }}>
                         <ClimbingBoxLoader color={theme.primary} />
@@ -247,21 +289,21 @@ const Compras: React.FC = () => {
                                         </td>
                                     </tr>
                                 ) : (
-                                    table.getRowModel().rows.map(row => (
-                                        <tr key={row.id}>
+                                    table.getRowModel().rows.map((row, idx) => (
+                                        <StaggeredRow key={row.id} $index={idx}>
                                             {row.getVisibleCells().map(cell => (
                                                 <td key={cell.id}>
                                                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                                                 </td>
                                             ))}
-                                        </tr>
+                                        </StaggeredRow>
                                     ))
                                 )}
                             </tbody>
                         </Table>
 
                         {/* Pagination */}
-                        <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(0,0,0,0.05)' }}>
+                        <div style={{ padding: '15px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(150,150,150,0.15)' }}>
                             <div style={{ display: 'flex', gap: 8 }}>
                                 <Button
                                     $variant="ghost"
