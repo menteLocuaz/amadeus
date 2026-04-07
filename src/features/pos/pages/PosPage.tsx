@@ -1,11 +1,11 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import styled from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
 import { FiSearch, FiTag } from "react-icons/fi";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../hooks/useCart";
 import { usePOSStore } from "../store/usePOSStore";
-import { ProductService, type Product } from "../../products/services/ProductService";
+import { useProductQueries } from "../../products/hooks/useProductQueries";
 import { POSService } from "../services/POSService";
 import {
   ProductGrid, ProductCard, ProductImage
@@ -14,7 +14,7 @@ import CartSidebar from "../components/CartSidebar";
 
 const PosContainer = styled.div`
   display: flex;
-  height: calc(100vh - 40px); /* Adjusts for App.tsx padding */
+  height: calc(100vh - 40px);
   gap: 24px;
   padding: 0 28px;
   box-sizing: border-box;
@@ -70,22 +70,25 @@ const RightSide = styled.div`
   height: 100%;
 `;
 
+/**
+ * PosPage Component
+ * Provides a Point of Sale interface with a product grid and sidebar cart.
+ */
 const PosPage: React.FC = () => {
   const navigate = useNavigate();
   const { activePeriodo, setPeriodo, initialize } = usePOSStore();
   
-  const [products, setProducts] = useState<Product[]>([]);
-  const [filtered, setFiltered] = useState<Product[]>([]);
-  const [loading, setLoading] = useState(true);
+  // 1. Data Fetching (Using global queries)
+  const { data: products = [], isLoading: loading } = useProductQueries();
+
+  // 2. UI State
   const [query, setQuery] = useState("");
-  const [debouncedQuery, setDebouncedQuery] = useState("");
   const cart = useCart();
 
-  // 1. Validar sesión de POS al cargar
+  // 3. Session Validation
   useEffect(() => {
     const validatePOS = async () => {
-      initialize(); // Carga de localStorage
-      
+      initialize();
       const currentStation = usePOSStore.getState().id_estacion;
       
       if (!currentStation) {
@@ -93,21 +96,14 @@ const PosPage: React.FC = () => {
         return;
       }
 
-      // Si no tenemos el periodo en el store, verificar con el nuevo endpoint de estado
       if (!activePeriodo) {
         try {
           const { caja, periodo } = await POSService.getEstado(currentStation);
-          
-          if (!caja) {
+          if (!caja || !periodo) {
             navigate("/pos/apertura");
             return;
           }
-
-          if (periodo) {
-            setPeriodo(periodo);
-          } else {
-            navigate("/pos/apertura");
-          }
+          setPeriodo(periodo);
         } catch (err) {
           console.error("Error validando POS:", err);
           navigate("/pos/apertura");
@@ -117,44 +113,15 @@ const PosPage: React.FC = () => {
     validatePOS();
   }, [navigate, initialize, activePeriodo, setPeriodo]);
 
-  // Load products
-  useEffect(() => {
-    const load = async () => {
-      setLoading(true);
-      try {
-        const res = await ProductService.getAll();
-        const list = (res.data || []).map((p: any) => ({
-          ...p,
-          id_producto: p.id_producto || p.id,
-        }));
-        setProducts(list);
-        setFiltered(list);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    load();
-  }, []);
-
-  // Debounce search query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedQuery(query);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [query]);
-
-  // Filter products based on debounced query
-  useEffect(() => {
-    const q = debouncedQuery.trim().toLowerCase();
-    if (!q) { setFiltered(products); return; }
-    setFiltered(products.filter(p => 
+  // 4. Filtering (Memoized)
+  const filtered = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    if (!q) return products;
+    return products.filter(p => 
       (p.nombre || "").toLowerCase().includes(q) || 
       String(p.id_producto || p.id).includes(q)
-    ));
-  }, [debouncedQuery, products]);
+    );
+  }, [query, products]);
 
   const onClear = () => {
     if (cart.items.length > 0 && window.confirm("¿Limpiar carrito?")) cart.clear();
