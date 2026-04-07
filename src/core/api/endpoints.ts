@@ -40,6 +40,10 @@ export const ENDPOINTS = {
     base: '/monedas',
     byId: (id: string) => `/monedas/${id}`,
   },
+  clientes: {
+    base: '/clientes',
+    byId: (id: string) => `/clientes/${id}`,
+  },
   proveedores: {
     base: '/proveedores',
     byId: (id: string) => `/proveedores/${id}`,

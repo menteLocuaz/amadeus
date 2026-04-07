@@ -39,6 +39,7 @@ export const Sidebar: React.FC = () => {
         { label: "Empresas", icon: <MdBusiness />, to: ROUTES.EMPRESAS },
         { label: "Sucursales", icon: <FiMapPin />, to: ROUTES.SUCURSALES },
         { label: "Usuarios", icon: <FiUsers />, to: ROUTES.USUARIOS },
+        { label: "Clientes", icon: <FiUsers />, to: ROUTES.CLIENTES },
         { label: "Caja (POS)", icon: <MdPointOfSale />, to: ROUTES.POS },
         { label: "Catálogo", icon: <FiShoppingBag />, to: ROUTES.CATALOGO },
         { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },
