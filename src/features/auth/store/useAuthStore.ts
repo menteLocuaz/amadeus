@@ -44,9 +44,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           const user = await AuthService.getMe();
           set({ user, isLoading: false });
-        } catch (err: unknown) {
-          const errorMessage = err instanceof Error ? err.message : 'Error desconocido';
-          set({ error: errorMessage, isLoading: false, user: null, token: null });
+        } catch (err: any) {
+          const errorMessage = err?.message || 'Error desconocido';
+          // No limpiamos el token aquí para evitar logout por errores de red temporales
+          // El interceptor de Axios ya maneja el 401/403 limpiando la sesión
+          set({ error: errorMessage, isLoading: false });
         }
       },
 

@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { persist, createJSONStorage } from 'zustand/middleware';
 
 export interface ActivePeriodo {
     id_periodo: string;
@@ -17,36 +18,41 @@ interface POSState {
     setEstacion: (id: string, nombre: string) => void;
     clearEstacion: () => void;
     setPeriodo: (periodo: ActivePeriodo | null) => void;
-    initialize: () => void;
+    initialize: () => void; // Mantener para compatibilidad, aunque persist lo maneja
 }
 
-export const usePOSStore = create<POSState>((set) => ({
-    id_estacion: null,
-    estacionNombre: null,
-    activePeriodo: null,
-    isLoading: false,
+export const usePOSStore = create<POSState>()(
+    persist(
+        (set) => ({
+            id_estacion: null,
+            estacionNombre: null,
+            activePeriodo: null,
+            isLoading: false,
 
-    setEstacion: (id, nombre) => {
-        localStorage.setItem('id_estacion', id);
-        localStorage.setItem('estacion_nombre', nombre);
-        set({ id_estacion: id, estacionNombre: nombre });
-    },
+            setEstacion: (id, nombre) => {
+                set({ id_estacion: id, estacionNombre: nombre });
+            },
 
-    clearEstacion: () => {
-        localStorage.removeItem('id_estacion');
-        localStorage.removeItem('estacion_nombre');
-        set({ id_estacion: null, estacionNombre: null, activePeriodo: null });
-    },
+            clearEstacion: () => {
+                set({ id_estacion: null, estacionNombre: null, activePeriodo: null });
+            },
 
-    setPeriodo: (periodo) => {
-        set({ activePeriodo: periodo });
-    },
+            setPeriodo: (periodo) => {
+                set({ activePeriodo: periodo });
+            },
 
-    initialize: () => {
-        const id = localStorage.getItem('id_estacion');
-        const nombre = localStorage.getItem('estacion_nombre');
-        if (id && nombre) {
-            set({ id_estacion: id, estacionNombre: nombre });
+            initialize: () => {
+                // El middleware persist ya carga los datos automáticamente al hidratar el store
+            }
+        }),
+        {
+            name: 'pos-storage',
+            storage: createJSONStorage(() => localStorage),
+            partialize: (state) => ({ 
+                id_estacion: state.id_estacion, 
+                estacionNombre: state.estacionNombre,
+                activePeriodo: state.activePeriodo
+            }),
         }
-    }
-}));
+    )
+);
