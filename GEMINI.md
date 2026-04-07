@@ -57,3 +57,6 @@ The project follows a standard React directory structure:
 - `src/App.tsx`: Layout and Theme provider setup.
 - `src/routes/routes.tsx`: Navigation mapping.
 - `src/styles/Themes.tsx`: Color palettes and design tokens.
+
+## Code
+Reescribe este código para hacerlo más limpio, eficiente y legible. Incluye comentarios explicativos donde sea necesario

@@ -87,10 +87,12 @@ export const useUsuarios = () => {
         setEditingItem(null);
         // Find a default active status if available
         const defaultStatus = statusList.find(s => s.std_descripcion.toLowerCase() === 'activo')?.id_status || statusList[0]?.id_status || "";
-        reset({ 
-            nombre: "", apellido: "", email: "", username: "", 
-            usu_telefono: "", password: "", confirmPassword: "", 
-            id_sucursal: "", id_rol: "", id_status: defaultStatus 
+        reset({
+            nombre: "", apellido: "", email: "", username: "",
+            usu_dni: "", usu_telefono: "", password: "", confirmPassword: "",
+            usu_pin_pos: "", usu_tarjeta_nfc: "", nombre_ticket: "",
+            sucursales_acceso: [],
+            id_sucursal: "", id_rol: "", id_status: defaultStatus
         });
         setViewMode('form');
     };
