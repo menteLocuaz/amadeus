@@ -1,29 +1,34 @@
 import styled from "styled-components";
 
 export const Badge = styled.span<{ $color?: string; $variant?: "outline" }>`
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 12px;
+  border-radius: 100px;
+  font-size: 0.7rem;
   font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  
   border: ${({ $variant, $color, theme }) =>
-    $variant === "outline" ? `1px solid ${$color || theme.bg4}55` : "none"};
-  background: ${({ $variant, $color }) =>
+    $variant === "outline" ? `1px solid ${$color || theme.primary}44` : "1px solid transparent"};
+  
+  background: ${({ $variant, $color, theme }) =>
     $variant === "outline"
       ? "transparent"
-      : $color || "rgba(252, 163, 17, 0.1)"};
+      : `${$color || theme.primary}15`};
+  
   color: ${({ $variant, $color, theme }) =>
-    $variant === "outline"
-      ? $color || theme.bg4
-      : $color
-      ? "#fff"
-      : theme.bg4};
+    $color || theme.primary};
 `;
 
 export const Tag = styled.span<{ $color?: string }>`
-  padding: 6px 8px;
-  border-radius: 999px;
+  padding: 4px 10px;
+  border-radius: 6px;
   background: ${p => p.$color ?? (p.theme?.bg2 || "rgba(255,255,255,0.04)")};
-  font-weight: 700;
+  font-weight: 600;
   color: ${p => p.theme?.text || "#F8FAFC"};
-  font-size: 0.85rem;
+  font-size: 0.8rem;
+  letter-spacing: 0.02em;
 `;

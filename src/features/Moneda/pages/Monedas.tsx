@@ -19,8 +19,8 @@ const Header = styled.header`
   justify-content: space-between;
   align-items: flex-end;
   margin-bottom: 48px;
-  border-bottom: 1px solid ${({ theme }) => theme.bg3}44;
-  padding-bottom: 24px;
+  border-bottom: 1px solid ${({ theme }) => theme.bg3}11;
+  padding-bottom: 32px;
 
   @media (max-width: 768px) {
     flex-direction: column;
@@ -31,51 +31,54 @@ const Header = styled.header`
 
 const TitleArea = styled.div`
   h1 {
-    font-size: 2.2rem;
+    font-size: 2.5rem;
     font-weight: 800;
-    letter-spacing: -0.02em;
+    letter-spacing: -0.04em;
     color: ${({ theme }) => theme.text};
-    margin: 0 0 8px 0;
+    margin: 0 0 12px 0;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 16px;
+    font-family: 'Space Grotesk', sans-serif;
 
     svg {
-      color: ${({ theme }) => theme.bg4};
-      font-size: 1.8rem;
+      color: ${({ theme }) => theme.primary};
+      font-size: 2rem;
     }
   }
   p {
-    font-size: 1rem;
+    font-size: 1.1rem;
     color: ${({ theme }) => theme.texttertiary};
-    max-width: 500px;
-    line-height: 1.5;
+    max-width: 600px;
+    line-height: 1.6;
+    font-weight: 500;
   }
 `;
 
 const ActionArea = styled.div`
   display: flex;
-  gap: 12px;
+  gap: 16px;
 `;
 
 const MintButton = styled.button`
   all: unset;
   display: flex;
   align-items: center;
-  gap: 10px;
-  padding: 12px 24px;
-  background: ${({ theme }) => theme.bg4};
-  color: ${({ theme }) => theme.bg};
-  border-radius: 8px;
+  gap: 12px;
+  padding: 12px 28px;
+  background: ${({ theme }) => theme.primary};
+  color: #000;
+  border-radius: 12px;
   font-weight: 700;
-  font-size: 0.95rem;
+  font-size: 1rem;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px ${({ theme }) => theme.primary}33;
 
   &:hover:not(:disabled) {
     transform: translateY(-2px);
-    filter: brightness(1.1);
-    box-shadow: 0 8px 16px ${({ theme }) => theme.bg4}33;
+    filter: brightness(1.05);
+    box-shadow: 0 12px 32px ${({ theme }) => theme.primary}44;
   }
 
   &:disabled {
@@ -86,34 +89,42 @@ const MintButton = styled.button`
 
 const StatsStrip = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
-  margin-bottom: 40px;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
 `;
 
 const StatItem = styled.div`
-  padding: 20px;
-  background: ${({ theme }) => theme.bg2}44;
-  border: 1px solid ${({ theme }) => theme.bg3}22;
-  border-radius: 12px;
+  padding: 24px;
+  background: ${({ theme }) => theme.bg};
+  border: 1px solid ${({ theme }) => theme.bg3}11;
+  border-radius: 16px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
+  transition: all 0.3s ease;
+
+  &:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 12px 24px rgba(0,0,0,0.04);
+  }
 
   .label {
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.1em;
+    letter-spacing: 0.15em;
     color: ${({ theme }) => theme.texttertiary};
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
+    
+    svg { color: ${({ theme }) => theme.primary}; }
   }
 
   .value {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 1.5rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 1.75rem;
     font-weight: 800;
     color: ${({ theme }) => theme.text};
   }
@@ -121,41 +132,41 @@ const StatItem = styled.div`
 
 const Toolbar = styled.div`
   display: flex;
-  gap: 16px;
-  margin-bottom: 24px;
+  gap: 20px;
+  margin-bottom: 32px;
   align-items: center;
 `;
 
 const SearchBox = styled.div`
   position: relative;
   flex: 1;
-  max-width: 400px;
+  max-width: 440px;
 
   svg {
     position: absolute;
-    left: 16px;
+    left: 18px;
     top: 50%;
     transform: translateY(-50%);
-    color: ${({ theme }) => theme.bg4};
-    font-size: 1.1rem;
+    color: ${({ theme }) => theme.primary};
+    font-size: 1.2rem;
     pointer-events: none;
   }
 
   input {
     width: 100%;
-    padding: 12px 16px 12px 48px;
-    background: ${({ theme }) => theme.bg2};
-    border: 1px solid ${({ theme }) => theme.bg3}66;
-    border-radius: 10px;
+    padding: 14px 16px 14px 52px;
+    background: ${({ theme }) => theme.bg2}22;
+    border: 1px solid ${({ theme }) => theme.bg3}15;
+    border-radius: 12px;
     color: ${({ theme }) => theme.text};
-    font-size: 0.95rem;
-    transition: all 0.2s ease;
+    font-size: 1rem;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 
     &:focus {
       outline: none;
-      border-color: ${({ theme }) => theme.bg4};
+      border-color: ${({ theme }) => theme.primary};
       background: ${({ theme }) => theme.bg};
-      box-shadow: 0 0 0 4px ${({ theme }) => theme.bg4}15;
+      box-shadow: 0 0 0 4px ${({ theme }) => theme.primary}11;
     }
 
     &::placeholder {
@@ -166,27 +177,30 @@ const SearchBox = styled.div`
 
 const LedgerCard = styled.div`
   background: ${({ theme }) => theme.bg};
-  border: 1px solid ${({ theme }) => theme.bg3}33;
-  border-radius: 16px;
+  border: 1px solid ${({ theme }) => theme.bg3}11;
+  border-radius: 20px;
   overflow: hidden;
-  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.02);
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.03);
 `;
 
 const LoadingState = styled.div`
-  padding: 100px;
+  padding: 120px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 24px;
-  color: ${({ theme }) => theme.bg4};
+  gap: 32px;
+  color: ${({ theme }) => theme.primary};
 
   p {
-    font-family: "JetBrains Mono", monospace;
-    font-size: 0.85rem;
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 0.9rem;
     font-weight: 700;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
+    letter-spacing: 0.3em;
+    animation: pulse 2s infinite;
   }
+  
+  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 `;
 
 /* ------------------------------- Component ------------------------------- */

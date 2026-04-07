@@ -56,7 +56,7 @@ export const Light = {
 }
 
 export const Dark = {
-    body: "#000000",
+    body: "#0f0f0f",
     text: "#FFFFFF",
     bodyRgba: "0, 0, 0",
     textRgba: "255, 255, 255",
@@ -83,12 +83,12 @@ export const Dark = {
     warning: "#FCA311",
     info: "#3B82F6",
     bg4: "#FCA311",
-    bgtotal: "#000000",
+    bgtotal: "#141313",
     bgtgderecha: "#14213D",
     barrascroll: "#FCA311",
     bgCard: "#1a1a1a",
 
-    gray900: "#000000",
+    gray900: "#0a0909",
     gray800: "#14213D",
     gray700: "#2e2e2e",
     gray600: "#313131",
@@ -108,7 +108,7 @@ export const Dark = {
     // Theme toggles
     lightbackground: "none",
     lightcheckbox: "none",
-    darkbackground: "linear-gradient(135deg, #000000 0%, #14213D 100%)",
+    darkbackground: "linear-gradient(135deg, #161515 0%, #14213D 100%)",
     darkcheckbox: "#FCA311"
 }
 
