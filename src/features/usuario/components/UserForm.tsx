@@ -111,14 +111,14 @@ const UserForm: React.FC<UserFormProps> = ({
                 <div className="input-wrap"><input {...register("nombre_ticket")} placeholder="Ej: Juan P." /></div>
                 {errors.nombre_ticket && <div className="err"><FiX /> {errors.nombre_ticket.message}</div>}
               </InputGroup>
-              <InputGroup style={{ gridColumn: 'span 2' }}>
+              <InputGroup style={{ gridColumn: 'span 2' }} $error={!!errors.sucursales_acceso}>
                 <label>Sucursales de Acceso Permitido</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
                   {sucursales.map(s => (
                     <label key={s.id_sucursal} style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', fontSize: 13, textTransform: 'none', color: '#e2e8f0' }}>
-                      <input 
-                        type="checkbox" 
-                        value={s.id_sucursal} 
+                      <input
+                        type="checkbox"
+                        value={s.id_sucursal}
                         {...register("sucursales_acceso")}
                         style={{ width: 16, height: 16, accentColor: '#7c3aed' }}
                       />
@@ -126,6 +126,7 @@ const UserForm: React.FC<UserFormProps> = ({
                     </label>
                   ))}
                 </div>
+                {errors.sucursales_acceso && <div className="err"><FiX /> {errors.sucursales_acceso.message as string}</div>}
               </InputGroup>
             </div>
           </Section>

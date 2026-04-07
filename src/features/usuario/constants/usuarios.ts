@@ -85,7 +85,13 @@ export const usuarioSchema = yup.object({
     usu_tarjeta_nfc: yup.string().optional(),
     usu_pin_pos: yup.string().optional(),
     nombre_ticket: yup.string().optional(),
-    sucursales_acceso: yup.array().of(yup.string()).optional(),
+    sucursales_acceso: yup.array()
+        .transform((val) => {
+            if (!val || val === false) return [];
+            return Array.isArray(val) ? val : [val];
+        })
+        .of(yup.string())
+        .optional(),
     password: yup.string().when("$isEditing", {
         is: true,
         then: s => s.optional().transform(v => v === "" ? undefined : v).min(6, "Mínimo 6 caracteres"),
