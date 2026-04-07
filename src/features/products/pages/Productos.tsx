@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from "react";
-import styled, { useTheme, keyframes } from "styled-components";
+import { useTheme } from "styled-components";
 import { ClimbingBoxLoader } from "react-spinners";
-import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiImage, FiPackage, FiRefreshCw, FiMapPin } from "react-icons/fi";
+import { FiPlus, FiSearch, FiEdit2, FiTrash2, FiPackage, FiRefreshCw, FiMapPin } from "react-icons/fi";
 import {
     useReactTable,
     getCoreRowModel,
@@ -19,127 +19,28 @@ import { type Product } from "../services/ProductService";
 // UI Components
 import {
     PageContainer, TableCard, Table, ActionBtn, Badge,
-    PageHeader, HeaderTitle, Toolbar, SearchBox, Button
+    PageHeader, Toolbar, SearchBox, Button
 } from "../../../shared/components/UI";
+import { ProductCell, PriceText } from "../../../shared/components/UI/molecules/ProductCell";
+
+// Styles
+import { BoldHeader, StaggeredRow } from "./Productos.styles";
 
 const columnHelper = createColumnHelper<Product>();
 
-// --- Luminous Motion & Editorial Animations ---
-const fadeInUp = keyframes`
-  from { opacity: 0; transform: translateY(15px); }
-  to { opacity: 1; transform: translateY(0); }
-`;
-
-const StaggeredRow = styled.tr<{ $index?: number }>`
-  animation: ${fadeInUp} 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  animation-delay: ${({ $index }) => ($index || 0) * 0.05}s;
-  opacity: 0;
-  transition: all 0.2s ease;
-  
-  &:hover {
-    background: ${({ theme }) => theme.primary}08 !important;
-    transform: scale(1.002) translateX(4px);
-    box-shadow: -4px 0 0 ${({ theme }) => theme.primary};
-  }
-`;
-
-const BoldHeader = styled(HeaderTitle)`
-  h1 {
-    font-family: 'Outfit', 'Space Grotesk', system-ui, sans-serif;
-    font-size: 2.5rem;
-    font-weight: 800;
-    letter-spacing: -0.05em;
-    background: linear-gradient(135deg, ${({ theme }) => theme.text}, ${({ theme }) => theme.primary});
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    display: flex;
-    align-items: center;
-    gap: 12px;
-  }
-  p {
-    font-weight: 500;
-    opacity: 0.7;
-    margin-top: 8px;
-    font-size: 1.05rem;
-  }
-`;
-
-/* --- Styled Components --- */
-const ProductCell = styled.div`
-    display: flex;
-    align-items: center;
-    gap: 12px;
-`;
-
-const ProductImg = styled.img`
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    object-fit: cover;
-    background: ${({ theme }) => theme.bgCard || "#eee"};
-`;
-
-const ProductImgPlaceholder = styled.div`
-    width: 40px;
-    height: 40px;
-    border-radius: 8px;
-    background: rgba(150, 150, 150, 0.1);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    color: ${({ theme }) => theme.texttertiary};
-    font-size: 1.2rem;
-`;
-
-const ProductName = styled.div`
-    font-weight: 700;
-    color: ${({ theme }) => theme.text};
-`;
-
-const ProductSku = styled.div`
-    font-weight: 600;
-    font-size: 0.8rem;
-    color: ${({ theme }) => theme.primary};
-    background: ${({ theme }) => theme.primary}15;
-    padding: 2px 8px;
-    border-radius: 4px;
-    display: inline-block;
-    margin-top: 4px;
-    letter-spacing: 0.05em;
-    opacity: 0.9;
-    font-family: 'JetBrains Mono', 'Space Mono', monospace;
-`;
-
-const PriceText = styled.div`
-    color: ${({ theme }) => theme.success};
-    font-weight: 700;
-    text-align: right;
-`;
-
+/**
+ * Productos Page Component
+ * Main view for managing the product catalog.
+ * Features: Search, CRUD, Inventory levels, and Sucursal management.
+ */
 const Productos: React.FC = () => {
     const theme = useTheme();
+    
     // 1. Data Fetching
     const {
         products, categories, units, currencies, sucursales, estatusList,
-        isLoading, isDeletingId, user, refresh, deleteProduct
+        statusMap, sucursalMap, isLoading, isDeletingId, user, refresh, deleteProduct
     } = useProducts();
-
-    // maps for faster lookup
-    const sucursalMap = useMemo(() => {
-        const map: Record<string, string> = {};
-        sucursales.forEach((s: any) => {
-            map[s.id_sucursal] = s.nombre_sucursal || s.nombre;
-        });
-        return map;
-    }, [sucursales]);
-
-    const estatusMap = useMemo(() => {
-        const map: Record<string, string> = {};
-        estatusList.forEach((e: any) => {
-            map[e.id_status || e.id] = e.std_descripcion || e.descripcion;
-        });
-        return map;
-    }, [estatusList]);
 
     // 2. UI State
     const [globalFilter, setGlobalFilter] = useState("");
@@ -162,17 +63,11 @@ const Productos: React.FC = () => {
         columnHelper.accessor("nombre", {
             header: "Producto",
             cell: info => (
-                <ProductCell>
-                    {info.row.original.imagen ? (
-                        <ProductImg src={info.row.original.imagen} alt="" />
-                    ) : (
-                        <ProductImgPlaceholder><FiImage /></ProductImgPlaceholder>
-                    )}
-                    <div>
-                        <ProductName>{info.getValue()}</ProductName>
-                        <ProductSku>{info.row.original.id_producto || "ID: ---"}</ProductSku>
-                    </div>
-                </ProductCell>
+                <ProductCell 
+                    nombre={info.getValue()} 
+                    sku={info.row.original.id_producto || "---"} 
+                    imagen={info.row.original.imagen}
+                />
             )
         }),
         columnHelper.accessor("precio_venta", {
@@ -225,7 +120,7 @@ const Productos: React.FC = () => {
         columnHelper.accessor("id_status", {
             header: "Estado",
             cell: info => {
-                const name = estatusMap[info.getValue()] || "ACTIVO";
+                const name = statusMap[info.getValue()] || "ACTIVO";
                 const isInactive = name.toUpperCase().includes("INACTIVO") || name.toUpperCase().includes("CANCELADO");
                 return (
                     <Badge $color={isInactive ? `${theme.danger}22` : `${theme.success}22`} style={{ color: isInactive ? theme.danger : theme.success }}>
@@ -256,7 +151,7 @@ const Productos: React.FC = () => {
                 </div>
             )
         })
-    ], [isDeletingId, theme]);
+    ], [isDeletingId, theme, statusMap, sucursalMap]);
 
     // 5. Table Instance
     const table = useReactTable({
@@ -299,7 +194,13 @@ const Productos: React.FC = () => {
                 </Toolbar>
             </PageHeader>
 
-            <TableCard style={{ borderRadius: '16px', boxShadow: '0 8px 32px rgba(252, 163, 17, 0.08)', border: '1px solid rgba(252, 163, 17, 0.2)', background: theme.bg + 'F0', backdropFilter: 'blur(10px)' }}>
+            <TableCard style={{ 
+                borderRadius: '16px', 
+                boxShadow: `0 8px 32px ${theme.primary}15`, 
+                border: `1px solid ${theme.primary}33`, 
+                background: theme.bg + 'F0', 
+                backdropFilter: 'blur(10px)' 
+            }}>
                 {isLoading ? (
                     <div style={{ padding: 100, display: "flex", flexDirection: "column", alignItems: "center", gap: 20 }}>
                         <ClimbingBoxLoader color={theme.primary} />

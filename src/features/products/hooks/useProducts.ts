@@ -1,11 +1,12 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo, useEffect } from "react";
 import { useAuthStore } from "../../auth/store/useAuthStore";
-import { useCatalogStore } from "../../../shared/store/useCatalogStore";
+import { useCatalogStore, selectStatusMap, selectSucursalMap } from "../../../shared/store/useCatalogStore";
 import { useProductQueries, useProductMutations } from "./useProductQueries";
-import { type Product } from "../services/ProductService";
 
+/**
+ * Hook para la gestión de productos e integración con catálogos globales.
+ */
 export const useProducts = () => {
-  const [search, setSearch] = useState("");
   const { user } = useAuthStore();
 
   // --- Store de Catálogos (Centralizado) ---
@@ -14,14 +15,17 @@ export const useProducts = () => {
     fetchCatalogs, isLoading: isCatalogLoading
   } = useCatalogStore();
 
-  // Solo estatus del módulo 4 (Productos) — el backend valida coherencia de módulo.
-  // useMemo en lugar de selector con .filter() para evitar nueva referencia en cada render.
+  // Mapas para búsquedas O(1) en la UI
+  const sucursalMap = useCatalogStore(selectSucursalMap);
+  const statusMap = useCatalogStore(selectStatusMap);
+
+  // Solo estatus del módulo 4 (Productos)
   const productStatuses = useMemo(
     () => statusList.filter(s => s.mdl_id === 4),
     [statusList]
   );
 
-  // --- Query de Productos (Dinámico con React Query) ---
+  // --- Query de Productos (React Query) ---
   const { data: products = [], isLoading: isProdLoading, refetch } = useProductQueries();
 
   // --- Mutation ---
@@ -32,11 +36,6 @@ export const useProducts = () => {
     fetchCatalogs();
   }, [fetchCatalogs]);
 
-  const filteredProducts = useMemo(() => 
-    products.filter((p: Product) => p.nombre.toLowerCase().includes(search.toLowerCase())), 
-    [products, search]
-  );
-
   const deleteProduct = (id: string) => {
     if (!window.confirm("¿Eliminar producto?")) return;
     deleteMutation.mutate(id);
@@ -45,14 +44,14 @@ export const useProducts = () => {
   const isLoading = isProdLoading || isCatalogLoading;
 
   return {
-    products: filteredProducts,
+    products, // Ya no filtramos aquí, TanStack Table se encarga del filtrado global
     categories,
     units,
     currencies,
     sucursales,
     estatusList: productStatuses,
-    search,
-    setSearch,
+    statusMap,
+    sucursalMap,
     isLoading,
     isDeletingId: deleteMutation.isPending ? deleteMutation.variables : (null as string | null),
     user,

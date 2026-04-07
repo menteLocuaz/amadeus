@@ -5,7 +5,7 @@
 import { create } from "zustand";
 import { CategoryService } from "../../features/products/services/CategoryService";
 import { MedidaService } from "../../features/products/services/MedidaService";
-import { MonedaService } from "../../features/Moneda/services/MonedaService";
+import { MonedaService } from "../../features/moneda/services/MonedaService";
 import { EstatusService } from "../../features/auth/services/EstatusService";
 import { SucursalService } from "../../features/proveedor/services/SucursalService";
 
@@ -27,6 +27,8 @@ interface CatalogState {
     currencies:     any[];
     statusList:     StatusItem[];
     sucursales:     any[];
+    statusMap:      Record<string, string>;
+    sucursalMap:    Record<string, string>;
     isLoading:      boolean;
     isInitialized:  boolean;
     error:          string | null;
@@ -36,14 +38,24 @@ interface CatalogState {
 // ─── Ayudantes ─────────────────────────────────────────────────────────────────
 
 /**
+ * Genera un mapa de ID -> Nombre para búsquedas O(1).
+ */
+const createMap = (items: any[], idKey: string, nameKey: string) => {
+    const map: Record<string, string> = {};
+    items.forEach(item => {
+        const id = item[idKey];
+        if (id) map[id] = item[nameKey] || item.nombre || "";
+    });
+    return map;
+};
+
+/**
  * Aplana el catálogo de estatus (agrupado por el backend) en una lista única.
- * Filtra duplicados y normaliza los nombres de las propiedades.
  */
 const flattenStatuses = (data: Record<string, any>): StatusItem[] => {
     const seen   = new Set<string>();
     const result: StatusItem[] = [];
 
-    // Prioridad de módulos específicos (primero los que se suelen usar en la UI)
     const preferred = ["3", "1", "8", "2"];
     const keys = [
         ...preferred.filter(k => k in data),
@@ -79,6 +91,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
     currencies:    [],
     statusList:    [],
     sucursales:    [],
+    statusMap:     {},
+    sucursalMap:   {},
     isLoading:     false,
     isInitialized: false,
     error:         null,
@@ -116,6 +130,8 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
                 currencies:    (resCurrs.data || []).map((c: any) => ({ ...c, id_moneda: c.id_moneda || c.id })),
                 statusList,
                 sucursales,
+                statusMap:     createMap(statusList, "id_status", "std_descripcion"),
+                sucursalMap:   createMap(sucursales, "id_sucursal", "nombre_sucursal"),
                 isLoading:     false,
                 isInitialized: true
             });
@@ -133,8 +149,8 @@ export const selectUserStatusList = (state: CatalogState) =>
 export const selectProductStatusList = (state: CatalogState) =>
     state.statusList.filter(s => s.mdl_id === 4);
 
-export const selectStatusMap = (state: CatalogState) => {
-    const map: Record<string, string> = {};
-    state.statusList.forEach(s => { map[s.id_status] = s.std_descripcion; });
-    return map;
-};
+/**
+ * Selectors for Maps (Stable References)
+ */
+export const selectStatusMap = (state: CatalogState) => state.statusMap;
+export const selectSucursalMap = (state: CatalogState) => state.sucursalMap;
