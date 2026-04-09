@@ -10,10 +10,10 @@ export interface AbrirPeriodoDTO {
 
 export const PeriodoService = {
     /**
-     * Abrir un nuevo periodo (turno) para una caja
+     * Abrir un nuevo periodo (turno) global
      */
-    abrir: async (dto: AbrirPeriodoDTO): Promise<ActivePeriodo> => {
-        const { data } = await axiosClient.post(ENDPOINTS.periodos.abrir, dto);
+    abrir: async (): Promise<ActivePeriodo> => {
+        const { data } = await axiosClient.post(ENDPOINTS.periodos.abrir);
         return data.data || data;
     },
 

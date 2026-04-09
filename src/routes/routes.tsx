@@ -44,6 +44,9 @@ const EstacionPage = lazy(() => import("../features/estacion/pages/Estacion"));
 const EmpresaPage = lazy(() => import("../features/empresa/pages/Empresa"));
 const SucursalPage = lazy(() => import("../features/sucursal/pages/Sucursal"));
 const UsuarioPage = lazy(() => import("../features/usuario/pages/Usuariospage"));
+const FacturacionPage = lazy(() => import("../features/facturacion/pages/FacturacionPage"));
+const HistorialPage = lazy(() => import("../features/facturacion/pages/HistorialPage"));
+const FacturacionConfig = lazy(() => import("../features/facturacion/pages/ConfiguracionPage"));
 
 /**
  * Sistema de Rutas Centralizado
@@ -89,6 +92,9 @@ export function MyRoutes() {
             <Route path={ROUTES.EMPRESAS} element={<EmpresaPage />} />
             <Route path={ROUTES.SUCURSALES} element={<SucursalPage />} />
             <Route path={ROUTES.USUARIOS} element={<UsuarioPage />} />
+            <Route path={ROUTES.FACTURACION} element={<FacturacionPage />} />
+            <Route path={ROUTES.FACTURAS_HISTORIAL} element={<HistorialPage />} />
+            <Route path={ROUTES.FACTURAS_CONFIG} element={<FacturacionConfig />} />
           </Route>
 
           {/* Ruta de selección de sistema (Public/Private sin Sidebar) */}

@@ -194,6 +194,7 @@ export const useEstaciones = () => {
      */
     const activeStatusList = useMemo(() =>
         statusList.filter(s =>
+            s.mdl_id === 8 ||
             (s as any).std_tipo_estado === "ACTIVO" ||
             (s as any).std_tipo_estado === "INACTIVO" ||
             (s as any).std_tipo_estado === "TERMINAL"

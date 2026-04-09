@@ -1,16 +1,13 @@
 import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
-import { type Caja } from './CajaService';
-import { type ActivePeriodo } from '../store/usePOSStore';
 
 export interface POSEstadoResponse {
-    estacion: {
-        id_estacion: string;
-        nombre: string;
-        id_sucursal: string;
-    };
-    caja: Caja | null;
-    periodo: ActivePeriodo | null;
+    id_control_estacion: string;
+    nombre_estacion: string;
+    fondo_base: number;
+    id_status: string;
+    status_descripcion: string;
+    fecha_inicio: string;
 }
 
 export const POSService = {

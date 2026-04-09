@@ -54,7 +54,7 @@ const LoginPage: React.FC = () => {
       if ((resp.data || []).length > 0) {
         setSelectedSucursal(resp.data[0].id_sucursal);
       }
-    } catch(e) {
+    } catch (e) {
       console.error("Error cargando sucursales:", e);
     } finally {
       setLoadingSucursales(false);
@@ -208,24 +208,33 @@ const LoginContainer = styled.div`
   left: 0;
   z-index: 2000;
   background-color: ${({ theme }) => theme.bgtotal};
+  background-image: radial-gradient(
+    circle,
+    ${({ theme }) => theme.bg4}18 1px,
+    transparent 1px
+  );
+  background-size: 28px 28px;
 `;
 
 const Card = styled.div`
   display: flex;
-  width: 900px;
+  width: 920px;
   max-width: 95vw;
   height: 580px;
-  border-radius: 20px;
+  border-radius: 24px;
   overflow: hidden;
-  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.08);
+  box-shadow:
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.18),
+    0 32px 64px rgba(0, 0, 0, 0.22);
   background: ${({ theme }) => theme.bg};
-  border: 1px solid ${({ theme }) => theme.bg3}11;
 `;
 
 const FormSide = styled.div`
-  flex: 1.2;
+  flex: 1.15;
   background: ${({ theme }) => theme.bg};
-  padding: 60px 80px;
+  border-left: 4px solid ${({ theme }) => theme.bg4};
+  padding: 52px 56px 52px 52px;
   display: flex;
   flex-direction: column;
   justify-content: center;
@@ -237,23 +246,23 @@ const FormSide = styled.div`
 const BrandMark = styled.div`
   display: flex;
   align-items: center;
-  gap: 14px;
-  margin-bottom: 56px;
+  gap: 10px;
+  margin-bottom: 40px;
 `;
 
 const BrandIcon = styled.div`
-  width: 36px;
-  height: 36px;
-  background: ${({ theme }) => theme.primary};
-  border-radius: 10px;
+  width: 34px;
+  height: 34px;
+  background: ${({ theme }) => theme.bg4};
+  border-radius: 8px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 0.8rem;
+  font-size: 0.75rem;
   font-weight: 900;
   color: #000;
   letter-spacing: -0.5px;
-  box-shadow: 0 4px 12px ${({ theme }) => theme.primary}44;
+  flex-shrink: 0;
 `;
 
 const BrandName = styled.span`
@@ -262,11 +271,10 @@ const BrandName = styled.span`
   letter-spacing: 3px;
   text-transform: uppercase;
   color: ${({ theme }) => theme.text};
-  font-family: 'Space Grotesk', sans-serif;
 `;
 
 const BrandAccent = styled.span`
-  color: ${({ theme }) => theme.primary};
+  color: ${({ theme }) => theme.bg4};
 `;
 
 // ─── Step indicator ──────────────────────────────────────────────────────────
@@ -274,57 +282,58 @@ const BrandAccent = styled.span`
 const StepTrack = styled.div`
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 28px;
+  gap: 8px;
+  margin-bottom: 18px;
 `;
 
 const StepDot = styled.div<{ $active: boolean }>`
-  width: 8px;
-  height: 8px;
+  width: 7px;
+  height: 7px;
   border-radius: 50%;
   background: ${({ theme, $active }) =>
-    $active ? theme.primary : `${theme.primary}22`};
-  transition: all 0.3s ease;
-  box-shadow: ${({ $active, theme }) => $active ? `0 0 10px ${theme.primary}66` : 'none'};
+    $active ? theme.bg4 : `${theme.bg4}30`};
+  transition: background 0.35s ease;
+  flex-shrink: 0;
 `;
 
 const StepConnector = styled.div<{ $filled: boolean }>`
-  width: 24px;
+  width: 20px;
   height: 2px;
-  border-radius: 2px;
+  border-radius: 1px;
   background: ${({ theme, $filled }) =>
-    $filled ? theme.primary : `${theme.primary}22`};
+    $filled ? theme.bg4 : `${theme.bg4}30`};
+  transition: background 0.35s ease;
 `;
 
 const StepLabel = styled.span`
   font-size: 0.7rem;
-  font-weight: 700;
+  font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 1.5px;
-  color: ${({ theme }) => theme.texttertiary};
-  margin-left: 6px;
+  color: ${({ theme }) => theme.bg4};
+  margin-left: 4px;
 `;
 
 // ─── Title section ───────────────────────────────────────────────────────────
 
 const TitleSection = styled.div`
-  margin-bottom: 40px;
+  margin-bottom: 28px;
 `;
 
 const Title = styled.h1`
-  font-size: 2.25rem;
-  font-weight: 800;
+  font-size: 2rem;
+  font-weight: 700;
   color: ${({ theme }) => theme.text};
-  margin-bottom: 12px;
-  letter-spacing: -0.03em;
-  font-family: 'Space Grotesk', sans-serif;
+  margin-bottom: 8px;
+  line-height: 1.2;
+  letter-spacing: -0.5px;
 `;
 
 const Subtitle = styled.p`
-  font-size: 1rem;
-  color: ${({ theme }) => theme.texttertiary};
-  line-height: 1.6;
-  font-weight: 500;
+  font-size: 0.875rem;
+  color: ${({ theme }) => theme.textsecondary};
+  opacity: 0.75;
+  line-height: 1.5;
 `;
 
 // ─── Form fields ─────────────────────────────────────────────────────────────
@@ -332,120 +341,129 @@ const Subtitle = styled.p`
 const ErrorMessage = styled.div`
   background: rgba(239, 68, 68, 0.08);
   color: #ef4444;
-  padding: 14px 20px;
-  border-radius: 12px;
-  margin-bottom: 32px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  margin-bottom: 18px;
   font-size: 0.85rem;
-  border: 1px solid rgba(239, 68, 68, 0.15);
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 10px;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  line-height: 1.4;
 `;
 
 const FieldGroup = styled.div`
-  margin-bottom: 24px;
+  margin-bottom: 16px;
   display: flex;
   flex-direction: column;
 `;
 
 const Label = styled.label`
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
-  letter-spacing: 0.1em;
-  color: ${({ theme }) => theme.texttertiary};
-  margin-bottom: 10px;
+  color: ${({ theme }) => theme.bg4};
+  margin-bottom: 7px;
 `;
 
 const Input = styled.input`
   width: 100%;
-  background: ${({ theme }) => theme.bg2}22;
-  border: 1px solid ${({ theme }) => theme.bg3}15;
-  border-radius: 12px;
-  padding: 14px 20px;
+  background: ${({ theme }) => theme.bg2};
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 13px 16px;
   color: ${({ theme }) => theme.text};
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &::placeholder {
+    color: ${({ theme }) => theme.texttertiary};
+    opacity: 0.45;
+  }
 
   &:focus {
-    border-color: ${({ theme }) => theme.primary};
-    background: ${({ theme }) => theme.bg};
-    box-shadow: 0 0 0 4px ${({ theme }) => theme.primary}15;
+    border-color: ${({ theme }) => theme.bg4};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.bg4}1A;
   }
 
   &:disabled {
     opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
 const Select = styled.select`
   width: 100%;
-  background: ${({ theme }) => theme.bg2}22;
-  border: 1px solid ${({ theme }) => theme.bg3}15;
-  border-radius: 12px;
-  padding: 14px 20px;
+  background: ${({ theme }) => theme.bg2};
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 13px 16px;
   color: ${({ theme }) => theme.text};
-  font-size: 1rem;
+  font-size: 0.95rem;
   outline: none;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
 
   &:focus {
-    border-color: ${({ theme }) => theme.primary};
-    box-shadow: 0 0 0 4px ${({ theme }) => theme.primary}15;
+    border-color: ${({ theme }) => theme.bg4};
+    box-shadow: 0 0 0 3px ${({ theme }) => theme.bg4}1A;
+  }
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
   }
 `;
 
 const CheckboxRow = styled.div`
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: 40px;
+  gap: 10px;
+  margin-bottom: 24px;
+  margin-top: 4px;
 `;
 
 const StyledCheckbox = styled.input`
-  accent-color: ${({ theme }) => theme.primary};
-  width: 18px;
-  height: 18px;
+  accent-color: ${({ theme }) => theme.bg4};
+  width: 16px;
+  height: 16px;
   cursor: pointer;
+  flex-shrink: 0;
 `;
 
 const CheckboxLabel = styled.label`
-  font-size: 0.9rem;
-  color: ${({ theme }) => theme.texttertiary};
+  font-size: 0.85rem;
+  color: ${({ theme }) => theme.textsecondary};
   cursor: pointer;
-  font-weight: 500;
+  opacity: 0.8;
 `;
 
 const LoginButton = styled.button`
   width: 100%;
-  padding: 16px;
-  background: ${({ theme }) => theme.primary};
+  padding: 14px;
+  background: ${({ theme }) => theme.bg4};
   color: #000;
-  font-weight: 800;
-  font-size: 1rem;
-  text-transform: uppercase;
-  letter-spacing: 2px;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
   border: none;
   border-radius: 12px;
   cursor: pointer;
-  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-  box-shadow: 0 8px 24px ${({ theme }) => theme.primary}33;
+  transition: opacity 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+  margin-bottom: 0;
 
   &:hover:not(:disabled) {
-    filter: brightness(1.05);
-    transform: translateY(-2px);
-    box-shadow: 0 12px 32px ${({ theme }) => theme.primary}44;
+    opacity: 0.9;
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px ${({ theme }) => theme.bg4}40;
   }
 
-  &:active {
+  &:active:not(:disabled) {
     transform: translateY(0);
+    box-shadow: none;
   }
 
   &:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: not-allowed;
   }
 `;
@@ -455,48 +473,58 @@ const LoginButton = styled.button`
 const LoadingOverlay = styled.div`
   position: absolute;
   inset: 0;
-  background: ${({ theme }) => theme.bg}CC;
+  background: ${({ theme }) => theme.bg}F0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   z-index: 10;
-  gap: 32px;
-  backdrop-filter: blur(12px);
+  border-radius: 0;
+  gap: 24px;
+  backdrop-filter: blur(2px);
 
   p {
-    color: ${({ theme }) => theme.primary};
-    font-weight: 800;
-    font-size: 0.8rem;
-    letter-spacing: 4px;
+    color: ${({ theme }) => theme.bg4};
+    font-weight: 700;
+    font-size: 0.9rem;
+    letter-spacing: 1.5px;
     text-transform: uppercase;
-    animation: pulse 2s infinite;
   }
-  
-  @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
 `;
 
 // ─── Image side ───────────────────────────────────────────────────────────────
 
 const ImageSide = styled.div`
-  flex: 0.8;
-  background: ${({ theme }) => theme.bg2}15;
+  flex: 1;
+  background:
+    linear-gradient(
+      170deg,
+      rgba(20, 33, 61, 0.72) 0%,
+      rgba(20, 33, 61, 0.45) 45%,
+      rgba(20, 33, 61, 0.82) 100%
+    ),
+    url(${FontLogin});
+  background-size: cover;
+  background-position: center;
   display: flex;
   align-items: flex-end;
-  padding: 60px;
+  padding: 44px 40px;
   position: relative;
-  border-left: 1px solid ${({ theme }) => theme.bg3}11;
+
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(
+      to top,
+      rgba(20, 33, 61, 0.6) 0%,
+      transparent 50%
+    );
+    pointer-events: none;
+  }
 
   @media (max-width: 768px) {
     display: none;
-  }
-  
-  &::before {
-    content: '';
-    position: absolute;
-    inset: 0;
-    background: linear-gradient(to top, ${({ theme }) => theme.bg}, transparent);
-    opacity: 0.4;
   }
 `;
 
@@ -506,38 +534,37 @@ const ImageContent = styled.div`
 `;
 
 const ImageEyebrow = styled.p`
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 3px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 2.5px;
   text-transform: uppercase;
-  color: ${({ theme }) => theme.primary};
-  margin-bottom: 16px;
+  color: #FCA311;
+  margin-bottom: 10px;
+  opacity: 0.9;
 `;
 
 const ImageHeadline = styled.h2`
-  font-size: 2.5rem;
+  font-size: 2.4rem;
   font-weight: 800;
-  color: ${({ theme }) => theme.text};
+  color: #ffffff;
   line-height: 1.1;
-  letter-spacing: -0.04em;
-  margin-bottom: 24px;
-  font-family: 'Space Grotesk', sans-serif;
+  letter-spacing: -1px;
+  margin-bottom: 16px;
 `;
 
 const ImageRule = styled.div`
-  width: 40px;
+  width: 36px;
   height: 3px;
-  background: ${({ theme }) => theme.primary};
-  margin-bottom: 24px;
   border-radius: 2px;
+  background: #FCA311;
+  margin-bottom: 14px;
 `;
 
 const ImageCaption = styled.p`
-  font-size: 1rem;
-  color: ${({ theme }) => theme.texttertiary};
-  line-height: 1.7;
-  max-width: 280px;
-  font-weight: 500;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.65);
+  line-height: 1.6;
+  max-width: 220px;
 `;
 
 export default LoginPage;
