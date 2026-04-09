@@ -1,527 +1,574 @@
 import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
-import { useForm, Controller } from "react-hook-form";
-import { yupResolver } from "@hookform/resolvers/yup";
-import * as yup from "yup";
 import { useNavigate } from "react-router-dom";
 import { ClimbingBoxLoader } from "react-spinners";
-import {
-    FiCalendar, FiClock, FiDollarSign, FiUser,
-    FiSun, FiSunset, FiMoon,
-    FiFileText, FiCheckCircle, FiMonitor, FiSettings, FiAlertTriangle,
-} from "react-icons/fi";
+import { FiMonitor, FiCheckCircle, FiDollarSign, FiCalendar } from "react-icons/fi";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { usePOSStore } from "../store/usePOSStore";
-import { type Caja } from "../services/CajaService";
+import { EstacionService, type EstacionAPI } from "../../estacion/services/EstacionService";
 import { PeriodoService } from "../services/PeriodoService";
 import { POSService } from "../services/POSService";
-import { EstacionService, type EstacionAPI } from "../../estacion/services/EstacionService";
-import {
-    PageContainer,
-    TableCard,
-    FormGroup as UIFormGroup,
-    Badge as UIBadge,
-    ModalOverlay,
-    ModalContent
-} from "../../../shared/components/UI";
+import { AuthService } from "../../auth/services/AuthService";
 
 /* ═══════════════════════════════════════════════════════════
-   VALIDACIÓN Y TIPOS
+   TYPES & ENUMS
 ═══════════════════════════════════════════════════════════ */
-const schema = yup.object({
-    monto_inicial: yup
-        .number()
-        .typeError("Ingresa un monto válido")
-        .min(0, "El monto no puede ser negativo")
-        .required("El monto es requerido"),
-    id_caja: yup.string().required("La caja es requerida"),
-    cajero: yup.string().required("El cajero es requerido"),
-    turno: yup.string().oneOf(["matutino", "vespertino", "nocturno"] as const).required("Selecciona un turno"),
-    notas: yup.string().ensure().default(""),
-});
-
-export interface AperturaForm {
-    monto_inicial: number;
-    id_caja: string;
-    cajero: string;
-    turno: "matutino" | "vespertino" | "nocturno";
-    notas: string;
-}
-
-type Turno = AperturaForm["turno"];
+type OperativeState = 
+  | 'INIT' 
+  | 'CAJA_SELECTED' 
+  | 'PERIODO_ABIERTO' 
+  | 'BASE_ASIGNADA' 
+  | 'READY_TO_SELL';
 
 /* ═══════════════════════════════════════════════════════════
-   HELPERS
+   ANIMATIONS & STYLES
 ═══════════════════════════════════════════════════════════ */
-const fmt = (d: Date, opts: Intl.DateTimeFormatOptions) =>
-    d.toLocaleDateString("es-MX", opts);
+const fadeIn = keyframes`from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); }`;
 
-const fmtTime = (d: Date) =>
-    d.toLocaleTimeString("es-MX", { hour: "2-digit", minute: "2-digit", second: "2-digit" });
-
-const fmtCurrency = (v: number) =>
-    new Intl.NumberFormat("es-MX", { style: "currency", currency: "MXN" }).format(v);
-
-const TURNOS: { value: Turno; label: string; Icon: React.ElementType }[] = [
-    { value: "matutino", label: "Matutino", Icon: FiSun },
-    { value: "vespertino", label: "Vespertino", Icon: FiSunset },
-    { value: "nocturno", label: "Nocturno", Icon: FiMoon },
-];
-
-/* ═══════════════════════════════════════════════════════════
-   ANIMACIONES Y ESTILOS
-═══════════════════════════════════════════════════════════ */
-const pulse = keyframes`0%,100% { opacity: 1; } 50% { opacity: 0.6; }`;
-const pop = keyframes`0% { transform: scale(0.7); opacity: 0; } 80% { transform: scale(1.08); } 100% { transform: scale(1); opacity: 1; }`;
-
-const PageLayout = styled.div`
-  min-height: calc(100vh - 160px);
+const MainWrap = styled.div`
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: calc(100vh - 120px);
+  padding: 20px;
 `;
 
-const FormHeader = styled.div`
-  background: linear-gradient(135deg, rgba(252,163,17,0.12), rgba(252,163,17,0.04));
-  border-bottom: 1px solid ${({ theme }) => theme.bg3}33;
-  padding: 28px 35px 22px;
+const TerminalCard = styled.div`
+  width: 100%;
+  max-width: 600px;
+  background: ${({ theme }) => theme.bg2 || '#1E293B'};
+  border-radius: 16px;
+  box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+  padding: 30px;
+  animation: ${fadeIn} 0.4s ease;
+  color: ${({ theme }) => theme.text || '#fff'};
 `;
 
 const Title = styled.h2`
-  margin: 0 0 4px;
-  font-size: 1.5rem;
-  font-weight: 800;
-  color: ${({ theme }) => theme.text};
+  font-size: 1.6rem;
+  margin: 0 0 10px;
+  text-align: center;
+  color: ${({ theme }) => theme.text || '#fff'};
 `;
 
 const Subtitle = styled.p`
-  margin: 0;
-  color: ${({ theme }) => theme.text}80;
-  font-size: 0.88rem;
-`;
-
-const CardBody = styled.div`
-  padding: 28px 35px;
-`;
-
-const PeriodBox = styled.div`
-  background: ${({ theme }) => theme.bg3}22;
-  border-radius: 14px;
-  padding: 18px 20px;
-  margin-bottom: 22px;
-  border: 1px solid ${({ theme }) => theme.bg3}33;
-`;
-
-const PeriodLabel = styled.div`
-  font-size: 0.75rem;
-  color: ${({ theme }) => theme.text}80;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  margin-bottom: 12px;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-`;
-
-const PeriodGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-`;
-
-const PeriodItem = styled.div`
-  background: ${({ theme }) => theme.bg};
-  border-radius: 10px;
-  padding: 12px 14px;
-  border: 1px solid ${({ theme }) => theme.bg3}22;
-`;
-
-const PeriodItemLabel = styled.div`
-  font-size: 0.72rem;
-  color: ${({ theme }) => theme.text}66;
-  margin-bottom: 4px;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-`;
-
-const PeriodItemValue = styled.div<{ $accent?: string }>`
   font-size: 0.9rem;
-  font-weight: 700;
-  color: ${({ $accent, theme }) => $accent || theme.text};
-  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: ${({ theme }) => theme.texttertiary || '#94A3B8'};
+  margin-bottom: 30px;
 `;
 
-const MontoBox = styled.div`
-  background: rgba(252,163,17,0.08);
-  border: 1.5px solid rgba(252,163,17,0.3);
-  border-radius: 14px;
-  padding: 18px 20px;
-  margin-bottom: 22px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-`;
-
-const MontoIcon = styled.div`
-  width: 50px;
-  height: 50px;
-  border-radius: 12px;
-  background: rgba(252,163,17,0.15);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #FCA311;
-  font-size: 1.4rem;
-  flex-shrink: 0;
-`;
-
-const MontoValue = styled.div`
-  font-size: 1.9rem;
-  font-weight: 900;
-  color: #FCA311;
-  line-height: 1;
-  font-variant-numeric: tabular-nums;
-`;
-
-const ErrorMsg = styled.span`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  color: #EF4444;
-  font-size: 0.78rem;
-  margin-top: 5px;
-`;
-
-const TurnoGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 10px;
-`;
-
-const TurnoBtn = styled.button<{ $active: boolean }>`
-  padding: 10px 8px;
-  border-radius: 10px;
-  border: 1.5px solid ${({ $active }) => $active ? "#FCA311" : "rgba(0,0,0,0.1)"};
-  background: ${({ $active }) => $active ? "rgba(252,163,17,0.12)" : "transparent"};
-  color: ${({ $active, theme }) => $active ? "#FCA311" : theme.text + "80"};
-  font-size: 0.82rem;
-  font-weight: ${({ $active }) => $active ? 700 : 500};
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 5px;
-  transition: all 0.2s;
-  &:hover { border-color: #FCA311; color: #FCA311; }
-`;
-
-const BtnPrimary = styled.button`
+const Btn = styled.button<{ $variant?: 'primary'|'danger'|'outline'|'success' }>`
   width: 100%;
   padding: 14px;
-  border-radius: 12px;
-  border: none;
-  background: #FCA311;
-  color: #000;
-  font-weight: 800;
+  border-radius: 8px;
   font-size: 1rem;
+  font-weight: 700;
+  border: none;
   cursor: pointer;
+  transition: all 0.2s;
+  
+  ${({ $variant, theme }) => {
+    switch ($variant) {
+      case 'danger': return `background: #EF4444; color: white;`;
+      case 'outline': return `background: transparent; border: 2px solid ${theme.bg3 || '#334155'}; color: ${theme.text || '#fff'};`;
+      case 'success': return `background: #10B981; color: white;`;
+      default: return `background: #10B981; color: white;`;
+    }
+  }}
+
+  &:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+  }
+`;
+
+const SelectBox = styled.select`
+  width: 100%;
+  padding: 12px;
+  border-radius: 8px;
+  background: ${({ theme }) => theme.bg || '#0F172A'};
+  border: 1px solid ${({ theme }) => theme.bg3 || '#334155'};
+  color: ${({ theme }) => theme.text || '#fff'};
+  font-size: 1rem;
+  margin-bottom: 20px;
+  &:focus { outline: none; border-color: #3B82F6; }
+`;
+
+const InputNumber = styled.input`
+  width: 100%;
+  padding: 16px;
+  font-size: 1.8rem;
+  text-align: center;
+  background: ${({ theme }) => theme.bg || '#0F172A'};
+  border: 2px solid #10B981;
+  border-radius: 8px;
+  color: ${({ theme }) => theme.text || '#fff'};
+  margin-bottom: 20px;
+  &:focus { outline: none; box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.2); }
+`;
+
+const PanelData = styled.div`
+  background: ${({ theme }) => theme.bg || '#0F172A'};
+  padding: 20px;
+  border-radius: 12px;
+  margin-bottom: 24px;
+  border: 1px solid ${({ theme }) => theme.bg3 || '#334155'};
+`;
+
+const RowItem = styled.div`
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px dashed ${({ theme }) => theme.bg3 || '#334155'};
+  &:last-child { border: none; padding-bottom: 0; }
+  span { color: ${({ theme }) => theme.texttertiary || '#94A3B8'}; font-size: 0.9rem; }
+  strong { color: ${({ theme }) => theme.text || '#fff'}; font-size: 1.05rem; }
+`;
+
+const ModalOverlay = styled.div`
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.7);
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  transition: all 0.2s;
-  &:disabled { opacity: 0.55; cursor: not-allowed; }
-  &:hover:not(:disabled) { transform: translateY(-2px); opacity: 0.9; }
+  z-index: 9999;
+  backdrop-filter: blur(4px);
 `;
 
-const LiveClock = styled.span`
-  animation: ${pulse} 2s infinite;
+const ModalBox = styled.div`
+  background: ${({ theme }) => theme.bg2 || '#1E293B'};
+  padding: 35px;
+  border-radius: 16px;
+  width: 90%;
+  max-width: 450px;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+  animation: ${fadeIn} 0.3s ease;
+  text-align: center;
 `;
 
-const InfoBar = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 10px 14px;
-  background: ${({ theme }) => theme.bg3}11;
+/* MaxPoint Styles */
+const MaxPointContainer = styled.div`
+  background: #2B3A4A;
   border-radius: 10px;
-  margin-bottom: 20px;
-  font-size: 0.85rem;
-  color: ${({ theme }) => theme.text}CC;
-  svg { color: #FCA311; }
+  padding: 24px;
+  min-height: 480px;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
+  position: relative;
 `;
-
-const AnimatedTerminalSetup = styled.div`
-  animation: ${pop} 0.4s ease;
+const MaxTitle = styled.h1`
+  font-size: 2.2rem;
+  color: #10B981;
+  font-weight: 300;
+  text-align: center;
+  margin: 0;
+  letter-spacing: 2px;
+  span { color: #3B82F6; }
+`;
+const MaxVersion = styled.p`
+  text-align: center;
+  color: white;
+  font-size: 0.65rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  margin-top: 5px;
+  margin-bottom: 30px;
+`;
+const MaxGrid = styled.div`
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 30px;
+`;
+const MaxLeft = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+`;
+const MaxCajaLabel = styled.div`
+  background: #0078D7;
+  color: white;
+  padding: 12px;
+  font-size: 0.9rem;
+  font-weight: bold;
+  text-align: center;
+`;
+const MaxInput = styled.input`
+  width: 100%;
+  padding: 12px;
+  font-size: 1rem;
+  border: none;
+  background: white;
+`;
+const UserInfoBlock = styled.div`
+  margin-top: 20px;
+  h4 { color: white; margin: 0 0 10px; font-weight: normal; font-size: 1rem; }
+  h2 { color: white; margin: 0 0 5px; font-size: 1.4rem; }
+  p { color: #A0AAB5; margin: 0; font-size: 0.8rem; }
+`;
+const Keypad = styled.div`
+  display: grid;
+  grid-template-columns: repeat(3, 1fr) 1.2fr;
+  gap: 8px;
+`;
+const KeyBtn = styled.button<{ $isOk?: boolean }>`
+  background: ${({ $isOk }) => $isOk ? '#22C55E' : '#FFFFFF'};
+  color: ${({ $isOk }) => $isOk ? '#FFF' : '#333'};
+  border: none;
+  font-size: 1.4rem;
+  font-weight: bold;
+  padding: 15px 0;
+  cursor: pointer;
+  border-radius: 2px;
+  grid-row: ${({ $isOk }) => $isOk ? '1 / span 4' : 'auto'};
+  grid-column: ${({ $isOk }) => $isOk ? '4' : 'auto'};
+  &:hover { opacity: 0.9; }
 `;
 
 /* ═══════════════════════════════════════════════════════════
-   COMPONENTE PRINCIPAL
+   COMPONENT
 ═══════════════════════════════════════════════════════════ */
-const AperturaCaja: React.FC = () => {
-    const navigate = useNavigate();
-    const { user } = useAuthStore();
-    const { id_estacion, estacionNombre, setEstacion, setPeriodo, initialize } = usePOSStore();
+const AperturaCajaProgressive: React.FC = () => {
+  const navigate = useNavigate();
+  const { user } = useAuthStore();
+  const { id_estacion, estacionNombre, setEstacion, clearEstacion, initialize, setPeriodo } = usePOSStore();
 
-    const [estaciones, setEstaciones] = useState<EstacionAPI[]>([]);
-    const [caja, setCaja] = useState<Caja | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [time, setTime] = useState(new Date());
-    const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [submitting, setSubmitting] = useState(false);
+  const [state, setState] = useState<OperativeState>('INIT');
 
-    useEffect(() => {
-        const t = setInterval(() => setTime(new Date()), 1000);
-        initialize();
-        return () => clearInterval(t);
-    }, [initialize]);
+  const [sucursales, setSucursales] = useState<any[]>([]);
+  const [estaciones, setEstaciones] = useState<EstacionAPI[]>([]);
+  
+  const [selectedSucursal, setSelectedSucursal] = useState("");
+  const [selectedEstacion, setSelectedEstacion] = useState("");
+  const [cajaInfo, setCajaInfo] = useState<any>(null);
 
-    const {
-        register,
-        handleSubmit,
-        control,
-        watch,
-        setValue,
-        formState: { errors, isSubmitting },
-    } = useForm<AperturaForm>({
-        resolver: yupResolver(schema),
-        defaultValues: {
-            monto_inicial: 0,
-            cajero: user?.usu_nombre || "",
-            turno: "matutino",
-            id_caja: "",
-            notas: "",
-        },
-    });
+  const [baseAmount, setBaseAmount] = useState<string>("0");
 
-    useEffect(() => {
-        if (user?.usu_nombre && watch("cajero") !== user.usu_nombre) {
-            setValue("cajero", user.usu_nombre);
-        }
-    }, [user, setValue, watch]);
+  const [pinEntry, setPinEntry] = useState("");
 
-    // Cargar estaciones si no hay una seleccionada
-    useEffect(() => {
-        const loadInitialData = async () => {
-            setLoading(true);
-            try {
-                if (!id_estacion) {
-                    const list = await EstacionService.getAll();
-                    setEstaciones(list);
-                } else {
-                    const { caja: cajaData, periodo } = await POSService.getEstado(id_estacion);
-                    if (cajaData) {
-                        setCaja(cajaData);
-                        setValue("id_caja", cajaData.id);
-                    }
-                    if (periodo) {
-                        setPeriodo(periodo);
-                        // Si ya hay un periodo activo, redirigir al POS
-                        navigate("/pos");
-                    }
-                }
-            } catch (err) {
-                console.error("Error cargando datos iniciales:", err);
-            } finally {
-                setLoading(false);
-            }
-        };
-        loadInitialData();
-    }, [id_estacion, setValue, navigate, setPeriodo]);
+  useEffect(() => {
+    initialize();
+    loadInitialData();
+  }, []);
 
-    const montoWatch = watch("monto_inicial");
+  const loadInitialData = async () => {
+    setLoading(true);
+    try {
+      // 1. Cargas iniciales
+      const sucs = await AuthService.getSucursales();
+      setSucursales(sucs.data || []);
+      
+      const ests = await EstacionService.getAll();
+      setEstaciones(ests);
 
-    const onSelectEstacion = (e: React.ChangeEvent<HTMLSelectElement>) => {
-        const id = e.target.value;
-        const est = estaciones.find(est => est.id_estacion === id);
-        if (est) {
-            setEstacion(est.id_estacion, est.nombre);
-        }
-    };
-
-    const onSubmit = async (data: AperturaForm) => {
-        try {
-            const newPeriodo = await PeriodoService.abrir({
-                id_caja: data.id_caja,
-                monto_apertura: data.monto_inicial,
-                comentario: data.notas
-            });
-            setPeriodo(newPeriodo);
-            setSubmitted(true);
-        } catch (err: any) {
-            console.error(err);
-            alert(err.response?.data?.message || "Error al abrir la caja.");
-        }
-    };
-
-    if (loading) {
-        return (
-            <PageContainer>
-                <PageLayout>
-                    <ClimbingBoxLoader color="#FCA311" />
-                </PageLayout>
-            </PageContainer>
-        );
+      // Si ya hay estación guardada localmente
+      if (id_estacion) {
+        checkEstacionStatus(id_estacion);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setLoading(false);
     }
+  };
 
-    if (submitted) {
-        return (
-            <ModalOverlay>
-                <ModalContent style={{ maxWidth: '480px', textAlign: 'center' }}>
-                    <div style={{ color: '#10B981', fontSize: '4rem', marginBottom: '20px' }}>
-                        <FiCheckCircle />
-                    </div>
-                    <Title>¡Caja Abierta!</Title>
-                    <Subtitle>El turno ha comenzado exitosamente.</Subtitle>
-                    <BtnPrimary style={{ marginTop: '30px' }} onClick={() => navigate("/pos")}>
-                        Ir al Punto de Venta
-                    </BtnPrimary>
-                </ModalContent>
-            </ModalOverlay>
-        );
+  const checkEstacionStatus = async (estacionId: string) => {
+    setSubmitting(true);
+    try {
+      const resp = await POSService.getEstado(estacionId);
+      const NULL_UUID = "00000000-0000-0000-0000-000000000000";
+
+      setCajaInfo({
+        id: resp.id_control_estacion !== NULL_UUID ? resp.id_control_estacion : estacionId,
+        nombre: resp.nombre_estacion,
+        estado: resp.status_descripcion,
+        fondo_base: resp.fondo_base,
+      });
+
+      const isActive = resp.status_descripcion?.toLowerCase() !== 'cerrada'
+        && resp.id_control_estacion !== NULL_UUID;
+
+      if (isActive) {
+        setBaseAmount(String(resp.fondo_base ?? 0));
+        setState('READY_TO_SELL');
+      } else {
+        setState('CAJA_SELECTED');
+      }
+    } catch (e: any) {
+      if (e.response?.status === 404) {
+        alert("Esa estación no tiene una caja vinculada o está inválida.");
+      }
+      clearEstacion();
+      setState('INIT');
+    } finally {
+      setSubmitting(false);
     }
+  };
 
+  const handleSelectSystem = async () => {
+    if (!selectedEstacion) return alert("Selecciona la Estación / Caja");
+    const est = estaciones.find(e => e.id_estacion === selectedEstacion);
+    if(est) {
+      setEstacion(est.id_estacion, est.nombre);
+      await checkEstacionStatus(est.id_estacion);
+    }
+  };
+
+  const handleOpenPeriodo = async () => {
+    setSubmitting(true);
+    try {
+      const periodo = await PeriodoService.abrir();
+      if (periodo) setPeriodo(periodo);
+      setState('PERIODO_ABIERTO');
+    } catch (e: any) {
+      // 400/409 = ya hay un periodo activo → continuar sin bloquear
+      if (e.response?.status === 400 || e.response?.status === 409) {
+        setState('PERIODO_ABIERTO');
+        return;
+      }
+      alert(e.response?.data?.message || "Error al abrir periodo");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleBaseAsignada = () => {
+    if (isNaN(Number(baseAmount)) || Number(baseAmount) < 0) {
+      return alert("Ingresa un monto válido");
+    }
+    setState('BASE_ASIGNADA');
+  };
+
+  const handleConfirmarFondos = async () => {
+    setSubmitting(true);
+    try {
+      await POSService.abrir({ id_estacion: usePOSStore.getState().id_estacion!, monto_base: Number(baseAmount) });
+      setState('READY_TO_SELL');
+    } catch (e: any) {
+      // 400 = caja ya abierta (sesión activa), igualmente avanzar
+      if (e.response?.status === 400 || e.response?.status === 409) {
+        setState('READY_TO_SELL');
+        return;
+      }
+      alert(e.response?.data?.message || "Error al asignar fondo a la caja");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleDesasignar = () => {
+    clearEstacion();
+    setState('INIT');
+    setBaseAmount("0");
+  };
+
+  const onPadPress = (key: string) => {
+    if (key === '<=') {
+      setPinEntry(prev => prev.slice(0, -1));
+    } else if (key === 'Borrar') {
+      setPinEntry("");
+    } else {
+      setPinEntry(prev => prev + key);
+    }
+  };
+
+  const handleLoginPos = () => {
+    if (pinEntry.length > 0) {
+      // Si validamos pin internamente, se haría aquí.
+      navigate("/pos");
+    } else {
+      navigate("/pos");
+    }
+  };
+
+  if (loading) {
+    return <MainWrap><ClimbingBoxLoader color="#10B981" /></MainWrap>;
+  }
+
+  // PANTALLA FINAL: LISTA PARA VENDER
+  if (state === 'READY_TO_SELL') {
     return (
-        <PageContainer>
-            <PageLayout>
-                <TableCard style={{ maxWidth: '580px', width: '100%', boxShadow: '0 20px 50px rgba(0,0,0,0.1)' }}>
-                    <FormHeader>
-                        <UIBadge style={{ marginBottom: '12px' }}>🏪 Sistema POS</UIBadge>
-                        <Title>Apertura de Caja</Title>
-                        <Subtitle>Vincula tu estación y registra el fondo inicial</Subtitle>
-                    </FormHeader>
+      <MainWrap>
+        <TerminalCard>
+          {/* Badge de estado */}
+          <div style={{ textAlign: 'center', marginBottom: '8px' }}>
+            <span style={{
+              display: 'inline-block',
+              background: '#10B981',
+              color: '#fff',
+              fontSize: '0.75rem',
+              fontWeight: 700,
+              padding: '4px 14px',
+              borderRadius: '99px',
+              letterSpacing: '1px',
+              textTransform: 'uppercase',
+            }}>🟢 Lista para vender</span>
+          </div>
 
-                    <CardBody>
-                        {!id_estacion ? (
-                            <AnimatedTerminalSetup>
-                                <InfoBar>
-                                    <FiSettings /> Esta terminal aún no está configurada.
-                                </InfoBar>
-                                <UIFormGroup>
-                                    <label><FiMonitor /> Selecciona esta Estación POS</label>
-                                    <select onChange={onSelectEstacion}>
-                                        <option value="">Seleccionar...</option>
-                                        {estaciones.map(e => (
-                                            <option key={e.id_estacion} value={e.id_estacion}>{e.nombre} ({e.ip})</option>
-                                        ))}
-                                    </select>
-                                    <Subtitle style={{ marginTop: '8px' }}>
-                                        Esta configuración se guardará localmente en este navegador.
-                                    </Subtitle>
-                                </UIFormGroup>
-                            </AnimatedTerminalSetup>
-                        ) : (
-                            <form onSubmit={handleSubmit(onSubmit)} noValidate>
-                                <InfoBar>
-                                    <FiMonitor /> Estación: <strong>{estacionNombre}</strong>
-                                    <button
-                                        type="button"
-                                        onClick={() => usePOSStore.getState().clearEstacion()}
-                                        style={{ marginLeft: 'auto', background: 'none', border: 'none', color: '#EF4444', cursor: 'pointer', fontSize: '0.75rem', fontWeight: 700 }}
-                                    >
-                                        CAMBIAR
-                                    </button>
-                                </InfoBar>
+          <Title style={{ marginBottom: '4px' }}>Caja Activa</Title>
+          <Subtitle>{cajaInfo?.nombre || estacionNombre} — {new Date().toLocaleDateString('es-ES', { dateStyle: 'long' })}</Subtitle>
 
-                                <PeriodBox>
-                                    <PeriodLabel><FiCalendar size={13} /> Operación</PeriodLabel>
-                                    <PeriodGrid>
-                                        <PeriodItem>
-                                            <PeriodItemLabel><FiCalendar size={11} /> Fecha</PeriodItemLabel>
-                                            <PeriodItemValue $accent="#FCA311">
-                                                {fmt(time, { dateStyle: 'medium' })}
-                                            </PeriodItemValue>
-                                        </PeriodItem>
-                                        <PeriodItem>
-                                            <PeriodItemLabel><FiClock size={11} /> Hora</PeriodItemLabel>
-                                            <PeriodItemValue $accent="#3B82F6">
-                                                <LiveClock>{fmtTime(time)}</LiveClock>
-                                            </PeriodItemValue>
-                                        </PeriodItem>
-                                    </PeriodGrid>
-                                </PeriodBox>
+          {/* Checkmarks de estado */}
+          <PanelData style={{ marginBottom: '28px' }}>
+            <RowItem>
+              <span>Estado del periodo</span>
+              <strong style={{ color: '#10B981' }}>✅ Periodo activo</strong>
+            </RowItem>
+            <RowItem>
+              <span>Caja asignada</span>
+              <strong style={{ color: '#10B981' }}>✅ {cajaInfo?.nombre || estacionNombre}</strong>
+            </RowItem>
+            <RowItem>
+              <span>Fondo inicial confirmado</span>
+              <strong style={{ color: '#10B981' }}>✅ ${Number(baseAmount).toFixed(2)}</strong>
+            </RowItem>
+            <RowItem>
+              <span>Cajero</span>
+              <strong>{user?.usu_nombre || 'Cajero actual'}</strong>
+            </RowItem>
+          </PanelData>
 
-                                <MontoBox>
-                                    <MontoIcon><FiDollarSign /></MontoIcon>
-                                    <div>
-                                        <Subtitle style={{ marginBottom: '4px' }}>Fondo de apertura</Subtitle>
-                                        <MontoValue>{fmtCurrency(Number(montoWatch || 0))}</MontoValue>
-                                    </div>
-                                </MontoBox>
-
-                                <UIFormGroup>
-                                    <label htmlFor="monto_inicial">Monto inicial en caja *</label>
-                                    <input
-                                        id="monto_inicial"
-                                        type="number"
-                                        step="0.01"
-                                        placeholder="0.00"
-                                        {...register("monto_inicial", { valueAsNumber: true })}
-                                    />
-                                    {errors.monto_inicial && <ErrorMsg>{errors.monto_inicial.message}</ErrorMsg>}
-                                </UIFormGroup>
-
-                                <UIFormGroup>
-                                    <label htmlFor="cajero"><FiUser size={13} /> Cajero responsable</label>
-                                    <input id="cajero" {...register("cajero")} readOnly />
-                                </UIFormGroup>
-
-                                <UIFormGroup>
-                                    <label><FiSun size={13} /> Turno *</label>
-                                    <Controller
-                                        name="turno"
-                                        control={control}
-                                        render={({ field }) => (
-                                            <TurnoGrid>
-                                                {TURNOS.map(({ value, label, Icon }) => (
-                                                    <TurnoBtn
-                                                        key={value}
-                                                        type="button"
-                                                        $active={field.value === value}
-                                                        onClick={() => field.onChange(value)}
-                                                    >
-                                                        <Icon size={18} />
-                                                        {label}
-                                                    </TurnoBtn>
-                                                ))}
-                                            </TurnoGrid>
-                                        )}
-                                    />
-                                </UIFormGroup>
-
-                                <UIFormGroup>
-                                    <label htmlFor="notas"><FiFileText size={13} /> Notas</label>
-                                    <textarea id="notas" placeholder="Observaciones..." {...register("notas")} />
-                                </UIFormGroup>
-
-                                <input type="hidden" {...register("id_caja")} />
-                                {!caja && !loading && (
-                                    <div style={{
-                                        padding: '12px',
-                                        borderRadius: '8px',
-                                        background: 'rgba(239, 68, 68, 0.1)',
-                                        color: '#EF4444',
-                                        fontSize: '0.85rem',
-                                        display: 'flex',
-                                        alignItems: 'center',
-                                        gap: '10px',
-                                        marginBottom: '20px',
-                                        border: '1px solid rgba(239, 68, 68, 0.2)'
-                                    }}>
-                                        <FiAlertTriangle size={20} />
-                                        <span>Esta terminal no está autorizada para realizar ventas. Contacte al administrador para vincular esta estación a una caja.</span>
-                                    </div>
-                                )}
-
-                                <BtnPrimary type="submit" disabled={isSubmitting || !caja}>
-                                    {isSubmitting ? <ClimbingBoxLoader color="#000" size={12} /> : "Abrir Caja"}
-                                </BtnPrimary>                            </form>
-                        )}
-                    </CardBody>
-                </TableCard>
-            </PageLayout>
-        </PageContainer>
+          {/* Acciones */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            <Btn $variant="success" onClick={() => navigate('/pos')}>
+              🟢 Ingresar al POS (comenzar ventas)
+            </Btn>
+            <Btn $variant="outline" onClick={handleDesasignar}>
+              🔄 Reasignar caja / cambiar caja
+            </Btn>
+          </div>
+        </TerminalCard>
+      </MainWrap>
     );
+  }
+
+  return (
+    <MainWrap>
+      {/* 
+        =============================================
+        STATE: INIT
+        =============================================
+      */}
+      {state === 'INIT' && (
+        <TerminalCard>
+          <FiMonitor size={42} color="#10B981" style={{ display: 'block', margin: '0 auto 15px' }} />
+          <Title>Selección de Caja y ERP</Title>
+          <Subtitle>Por favor elige la sucursal y la caja disponible para iniciar el turno.</Subtitle>
+
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Sucursal / ERP</label>
+          <SelectBox value={selectedSucursal} onChange={e => setSelectedSucursal(e.target.value)}>
+            <option value="">Seleccionar Sucursal...</option>
+            {sucursales.map(s => <option key={s.id_sucursal} value={s.id_sucursal}>{s.nombre_sucursal}</option>)}
+          </SelectBox>
+
+          <label style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>Caja Disponible (Estación)</label>
+          <SelectBox value={selectedEstacion} onChange={e => setSelectedEstacion(e.target.value)}>
+            <option value="">Listado de Cajas...</option>
+            {estaciones.map(e => <option key={e.id_estacion} value={e.id_estacion}>{e.nombre}</option>)}
+          </SelectBox>
+
+          <Btn onClick={handleSelectSystem} disabled={submitting}>
+            {submitting ? "Verificando..." : "Continuar"}
+          </Btn>
+        </TerminalCard>
+      )}
+
+      {/* 
+        =============================================
+        MODAL 1: CONFIRMACIÓN APERTURA
+        =============================================
+      */}
+      {state === 'CAJA_SELECTED' && (
+        <ModalOverlay>
+          <ModalBox>
+            <FiCalendar size={50} color="#3B82F6" style={{ margin: '0 auto 20px' }} />
+            <h2 style={{ margin: '0 0 10px', color: '#fff' }}>¿Deseas abrir el periodo de ventas?</h2>
+            <p style={{ color: '#94A3B8', marginBottom: '30px' }}>
+              Se asignará el inicio de operaciones para <strong>{cajaInfo?.nombre}</strong>.
+            </p>
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <Btn $variant="outline" onClick={() => setState('INIT')}>❌ Cancelar</Btn>
+              <Btn $variant="success" onClick={handleOpenPeriodo} disabled={submitting}>
+                {submitting ? "Abriendo..." : "✅ Abrir periodo"}
+              </Btn>
+            </div>
+          </ModalBox>
+        </ModalOverlay>
+      )}
+
+      {/* 
+        =============================================
+        MODAL 2: ASIGNACIÓN DE BASE
+        =============================================
+      */}
+      {state === 'PERIODO_ABIERTO' && (
+        <ModalOverlay>
+          <ModalBox>
+            <FiDollarSign size={50} color="#10B981" style={{ margin: '0 auto 20px' }} />
+            <h2 style={{ margin: '0 0 10px', color: '#fff' }}>Fondo Inicial</h2>
+            <p style={{ color: '#94A3B8', marginBottom: '25px' }}>
+              Asigna la base de caja (efectivo inicial) para <strong>{cajaInfo?.nombre}</strong>
+            </p>
+            <InputNumber 
+              type="number" 
+              value={baseAmount} 
+              onChange={e => setBaseAmount(e.target.value)}
+              min="0"
+              step="0.01"
+            />
+            <div style={{ display: 'flex', gap: '15px' }}>
+              <Btn $variant="outline" onClick={() => { clearEstacion(); setState('INIT'); }}>❌ Cancelar</Btn>
+              <Btn $variant="success" onClick={handleBaseAsignada}>✅ Confirmar base</Btn>
+            </div>
+          </ModalBox>
+        </ModalOverlay>
+      )}
+
+      {/* 
+        =============================================
+        PANEL: CONFIRMACIÓN CAJERO
+        =============================================
+      */}
+      {state === 'BASE_ASIGNADA' && (
+        <TerminalCard>
+          <FiCheckCircle size={46} color="#10B981" style={{ display: 'block', margin: '0 auto 15px' }} />
+          <Title>Confirmación de Fondos</Title>
+          <Subtitle>Confirma que el fondo inicial es correcto antes de comenzar.</Subtitle>
+
+          <PanelData>
+             <RowItem>
+               <span>Nombre de la caja</span>
+               <strong>{cajaInfo?.nombre || estacionNombre}</strong>
+             </RowItem>
+             <RowItem>
+               <span>Fecha de periodo</span>
+               <strong>{new Date().toLocaleDateString('es-ES', { dateStyle: 'long' })}</strong>
+             </RowItem>
+             <RowItem>
+               <span>Cajero Asignado</span>
+               <strong>{user?.usu_nombre || "Cajero actual"}</strong>
+             </RowItem>
+             <RowItem>
+               <span>Monto Asignado</span>
+               <strong style={{ color: '#10B981', fontSize: '1.2rem' }}>${Number(baseAmount).toFixed(2)}</strong>
+             </RowItem>
+          </PanelData>
+
+          <div style={{ display: 'flex', gap: '15px' }}>
+            <Btn $variant="outline" onClick={() => setState('PERIODO_ABIERTO')}>❌ Rechazar</Btn>
+            <Btn $variant="success" onClick={handleConfirmarFondos} disabled={submitting}>
+              {submitting ? "Guardando..." : "✅ Confirmar fondos"}
+            </Btn>
+          </div>
+        </TerminalCard>
+      )}
+      
+    </MainWrap>
+  );
 };
 
-export default AperturaCaja;
+export default AperturaCajaProgressive;
