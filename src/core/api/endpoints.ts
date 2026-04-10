@@ -63,6 +63,7 @@ export const ENDPOINTS = {
     movimientosByProduct: (id: string) => `/inventario/movimientos/${id}`,
     valuacion: '/inventario/valuacion',
     rotacion: '/inventario/rotacion',
+    rotacionDetalle: '/inventario/rotacion/detalle',
   },
   ordenes: {
     base: '/ordenes',

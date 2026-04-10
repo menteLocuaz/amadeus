@@ -25,7 +25,7 @@ interface NavLinkItem {
 // --- Componente Principal ---
 export const Sidebar: React.FC = () => {
     const { theme, toggleTheme, sidebarOpen, toggleSidebar } = useUIStore();
-    const { logout } = useAuthStore();
+    const { logout, user } = useAuthStore();
     const navigate = useNavigate();
 
     const handleLogout = useCallback(async () => {
@@ -70,7 +70,16 @@ export const Sidebar: React.FC = () => {
                 </LogoSection>
 
                 {/* Secciones de Navegación */}
-                <NavSection links={primaryLinks} sidebarOpen={sidebarOpen} />
+                <NavSection
+                  links={primaryLinks.filter(link => {
+                    // Administradores ven todo
+                    if (user?.rol?.nombre_rol === 'Administrador') return true;
+                    // Si el backend no envía permisos, mostramos todo (fallback)
+                    if (!user?.permisos || !Array.isArray(user.permisos) || user.permisos.length === 0) return true;
+                    return user.permisos.includes(link.to);
+                  })}
+                  sidebarOpen={sidebarOpen}
+                />
                 <Divider />
                 <NavSection links={secondaryLinks} sidebarOpen={sidebarOpen} />
                 <Divider />

@@ -35,6 +35,7 @@ export interface UserMe {
       id_sucursal: string;
       nombre_sucursal: string;
   };
+  permisos: string[];
 }
 
 export interface LoginResponse {

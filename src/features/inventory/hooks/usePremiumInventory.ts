@@ -17,6 +17,7 @@ import {
     type InventoryCreateDTO,
     type InventoryUpdateDTO,
     type MovimientoRequest,
+    type MovimientoMasivoRequest,
     type ValuacionResult,
 } from '../services/InventoryService';
 import { ProductService, type Product } from '../../products/services/ProductService';
@@ -229,7 +230,43 @@ export const useInventoryRotation = () => {
         queryKey: premiumInventoryKeys.rotation(sucursalId),
         queryFn:  () => InventoryService.getRotacion(sucursalId),
         enabled:  !!sucursalId,
-        // La clasificación ABC rara vez cambia; 15 min reduce requests innecesarios
         staleTime: 15 * 60 * 1000,
+    });
+};
+
+// ── Hook: useInventoryRotacionDetalle ──────────────────────────────────────────
+/** Índice de rotación real (COGS / inventario promedio) por producto. */
+export const useInventoryRotacionDetalle = () => {
+    const { user }   = useAuthStore();
+    const sucursalId = getSucursalId(user);
+
+    return useQuery({
+        queryKey: [...premiumInventoryKeys.rotation(sucursalId), 'detalle'] as const,
+        queryFn:  () => InventoryService.getRotacionDetalle(sucursalId),
+        enabled:  !!sucursalId,
+        staleTime: 15 * 60 * 1000,
+    });
+};
+
+// ── Hook: useMovimientoMasivo ──────────────────────────────────────────────────
+/** Registra el mismo tipo de movimiento para múltiples productos en una operación atómica. */
+export const useMovimientoMasivo = () => {
+    const queryClient = useQueryClient();
+    return useMutation({
+        mutationFn: (payload: MovimientoMasivoRequest) =>
+            InventoryService.createMovementMasivo(payload),
+        onSuccess: (res) => {
+            queryClient.invalidateQueries({ queryKey: premiumInventoryKeys.all });
+            const count = Array.isArray(res.data) ? res.data.length : 0;
+            Swal.fire({
+                icon: 'success', title: 'Movimiento Masivo Registrado',
+                text: `Se procesaron ${count} producto(s) correctamente.`,
+                toast: true, position: 'top-end', showConfirmButton: false, timer: 2000,
+            });
+        },
+        onError: (error: any) => {
+            const msg = error.response?.data?.message ?? 'Error al procesar el movimiento masivo';
+            Swal.fire({ icon: 'error', title: 'Error Transaccional', text: msg });
+        },
     });
 };
