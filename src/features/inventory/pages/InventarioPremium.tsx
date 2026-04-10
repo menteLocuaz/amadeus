@@ -1,8 +1,9 @@
 import React, { useState, useMemo } from "react";
-import { 
-    FiSearch, FiRefreshCw, FiEdit, FiPackage, 
-    FiAlertTriangle, FiTrendingUp, 
-    FiX, FiActivity
+import styled from "styled-components";
+import {
+    FiSearch, FiRefreshCw, FiEdit, FiPackage,
+    FiAlertTriangle, FiTrendingUp,
+    FiX, FiActivity, FiLayers, FiBarChart2, FiSend
 } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import {
@@ -23,14 +24,14 @@ import {
 import { ProductCell } from "../../../shared/components/UI/molecules/ProductCell";
 
 // Hooks
-import { 
-    usePremiumInventory, 
-    useInitializeInventory, 
-    useUpdateInventory, 
-    useCreateMovement, 
+import {
+    usePremiumInventory,
+    useInitializeInventory,
+    useUpdateInventory,
+    useCreateMovement,
     useInventoryValuation,
     useInventoryRotation,
-    type MergedInventoryItem 
+    type MergedInventoryItem
 } from "../hooks/usePremiumInventory";
 
 // Modals
@@ -38,6 +39,11 @@ import {
     InitInventoryModal, UpdateInventoryModal, MovementModal,
     type InitPayload, type UpdatePayload, type MovementPayload,
 } from "../components/InventoryModals";
+
+// Analysis panels
+import { ValuacionPanel }         from "../components/ValuacionPanel";
+import { RotacionABCPanel }       from "../components/RotacionABCPanel";
+import { MovimientosMasivosPanel } from "../components/MovimientosMasivosPanel";
 
 // Styles
 import {
@@ -48,35 +54,45 @@ import {
 const columnHelper = createColumnHelper<MergedInventoryItem>();
 
 type ActionType = 'init' | 'update' | 'movement';
+type ActiveTab  = 'existencias' | 'valuacion' | 'rotacion' | 'masivo';
+
+const TABS: { key: ActiveTab; label: string; icon: React.ReactNode }[] = [
+    { key: 'existencias', label: 'Existencias',         icon: <FiLayers size={14} />   },
+    { key: 'valuacion',   label: 'Valuación',           icon: <FiTrendingUp size={14} /> },
+    { key: 'rotacion',    label: 'Análisis ABC',        icon: <FiBarChart2 size={14} /> },
+    { key: 'masivo',      label: 'Mov. Masivos',        icon: <FiSend size={14} />     },
+];
 
 /**
  * InventarioPremium Component
- * Advanced inventory management with ABC rotation analysis and valuation methods.
+ * Advanced inventory management with tabs for stock table, valuation,
+ * ABC rotation analysis, and bulk movements.
  */
 const InventarioPremium: React.FC = () => {
-    // 1. Data Fetching
+    // ── Data Fetching ──────────────────────────────────────────────────────────
     const { data: items = [], isLoading, isFetching, refetch } = usePremiumInventory();
-    const initMutation = useInitializeInventory();
+    const initMutation   = useInitializeInventory();
     const updateMutation = useUpdateInventory();
-    const moveMutation = useCreateMovement();
+    const moveMutation   = useCreateMovement();
 
-    // Analysis Queries
+    // Analysis (used in stats card on existencias tab)
     const [valMethod, setValMethod] = useState<'peps' | 'ueps' | 'promedio'>('promedio');
     const { data: valuationData } = useInventoryValuation(valMethod);
-    const { data: rotationData } = useInventoryRotation();
+    const { data: rotationData  } = useInventoryRotation();
 
-    // 2. UI State
+    // ── UI State ───────────────────────────────────────────────────────────────
+    const [activeTab,    setActiveTab]    = useState<ActiveTab>('existencias');
     const [globalFilter, setGlobalFilter] = useState("");
-    const [catFilter, setCatFilter] = useState("all");
-    const [actionState, setActionState] = useState<{ type: ActionType, item: MergedInventoryItem } | null>(null);
+    const [catFilter,    setCatFilter]    = useState("all");
+    const [actionState,  setActionState]  = useState<{ type: ActionType; item: MergedInventoryItem } | null>(null);
 
-    // 3. Stats Calculation
+    // ── Stats ──────────────────────────────────────────────────────────────────
     const stats = useMemo(() => {
         const totalProducts = items.length;
-        const lowStock = items.filter(i => i.stock_actual > 0 && i.stock_actual <= i.stock_minimo).length;
+        const lowStock   = items.filter(i => i.stock_actual > 0 && i.stock_actual <= i.stock_minimo).length;
         const outOfStock = items.filter(i => i.stock_actual <= 0).length;
-        const totalValue = valuationData?.data?.total_valor || items.reduce((acc, curr) => acc + (curr.stock_actual * curr.precio_compra), 0);
-
+        const totalValue = valuationData?.data?.total_valor
+            || items.reduce((acc, curr) => acc + (curr.stock_actual * curr.precio_compra), 0);
         return { totalProducts, lowStock, outOfStock, totalValue };
     }, [items, valuationData]);
 
@@ -93,20 +109,17 @@ const InventarioPremium: React.FC = () => {
 
     const getRotationClass = (id: string) => rotationMap.get(id) ?? null;
 
-    // 4. Memoized Data for Filters
-    const categories = useMemo(() => 
-        ["all", ...new Set(items.map(i => i.categoria_nombre).filter(Boolean))], 
+    // ── Filters ────────────────────────────────────────────────────────────────
+    const categories = useMemo(() =>
+        ["all", ...new Set(items.map(i => i.categoria_nombre).filter(Boolean))],
     [items]);
 
     const filteredData = useMemo(() => {
-        let data = items;
-        if (catFilter !== "all") {
-            data = data.filter(item => item.categoria_nombre === catFilter);
-        }
-        return data;
+        if (catFilter === "all") return items;
+        return items.filter(item => item.categoria_nombre === catFilter);
     }, [items, catFilter]);
 
-    // 5. TanStack Table Columns
+    // ── Table Columns ──────────────────────────────────────────────────────────
     const columns = useMemo(() => [
         columnHelper.accessor("nombre", {
             header: "Producto",
@@ -114,18 +127,18 @@ const InventarioPremium: React.FC = () => {
                 const rotation = getRotationClass(info.row.original.id_producto);
                 return (
                     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <ProductCell 
-                            nombre={info.getValue()} 
-                            sku={info.row.original.id_producto} 
+                        <ProductCell
+                            nombre={info.getValue()}
+                            sku={info.row.original.id_producto}
                             imagen={info.row.original.imagen}
                             placeholderIcon={FiPackage}
                         />
                         {rotation && (
-                            <Badge 
-                                $color={rotation === 'A' ? '#ef444422' : rotation === 'B' ? '#f59e0b22' : '#10b98122'} 
-                                style={{ 
-                                    color: rotation === 'A' ? '#ef4444' : rotation === 'B' ? '#f59e0b' : '#10b981', 
-                                    fontSize: '0.65rem', 
+                            <Badge
+                                $color={rotation === 'A' ? '#ef444422' : rotation === 'B' ? '#f59e0b22' : '#10b98122'}
+                                style={{
+                                    color: rotation === 'A' ? '#ef4444' : rotation === 'B' ? '#f59e0b' : '#10b981',
+                                    fontSize: '0.65rem',
                                     padding: '1px 5px',
                                     alignSelf: 'center',
                                     marginTop: -15
@@ -140,16 +153,15 @@ const InventarioPremium: React.FC = () => {
         }),
         columnHelper.accessor("categoria_nombre", {
             header: "Categoría",
-            cell: info => <Badge $color="#6366f122" style={{color: '#6366f1'}}>{info.getValue()}</Badge>
+            cell: info => <Badge $color="#6366f122" style={{ color: '#6366f1' }}>{info.getValue()}</Badge>
         }),
         columnHelper.accessor("stock_actual", {
-            header: () => <div style={{textAlign: 'right'}}>Existencias</div>,
+            header: () => <div style={{ textAlign: 'right' }}>Existencias</div>,
             cell: info => {
                 const val = info.getValue() ?? 0;
                 const min = info.row.original.stock_minimo;
                 const isLow = val <= min && val > 0;
                 const isOut = val <= 0;
-                
                 return (
                     <StockContainer>
                         <div className="label">
@@ -161,8 +173,8 @@ const InventarioPremium: React.FC = () => {
                             </small>
                         </div>
                         <ProgressBar>
-                            <ProgressFill 
-                                $percent={Math.min((val / (info.row.original.stock_maximo || 100)) * 100, 100)} 
+                            <ProgressFill
+                                $percent={Math.min((val / (info.row.original.stock_maximo || 100)) * 100, 100)}
                                 $status={isOut ? "critical" : isLow ? "warning" : "success"}
                             />
                         </ProgressBar>
@@ -171,7 +183,7 @@ const InventarioPremium: React.FC = () => {
             }
         }),
         columnHelper.accessor("precio_venta", {
-            header: () => <div style={{textAlign: 'right'}}>Precio Venta</div>,
+            header: () => <div style={{ textAlign: 'right' }}>Precio Venta</div>,
             cell: info => (
                 <div style={{ textAlign: "right", fontWeight: 700 }}>
                     ${(info.getValue() || 0).toFixed(2)}
@@ -205,7 +217,6 @@ const InventarioPremium: React.FC = () => {
         })
     ], [rotationMap]);
 
-
     const table = useReactTable({
         data: filteredData,
         columns,
@@ -225,119 +236,164 @@ const InventarioPremium: React.FC = () => {
             <PageHeader>
                 <HeaderTitle>
                     <h1><FiPackage color="#FCA311" /> Control de Inventario</h1>
-                    <p>Visión global de existencias y niveles críticos</p>
+                    <p>Existencias, valuación contable, análisis ABC y movimientos masivos</p>
                 </HeaderTitle>
 
-                <Toolbar>
-                    <SearchBox>
-                        <FiSearch />
-                        <input
-                            placeholder="Buscar producto..."
-                            value={globalFilter ?? ""}
-                            onChange={(e) => setGlobalFilter(e.target.value)}
-                        />
-                    </SearchBox>
-                    <ActionBtn onClick={() => refetch()} title="Sincronizar">
-                        <FiRefreshCw className={isFetching ? "spin" : ""} />
-                    </ActionBtn>
-                </Toolbar>
+                {activeTab === 'existencias' && (
+                    <Toolbar>
+                        <SearchBox>
+                            <FiSearch />
+                            <input
+                                placeholder="Buscar producto..."
+                                value={globalFilter ?? ""}
+                                onChange={(e) => setGlobalFilter(e.target.value)}
+                            />
+                        </SearchBox>
+                        <ActionBtn onClick={() => refetch()} title="Sincronizar">
+                            <FiRefreshCw className={isFetching ? "spin" : ""} />
+                        </ActionBtn>
+                    </Toolbar>
+                )}
             </PageHeader>
 
-            <StatsGrid>
-                <StatCard $color="#3b82f6">
-                    <div className="icon"><FiPackage /></div>
-                    <div className="content">
-                        <h3>{stats.totalProducts}</h3>
-                        <p>Productos Totales</p>
-                    </div>
-                </StatCard>
-                <StatCard $color="#f59e0b">
-                    <div className="icon"><FiAlertTriangle /></div>
-                    <div className="content">
-                        <h3>{stats.lowStock}</h3>
-                        <p>Stock Bajo</p>
-                    </div>
-                </StatCard>
-                <StatCard $color="#ef4444">
-                    <div className="icon"><FiX /></div>
-                    <div className="content">
-                        <h3>{stats.outOfStock}</h3>
-                        <p>Agotados</p>
-                    </div>
-                </StatCard>
-                <StatCard $color="#10b981">
-                    <div className="icon"><FiTrendingUp /></div>
-                    <div className="content">
-                        <h3>${stats.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
-                        <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
-                            {(['promedio', 'peps', 'ueps'] as const).map(m => (
-                                <ValMethodBtn 
-                                    key={m} 
-                                    $active={valMethod === m}
-                                    onClick={() => setValMethod(m)}
+            {/* Stats Cards — solo en tab Existencias */}
+            {activeTab === 'existencias' && (
+                <StatsGrid>
+                    <StatCard $color="#3b82f6">
+                        <div className="icon"><FiPackage /></div>
+                        <div className="content">
+                            <h3>{stats.totalProducts}</h3>
+                            <p>Productos Totales</p>
+                        </div>
+                    </StatCard>
+                    <StatCard $color="#f59e0b">
+                        <div className="icon"><FiAlertTriangle /></div>
+                        <div className="content">
+                            <h3>{stats.lowStock}</h3>
+                            <p>Stock Bajo</p>
+                        </div>
+                    </StatCard>
+                    <StatCard $color="#ef4444">
+                        <div className="icon"><FiX /></div>
+                        <div className="content">
+                            <h3>{stats.outOfStock}</h3>
+                            <p>Agotados</p>
+                        </div>
+                    </StatCard>
+                    <StatCard $color="#10b981">
+                        <div className="icon"><FiTrendingUp /></div>
+                        <div className="content">
+                            <h3>${stats.totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</h3>
+                            <div style={{ display: 'flex', gap: 4, marginTop: 4 }}>
+                                {(['promedio', 'peps', 'ueps'] as const).map(m => (
+                                    <ValMethodBtn
+                                        key={m}
+                                        $active={valMethod === m}
+                                        onClick={() => setValMethod(m)}
+                                    >
+                                        {m.toUpperCase()}
+                                    </ValMethodBtn>
+                                ))}
+                            </div>
+                        </div>
+                    </StatCard>
+                </StatsGrid>
+            )}
+
+            {/* Tab Bar */}
+            <TabBar>
+                {TABS.map(tab => (
+                    <TabBtn
+                        key={tab.key}
+                        $active={activeTab === tab.key}
+                        onClick={() => setActiveTab(tab.key)}
+                    >
+                        {tab.icon}
+                        {tab.label}
+                    </TabBtn>
+                ))}
+            </TabBar>
+
+            {/* Tab: Existencias */}
+            {activeTab === 'existencias' && (
+                <>
+                    <FilterRow>
+                        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+                            {categories.map(c => (
+                                <FilterChip
+                                    key={c}
+                                    $active={catFilter === c}
+                                    onClick={() => setCatFilter(c)}
                                 >
-                                    {m.toUpperCase()}
-                                </ValMethodBtn>
+                                    {c === 'all' ? 'Todos' : c}
+                                </FilterChip>
                             ))}
                         </div>
-                    </div>
-                </StatCard>
-            </StatsGrid>
+                        <div style={{ opacity: 0.5, fontSize: '0.85rem' }}>
+                            Mostrando {table.getRowModel().rows.length} de {items.length} productos
+                        </div>
+                    </FilterRow>
 
-            {/* Quick Filter */}
-            <FilterRow>
-                <div style={{ display: 'flex', gap: 10 }}>
-                    {categories.map(c => (
-                        <FilterChip 
-                            key={c} 
-                            $active={catFilter === c} 
-                            onClick={() => setCatFilter(c)}
-                        >
-                            {c === 'all' ? 'Todos' : c}
-                        </FilterChip>
-                    ))}
-                </div>
-                <div style={{ opacity: 0.5, fontSize: '0.85rem' }}>
-                    Mostrando {table.getRowModel().rows.length} de {items.length} productos
-                </div>
-            </FilterRow>
-
-            <TableCard>
-                {isLoading ? (
-                    <LoaderContainer>
-                        <ClimbingBoxLoader color="#FCA311" />
-                        <p>Procesando inventario...</p>
-                    </LoaderContainer>
-                ) : (
-                    <Table>
-                        <thead>
-                            {table.getHeaderGroups().map(headerGroup => (
-                                <tr key={headerGroup.id}>
-                                    {headerGroup.headers.map(header => (
-                                        <th key={header.id}>
-                                            {flexRender(header.column.columnDef.header, header.getContext())}
-                                        </th>
+                    <TableCard>
+                        {isLoading ? (
+                            <LoaderContainer>
+                                <ClimbingBoxLoader color="#FCA311" />
+                                <p>Procesando inventario...</p>
+                            </LoaderContainer>
+                        ) : (
+                            <Table>
+                                <thead>
+                                    {table.getHeaderGroups().map(headerGroup => (
+                                        <tr key={headerGroup.id}>
+                                            {headerGroup.headers.map(header => (
+                                                <th key={header.id}>
+                                                    {flexRender(header.column.columnDef.header, header.getContext())}
+                                                </th>
+                                            ))}
+                                        </tr>
                                     ))}
-                                </tr>
-                            ))}
-                        </thead>
-                        <tbody>
-                            {table.getRowModel().rows.map(row => (
-                                <tr key={row.id}>
-                                    {row.getVisibleCells().map(cell => (
-                                        <td key={cell.id}>
-                                            {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                        </td>
+                                </thead>
+                                <tbody>
+                                    {table.getRowModel().rows.map(row => (
+                                        <tr key={row.id}>
+                                            {row.getVisibleCells().map(cell => (
+                                                <td key={cell.id}>
+                                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                                </td>
+                                            ))}
+                                        </tr>
                                     ))}
-                                </tr>
-                            ))}
-                        </tbody>
-                    </Table>
-                )}
-            </TableCard>
+                                </tbody>
+                            </Table>
+                        )}
+                    </TableCard>
+                </>
+            )}
 
+            {/* Tab: Valuación */}
+            {activeTab === 'valuacion' && (
+                <TabPanel>
+                    <ValuacionPanel />
+                </TabPanel>
+            )}
+
+            {/* Tab: Análisis ABC */}
+            {activeTab === 'rotacion' && (
+                <TabPanel>
+                    <RotacionABCPanel />
+                </TabPanel>
+            )}
+
+            {/* Tab: Movimientos Masivos */}
+            {activeTab === 'masivo' && (
+                <TabPanel>
+                    <MovimientosMasivosPanel />
+                </TabPanel>
+            )}
+
+            {/* Modals */}
             {actionState?.type === 'init' && (
-                <InitInventoryModal 
+                <InitInventoryModal
                     item={actionState.item}
                     onClose={() => setActionState(null)}
                     onSave={handleInit}
@@ -365,3 +421,38 @@ const InventarioPremium: React.FC = () => {
 };
 
 export default InventarioPremium;
+
+// ── Tab styles ─────────────────────────────────────────────────────────────────
+const TabBar = styled.div`
+    display: flex;
+    gap: 4px;
+    border-bottom: 1px solid ${({ theme }) => theme.bg3}22;
+    margin-bottom: 4px;
+`;
+
+const TabBtn = styled.button<{ $active: boolean }>`
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 18px;
+    border: none;
+    background: transparent;
+    color: ${({ theme, $active }) => $active ? theme.text : theme.textsecondary || theme.text};
+    font-size: 0.85rem;
+    font-weight: ${({ $active }) => $active ? 700 : 500};
+    cursor: pointer;
+    opacity: ${({ $active }) => $active ? 1 : 0.5};
+    border-bottom: 2px solid ${({ theme, $active }) => $active ? (theme.primary || '#FCA311') : 'transparent'};
+    margin-bottom: -1px;
+    transition: opacity 0.15s ease, border-color 0.15s ease, color 0.15s ease;
+    white-space: nowrap;
+
+    &:hover { opacity: 1; }
+`;
+
+const TabPanel = styled.div`
+    background: ${({ theme }) => theme.bg};
+    border: 1px solid ${({ theme }) => theme.bg3}22;
+    border-radius: 14px;
+    padding: 28px;
+`;

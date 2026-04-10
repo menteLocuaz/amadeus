@@ -63,6 +63,16 @@ export interface RotacionABC {
     C: string[];
 }
 
+/** Detalle de rotación de un producto calculado sobre COGS e inventario promedio. */
+export interface RotacionDetalleItem {
+    id_producto: string;
+    nombre?: string;
+    indice_rotacion: number;     // COGS / inventario_promedio
+    cogs: number;
+    inventario_promedio: number;
+    clase?: 'A' | 'B' | 'C';
+}
+
 // ── DTOs de entrada ───────────────────────────────────────────────────────────
 
 /** Body para POST /inventario — crea el primer registro de un producto en una sucursal. */
@@ -268,6 +278,17 @@ export const InventoryService = {
     getRotacion: async (id_sucursal: string): Promise<ApiResponse<RotacionABC>> => {
         const { data } = await axiosClient.get(
             `${ENDPOINTS.inventario.rotacion}?id_sucursal=${id_sucursal}`
+        );
+        return data;
+    },
+
+    /**
+     * Índice de rotación real de cada producto (COGS / inventario promedio).
+     * GET /inventario/rotacion/detalle?id_sucursal={uuid}
+     */
+    getRotacionDetalle: async (id_sucursal: string): Promise<ApiResponse<RotacionDetalleItem[]>> => {
+        const { data } = await axiosClient.get(
+            `${ENDPOINTS.inventario.rotacionDetalle}?id_sucursal=${id_sucursal}`
         );
         return data;
     },
