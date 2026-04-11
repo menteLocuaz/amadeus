@@ -1,121 +1,150 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { MonedaService, type Moneda } from "../services/MonedaService";
+import { MonedaService, type Moneda, type CreateMonedaDTO } from "../services/MonedaService";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 
 export interface MonedaFormData {
-  nombre:      string;
+  nombre: string;
   id_sucursal: string;
+  id_status: string;
 }
 
-/** Normaliza el ID de moneda independientemente del campo que venga del API */
+/**
+ * Normalizes currency data from the API to a consistent internal format.
+ * Handles variations in field names like id_divisa, id_moneda, etc.
+ */
 const normalizeMoneda = (m: any): Moneda => ({
-  ...m,
-  id_moneda: m.id_moneda ?? m.id_divisa ?? m.id,
-  nombre: m.nombre ?? m.nombre_moneda ?? "S/N",
+  id_moneda: String(m.id_moneda || m.id_divisa || m.id || ""),
+  nombre: m.nombre || m.nombre_moneda || "S/N",
+  id_sucursal: m.id_sucursal || "",
+  id_status: m.id_status || m.status?.id_status || "",
+  status: m.status,
 });
 
 export function useMonedaPage() {
   const { user } = useAuthStore();
-  const { sucursales, fetchCatalogs } = useCatalogStore();
+  const { sucursales, statusList, fetchCatalogs } = useCatalogStore();
 
+  // ── Main State ──
+  const [monedas, setMonedas] = useState<Moneda[]>([]);
+  const [search, setSearch] = useState("");
 
-  // ── Estado principal ──
-  const [monedas,     setMonedas]     = useState<Moneda[]>([]);
-  const [search,      setSearch]      = useState("");
+  // ── Modal State ──
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingMoneda, setEditingMoneda] = useState<Moneda | null>(null);
+  const [formData, setFormData] = useState<MonedaFormData>({ 
+    nombre: "", 
+    id_sucursal: "",
+    id_status: ""
+  });
 
-  // ── Estado del modal ──
-  const [isModalOpen,    setIsModalOpen]    = useState(false);
-  const [editingMoneda,  setEditingMoneda]  = useState<Moneda | null>(null);
-  const [formData,       setFormData]       = useState<MonedaFormData>({ nombre: "", id_sucursal: "" });
-
-  // ── Estado de operaciones async ──
-  const [isLoading,    setIsLoading]    = useState(false);
-  const [isSaving,     setIsSaving]     = useState(false);
+  // ── Async Operations State ──
+  const [isLoading, setIsLoading] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const [isDeletingId, setIsDeletingId] = useState<string | null>(null);
 
-  // ── Carga inicial ──
-  useEffect(() => {
-    loadData();
-    fetchCatalogs();
-  }, [fetchCatalogs]);
-
-  /** Obtiene todas las monedas y normaliza los IDs */
+  /**
+   * Loads all currencies and normalizes them.
+   */
   const loadData = useCallback(async () => {
     setIsLoading(true);
     try {
       const res = await MonedaService.getAll();
-      setMonedas((res.data || []).map(normalizeMoneda));
+      const rawData = Array.isArray(res.data) ? res.data : [];
+      setMonedas(rawData.map(normalizeMoneda));
     } catch (err) {
-      console.error("Error al cargar monedas:", err);
+      console.error("Error loading currencies:", err);
     } finally {
       setIsLoading(false);
     }
   }, []);
 
-  // ── Filtrado reactivo por texto ──
+  // Initial load
+  useEffect(() => {
+    loadData();
+    fetchCatalogs();
+  }, [fetchCatalogs, loadData]);
+
+  // ── Reactive Filtering ──
   const filteredMonedas = useMemo(
-    () => monedas.filter(m => m.nombre?.toLowerCase().includes(search.toLowerCase())),
+    () => monedas.filter(m => 
+      m.nombre?.toLowerCase().includes(search.toLowerCase())
+    ),
     [monedas, search]
   );
 
-  /** Mapeo id_sucursal → nombre para mostrar en tabla */
+  /**
+   * Helper maps for O(1) lookups in the UI (e.g., Table rows).
+   */
   const sucursalMap = useMemo(() => {
     const map: Record<string, string> = {};
     sucursales.forEach((s: any) => {
-      map[s.id_sucursal] = s.nombre_sucursal;
+      const id = s.id_sucursal || s.id;
+      map[id] = s.nombre_sucursal || s.nombre;
     });
     return map;
   }, [sucursales]);
 
-  // ── Acciones del modal ──
+  // ── Modal Actions ──
   const openModal = useCallback((moneda?: Moneda) => {
     if (moneda) {
       setEditingMoneda(moneda);
       setFormData({ 
-        nombre: moneda.nombre ?? "", 
-        id_sucursal: moneda.id_sucursal ?? user?.id_sucursal ?? "" 
+        nombre: moneda.nombre || "", 
+        id_sucursal: moneda.id_sucursal || user?.id_sucursal || "",
+        id_status: moneda.id_status || ""
       });
     } else {
+      // Find a default "Active" status for new entries
+      const activeStatus = statusList.find(s => 
+        s.std_descripcion.toLowerCase().includes("activ")
+      )?.id_status || "";
+
       setEditingMoneda(null);
       setFormData({ 
         nombre: "", 
-        id_sucursal: user?.id_sucursal ?? "" 
+        id_sucursal: user?.id_sucursal || "",
+        id_status: activeStatus
       });
     }
     setIsModalOpen(true);
-  }, [user?.id_sucursal]);
+  }, [user?.id_sucursal, statusList]);
 
-  const closeModal = () => setIsModalOpen(false);
+  const closeModal = useCallback(() => {
+    setIsModalOpen(false);
+    setEditingMoneda(null);
+  }, []);
 
-  // ── CRUD ──
+  // ── CRUD Operations ──
   const handleSave = async () => {
     const nombre = formData.nombre.trim();
-    if (!nombre)              return alert("El nombre es obligatorio");
+    if (!nombre) return alert("El nombre es obligatorio");
     if (!formData.id_sucursal) return alert("La sucursal es obligatoria");
+    if (!formData.id_status) return alert("El estado es obligatorio");
 
     setIsSaving(true);
     try {
-      const payload = { 
+      const payload: CreateMonedaDTO = { 
         nombre, 
-        id_sucursal: formData.id_sucursal
+        id_sucursal: formData.id_sucursal,
+        id_status: formData.id_status
       };
 
       if (editingMoneda) {
-        const id = String(editingMoneda.id_moneda ?? "");
+        const id = editingMoneda.id_moneda;
         if (!id) throw new Error("ID de moneda no encontrado");
         await MonedaService.update(id, payload);
-        alert("¡Moneda actualizada con éxito!");
       } else {
         await MonedaService.create(payload);
-        alert("¡Moneda creada con éxito!");
       }
 
       await loadData();
       closeModal();
+      alert(`¡Moneda ${editingMoneda ? "actualizada" : "creada"} con éxito!`);
     } catch (err: any) {
-      console.error("Error al guardar moneda:", err);
-      alert(`Error: ${err.response?.data?.message ?? err.message}`);
+      console.error("Error saving currency:", err);
+      const errorMsg = err.response?.data?.message || err.message || "Error desconocido";
+      alert(`Error: ${errorMsg}`);
     } finally {
       setIsSaving(false);
     }
@@ -129,23 +158,34 @@ export function useMonedaPage() {
     try {
       await MonedaService.delete(id);
       await loadData();
-      alert("Moneda eliminada");
-    } catch (err) {
-      console.error("Error al eliminar moneda:", err);
+      alert("Moneda eliminada con éxito");
+    } catch (err: any) {
+      console.error("Error deleting currency:", err);
+      alert(`Error: ${err.response?.data?.message || "No se pudo eliminar"}`);
     } finally {
       setIsDeletingId(null);
     }
   };
 
   return {
-    // Estado
-    filteredMonedas, sucursales, sucursalMap,
-    search, setSearch,
-    isLoading, isSaving, isDeletingId,
-    isModalOpen, editingMoneda,
-    formData, setFormData,
-    // Acciones
-    openModal, closeModal,
-    handleSave, handleDelete,
+    // State
+    filteredMonedas, 
+    sucursales, 
+    statusList,
+    sucursalMap,
+    search, 
+    setSearch,
+    isLoading, 
+    isSaving, 
+    isDeletingId,
+    isModalOpen, 
+    editingMoneda,
+    formData, 
+    setFormData,
+    // Actions
+    openModal, 
+    closeModal,
+    handleSave, 
+    handleDelete,
   };
 }

@@ -254,6 +254,9 @@ export const Configuración: React.FC = () => {
       { id: "medidas", category: "Inventario", title: "Unidades", description: "Kilos, metros, unidades y más", Icon: FiSliders, path: ROUTES.MEDIDAS },
       { id: "warehouse", category: "Inventario", title: "Almacenes", description: "Control de bodegas y transferencias", Icon: FiMapPin, onClick: () => alert("Módulo de Almacén") },
 
+      // --- Inventario (compras) ---
+      { id: "compras", category: "Inventario", title: "Compras", description: "Órdenes de compra y recepciones", Icon: FiShoppingCart, path: ROUTES.COMPRAS },
+
       // --- Entidades ---
       { id: "suppliers", category: "Entidades", title: "Proveedores", description: "Directorio y órdenes de compra", Icon: FiTruck, path: ROUTES.PROVEEDORES },
       { id: "clients", category: "Entidades", title: "Clientes", description: "Cartera y fidelización", Icon: FiUsers, path: ROUTES.CLIENTES },

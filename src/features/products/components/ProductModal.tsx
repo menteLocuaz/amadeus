@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { FiX, FiSave } from "react-icons/fi";
 import { ClimbingBoxLoader } from "react-spinners";
 import { useTheme } from "styled-components";
@@ -19,6 +19,11 @@ interface Props {
     onSuccess: () => void;
 }
 
+/**
+ * ProductModal Component
+ * Handles both creation and edition of products.
+ * Includes auto-generation of SKU based on the product name.
+ */
 export const ProductModal: React.FC<Props> = ({
     isOpen,
     onClose,
@@ -34,7 +39,7 @@ export const ProductModal: React.FC<Props> = ({
     const theme = useTheme();
     const { createMutation, updateMutation } = useProductMutations();
 
-    // true si el usuario escribió el SKU manualmente en esta sesión del modal
+    // Ref to track if SKU was manually edited to stop auto-generation
     const skuManualRef = useRef(false);
     
     const [formData, setFormData] = useState({
@@ -54,7 +59,10 @@ export const ProductModal: React.FC<Props> = ({
         id_sucursal: "",
     });
 
-    // Genera SKU a partir del nombre: "Cerveza Lager 355ml" → "CER-LAG-355"
+    /**
+     * Generates a SKU from a product name.
+     * Example: "Cerveza Lager 355ml" -> "CER-LAG-355"
+     */
     const generateSku = (nombre: string): string =>
         nombre
             .trim()
@@ -66,10 +74,10 @@ export const ProductModal: React.FC<Props> = ({
             .join('-')
             .slice(0, 20);
 
+    // Initialize form data when modal opens or editingProduct changes
     useEffect(() => {
         if (!isOpen) return;
 
-        // Al abrir el modal, reseteamos la bandera de edición manual de SKU
         skuManualRef.current = false;
 
         if (editingProduct) {
@@ -80,7 +88,7 @@ export const ProductModal: React.FC<Props> = ({
                 sku: editingProduct.sku || "",
                 precio_compra: editingProduct.precio_compra ?? 0,
                 precio_venta: editingProduct.precio_venta ?? 0,
-                stock: editingProduct.stock ?? 0,
+                stock: editingProduct.stock ?? (editingProduct as any).stock_actual ?? 0,
                 fecha_vencimiento: editingProduct.fecha_vencimiento
                     ? String(editingProduct.fecha_vencimiento).split("T")[0]
                     : "",
@@ -92,8 +100,10 @@ export const ProductModal: React.FC<Props> = ({
                 id_sucursal: editingProduct.id_sucursal || "",
             });
         } else {
-            const activeStatus =
-                estatusList.find((e: any) => String(e.std_descripcion).toLowerCase().includes("activ"))?.id_status || "";
+            const activeStatus = estatusList.find((e: any) => 
+                String(e.std_descripcion).toLowerCase().includes("activ")
+            )?.id_status || "";
+
             setFormData({
                 nombre: "",
                 descripcion: "",
@@ -105,7 +115,7 @@ export const ProductModal: React.FC<Props> = ({
                 fecha_vencimiento: "",
                 imagen: "",
                 id_categoria: "",
-                id_moneda: currencies?.[0]?.id_moneda || "",
+                id_moneda: currencies?.[0]?.id_moneda || currencies?.[0]?.id || "",
                 id_unidad: "",
                 id_status: activeStatus,
                 id_sucursal: userIdSucursal || "",
@@ -115,9 +125,10 @@ export const ProductModal: React.FC<Props> = ({
 
     const handleChange = (key: keyof typeof formData, value: any) => {
         if (key === 'sku') skuManualRef.current = true;
+        
         setFormData((prev) => {
             const next = { ...prev, [key]: value };
-            // Auto-generar SKU al escribir el nombre, solo en producto nuevo y sin edición manual
+            // Auto-generate SKU only for new products if not manually edited
             if (key === 'nombre' && !editingProduct && !skuManualRef.current) {
                 next.sku = generateSku(value);
             }
@@ -125,15 +136,25 @@ export const ProductModal: React.FC<Props> = ({
         });
     };
 
+    /**
+     * Extracts error message from API response.
+     */
+    const extractErrorMsg = (error: any): string => {
+        const data = error?.response?.data;
+        if (!data) return error?.message ?? 'Error desconocido';
+        if (typeof data === 'string') return data;
+        return data.message || data.error || JSON.stringify(data);
+    };
+
     const handleSave = async () => {
+        // Basic Validation
         if (!formData.nombre.trim())  return alert("El nombre del producto es obligatorio.");
         if (!formData.id_sucursal)    return alert("Debe seleccionar una sucursal.");
         if (!formData.id_categoria)   return alert("Debe seleccionar una categoría.");
         if (!formData.id_unidad)      return alert("Debe seleccionar una unidad de medida.");
 
-        // Construye el payload limpiando campos opcionales vacíos.
-        // El backend rechaza con 400 si recibe "" en campos que espera ausentes o nulos.
-        const payload = {
+        // Construct payload: cleanup empty strings and format numbers/dates
+        const payload: any = {
             nombre:        formData.nombre.trim(),
             descripcion:   formData.descripcion.trim(),
             precio_compra: Number(formData.precio_compra),
@@ -144,45 +165,45 @@ export const ProductModal: React.FC<Props> = ({
             id_unidad:     formData.id_unidad,
             id_status:     formData.id_status,
             id_sucursal:   formData.id_sucursal,
-            // Campos opcionales: se omiten si están vacíos en lugar de enviar ""
-            ...(formData.codigo_barras.trim()  && { codigo_barras:     formData.codigo_barras.trim() }),
-            ...(formData.sku.trim()            && { sku:               formData.sku.trim() }),
-            ...(formData.imagen.trim()         && { imagen:            formData.imagen.trim() }),
-            ...(formData.fecha_vencimiento     && { fecha_vencimiento: new Date(formData.fecha_vencimiento).toISOString() }),
         };
 
-        // Extrae el mensaje de error del backend sea cual sea la forma de la respuesta
-        const extractErrorMsg = (error: any): string => {
-            const d = error?.response?.data;
-            if (!d) return error?.message ?? 'Error desconocido';
-            if (typeof d === 'string') return d;
-            return d.message ?? d.error ?? JSON.stringify(d);
-        };
+        // Add optional fields only if they have a value
+        if (formData.codigo_barras.trim()) payload.codigo_barras = formData.codigo_barras.trim();
+        if (formData.sku.trim())           payload.sku = formData.sku.trim();
+        if (formData.imagen.trim())        payload.imagen = formData.imagen.trim();
+        
+        // Fix: Send YYYY-MM-DD instead of full ISO string to avoid 400 errors on strict backends
+        if (formData.fecha_vencimiento) {
+            payload.fecha_vencimiento = formData.fecha_vencimiento; 
+        }
 
         const options = {
-            onSuccess: () => { onSuccess(); onClose(); },
+            onSuccess: () => { 
+                onSuccess(); 
+                onClose(); 
+            },
             onError: (error: any) => {
-                console.error('Payload enviado:', payload);
-                console.error('Respuesta del servidor:', error?.response?.data);
+                console.error('Save Product Error. Payload:', payload, 'Response:', error?.response?.data);
                 alert(`Error al guardar: ${extractErrorMsg(error)}`);
             },
         };
 
         if (editingProduct) {
-            const id = String(editingProduct.id_producto ?? (editingProduct as any).id ?? "");
+            const id = String(editingProduct.id_producto || (editingProduct as any).id || "");
             updateMutation.mutate({ id, payload }, options);
         } else {
             createMutation.mutate(payload, options);
         }
     };
 
-    const saving = createMutation.isPending || updateMutation.isPending;
+    const isSaving = createMutation.isPending || updateMutation.isPending;
 
     if (!isOpen) return null;
 
   return (
     <ModalOverlay>
       <ModalContent style={{ maxWidth: 900 }}>
+        {/* Header */}
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
           <h2 style={{ margin: 0 }}>{editingProduct ? "Editar Producto" : "Nuevo Producto"}</h2>
           <ActionBtn $variant="close" onClick={onClose} aria-label="Cerrar">
@@ -190,8 +211,10 @@ export const ProductModal: React.FC<Props> = ({
           </ActionBtn>
         </div>
 
+        {/* Form Grid */}
         <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 18 }}>
-          {/* Columna izquierda */}
+          
+          {/* Left Column: Identification & Pricing */}
           <div>
             <FormGroup>
               <label>Nombre del Producto</label>
@@ -209,6 +232,7 @@ export const ProductModal: React.FC<Props> = ({
                 value={formData.descripcion}
                 onChange={(e) => handleChange("descripcion", e.target.value)}
                 placeholder="Detalles del producto..."
+                rows={3}
               />
             </FormGroup>
 
@@ -240,6 +264,7 @@ export const ProductModal: React.FC<Props> = ({
                   value={formData.precio_compra}
                   onChange={(e) => handleChange("precio_compra", e.target.value)}
                   step="0.01"
+                  min="0"
                 />
               </FormGroup>
 
@@ -250,6 +275,7 @@ export const ProductModal: React.FC<Props> = ({
                   value={formData.precio_venta}
                   onChange={(e) => handleChange("precio_venta", e.target.value)}
                   step="0.01"
+                  min="0"
                 />
               </FormGroup>
             </div>
@@ -261,6 +287,7 @@ export const ProductModal: React.FC<Props> = ({
                   type="number"
                   value={formData.stock}
                   onChange={(e) => handleChange("stock", e.target.value)}
+                  min="0"
                 />
               </FormGroup>
 
@@ -272,17 +299,20 @@ export const ProductModal: React.FC<Props> = ({
                   required
                 >
                   <option value="">Seleccione Moneda...</option>
-                  {currencies?.map((c: any) => (
-                    <option key={String(c.id_moneda ?? c.id)} value={c.id_moneda ?? c.id}>
-                      {c.nombre}
-                    </option>
-                  ))}
+                  {currencies?.map((c: any) => {
+                    const id = c.id_moneda || c.id;
+                    return (
+                      <option key={String(id)} value={id}>
+                        {c.nombre}
+                      </option>
+                    );
+                  })}
                 </select>
               </FormGroup>
             </div>
           </div>
 
-          {/* Columna derecha */}
+          {/* Right Column: Categories & Logistics */}
           <div>
             <FormGroup>
               <label>Categoría</label>
@@ -292,11 +322,14 @@ export const ProductModal: React.FC<Props> = ({
                 required
               >
                 <option value="">Seleccione...</option>
-                {categories?.map((c: any) => (
-                  <option key={String(c.id_categoria ?? c.id)} value={c.id_categoria ?? c.id}>
-                    {c.nombre}
-                  </option>
-                ))}
+                {categories?.map((c: any) => {
+                  const id = c.id_categoria || c.id;
+                  return (
+                    <option key={String(id)} value={id}>
+                      {c.nombre}
+                    </option>
+                  );
+                })}
               </select>
             </FormGroup>
 
@@ -308,11 +341,14 @@ export const ProductModal: React.FC<Props> = ({
                 required
               >
                 <option value="">Seleccione...</option>
-                {units?.map((u: any) => (
-                  <option key={String(u.id_unidad ?? u.id)} value={u.id_unidad ?? u.id}>
-                    {u.nombre}
-                  </option>
-                ))}
+                {units?.map((u: any) => {
+                  const id = u.id_unidad || u.id;
+                  return (
+                    <option key={String(id)} value={id}>
+                      {u.nombre}
+                    </option>
+                  );
+                })}
               </select>
             </FormGroup>
 
@@ -346,7 +382,7 @@ export const ProductModal: React.FC<Props> = ({
                   const sid = s.id_sucursal || s.id;
                   return (
                     <option key={String(sid)} value={sid}>
-                      {s.nombre || s.std_descripcion || s.nombre_sucursal}
+                      {s.nombre || s.nombre_sucursal || s.std_descripcion}
                     </option>
                   );
                 })}
@@ -361,29 +397,37 @@ export const ProductModal: React.FC<Props> = ({
                 required
               >
                 <option value="">Seleccione...</option>
-                {estatusList?.map((s: any) => (
-                  <option key={String(s.id_status ?? s.id)} value={s.id_status ?? s.id}>
-                    {s.std_descripcion}
-                  </option>
-                ))}
+                {estatusList?.map((s: any) => {
+                  const sid = s.id_status || s.id;
+                  return (
+                    <option key={String(sid)} value={sid}>
+                      {s.std_descripcion}
+                    </option>
+                  );
+                })}
               </select>
             </FormGroup>
           </div>
         </div>
 
+        {/* Footer Actions */}
         <div style={{ display: "flex", gap: 12, justifyContent: "flex-end", marginTop: 20 }}>
           <Button
             $variant="ghost"
             onClick={onClose}
-            disabled={saving}
+            disabled={isSaving}
           >
             Cancelar
           </Button>
           <Button
             onClick={handleSave}
-            disabled={saving}
+            disabled={isSaving}
           >
-            {saving ? <ClimbingBoxLoader size={12} color={theme.bg} /> : <><FiSave /> Confirmar</>}
+            {isSaving ? (
+              <ClimbingBoxLoader size={12} color={theme.bg} />
+            ) : (
+              <><FiSave /> Confirmar</>
+            )}
           </Button>
         </div>
       </ModalContent>

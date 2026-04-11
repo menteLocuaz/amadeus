@@ -242,6 +242,7 @@ export const MovimientosMasivosPanel: React.FC = () => {
                                                 min={0.01}
                                                 step="0.01"
                                                 onChange={e => actualizarCantidad(linea.id_producto, e.target.value)}
+                                                onFocus={e => e.target.select()}
                                                 $warning={esInsuficiente}
                                             />
                                         </td>

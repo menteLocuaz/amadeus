@@ -41,9 +41,10 @@ import {
 } from "../components/InventoryModals";
 
 // Analysis panels
-import { ValuacionPanel }         from "../components/ValuacionPanel";
-import { RotacionABCPanel }       from "../components/RotacionABCPanel";
+import { ValuacionPanel }          from "../components/ValuacionPanel";
+import { RotacionABCPanel }        from "../components/RotacionABCPanel";
 import { MovimientosMasivosPanel } from "../components/MovimientosMasivosPanel";
+import { ABC_COLORS }              from "../constants/abcConfig";
 
 // Styles
 import {
@@ -96,6 +97,11 @@ const InventarioPremium: React.FC = () => {
         return { totalProducts, lowStock, outOfStock, totalValue };
     }, [items, valuationData]);
 
+    // Map id_producto → nombre (passed to RotacionABCPanel to avoid double-fetch)
+    const nombreMap = useMemo(() =>
+        new Map(items.map(i => [i.id_producto, i.nombre])),
+    [items]);
+
     // Lookup table for rotation class
     const rotationMap = useMemo<Map<string, 'A' | 'B' | 'C'>>(() => {
         const map = new Map<string, 'A' | 'B' | 'C'>();
@@ -135,9 +141,9 @@ const InventarioPremium: React.FC = () => {
                         />
                         {rotation && (
                             <Badge
-                                $color={rotation === 'A' ? '#ef444422' : rotation === 'B' ? '#f59e0b22' : '#10b98122'}
+                                $color={`${ABC_COLORS[rotation]}22`}
                                 style={{
-                                    color: rotation === 'A' ? '#ef4444' : rotation === 'B' ? '#f59e0b' : '#10b981',
+                                    color: ABC_COLORS[rotation],
                                     fontSize: '0.65rem',
                                     padding: '1px 5px',
                                     alignSelf: 'center',
@@ -380,7 +386,7 @@ const InventarioPremium: React.FC = () => {
             {/* Tab: Análisis ABC */}
             {activeTab === 'rotacion' && (
                 <TabPanel>
-                    <RotacionABCPanel />
+                    <RotacionABCPanel nombreMap={nombreMap} />
                 </TabPanel>
             )}
 
