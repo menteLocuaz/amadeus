@@ -344,17 +344,30 @@ const AperturaCajaProgressive: React.FC = () => {
   };
 
   const handleConfirmarFondos = async () => {
+    if (!id_estacion) return alert("No se ha seleccionado una estación");
+    
+    // User ID is required by the backend to track who opened the POS session
+    const id_user_pos = user?.id || (user as any)?.id_usuario || "";
+    if (!id_user_pos) return alert("No se pudo identificar al usuario actual");
+
     setSubmitting(true);
     try {
-      await POSService.abrir({ id_estacion: usePOSStore.getState().id_estacion!, monto_base: Number(baseAmount) });
+      const payload = { 
+        id_estacion, 
+        fondo_base: Number(baseAmount),
+        id_user_pos
+      };
+
+      await POSService.abrir(payload);
       setState('READY_TO_SELL');
     } catch (e: any) {
-      // 400 = caja ya abierta (sesión activa), igualmente avanzar
+      // 400/409 often means session already active/open for this terminal
       if (e.response?.status === 400 || e.response?.status === 409) {
         setState('READY_TO_SELL');
         return;
       }
-      alert(e.response?.data?.message || "Error al asignar fondo a la caja");
+      const errorMsg = e.response?.data?.message || "Error al asignar fondo a la caja";
+      alert(errorMsg);
     } finally {
       setSubmitting(false);
     }

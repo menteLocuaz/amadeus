@@ -8,63 +8,90 @@
  */
 
 import React, { useMemo, useState } from "react";
-import styled from "styled-components";
 import { FiRefreshCw, FiPackage, FiAlertCircle } from "react-icons/fi";
-import { useInventoryRotation, useInventoryRotacionDetalle, usePremiumInventory } from "../hooks/usePremiumInventory";
+import { useInventoryRotation, useInventoryRotacionDetalle } from "../hooks/usePremiumInventory";
+import { ABC_CONFIG, type ClaseABC } from "../constants/abcConfig";
+import {
+    PanelWrapper, PanelHeader, RefreshBtn,
+    ParetoSection, ParetoBar, ParetoSegment, ParetoLegend, LegendItem,
+    ClassGrid, ClassColumn, ClassHeader, ClassRule,
+    ProductList, ProductRow, ShowMoreBtn, EmptyClass,
+    LoaderGrid, CardSkeleton, EmptyState,
+} from "./RotacionABCPanel.styles";
 
-// ── Configuración visual de clases ABC ────────────────────────────────────────
-const ABC_CONFIG = {
-    A: {
-        label: 'Clase A',
-        descripcion: 'Alto valor · 80% del valor total',
-        color: '#ef4444',
-        bgColor: '#ef444415',
-        borderColor: '#ef444430',
-        pct: '~80%',
-        regla: 'Máxima atención. Control de stock riguroso.',
-    },
-    B: {
-        label: 'Clase B',
-        descripcion: 'Valor medio · 15% del valor total',
-        color: '#f59e0b',
-        bgColor: '#f59e0b15',
-        borderColor: '#f59e0b30',
-        pct: '~15%',
-        regla: 'Revisión periódica. Gestión estándar.',
-    },
-    C: {
-        label: 'Clase C',
-        descripcion: 'Bajo valor · 5% del valor total',
-        color: '#10b981',
-        bgColor: '#10b98115',
-        borderColor: '#10b98130',
-        pct: '~5%',
-        regla: 'Baja prioridad. Reorden automático.',
-    },
-} as const;
+// ── Constantes ─────────────────────────────────────────────────────────────────
+const PAGE_SIZE = 50;
+const CLASES: ClaseABC[] = ['A', 'B', 'C'];
 
-type ClaseABC = 'A' | 'B' | 'C';
+// ── Subcomponente: lista de productos con paginación interna ───────────────────
+// Aislado para que showAll de una clase no re-renderice las otras dos.
+const ClassProductList: React.FC<{
+    ids: string[];
+    color: string;
+    nombreMap: Map<string, string>;
+    rotIndexMap: Map<string, number>;
+}> = ({ ids, color, nombreMap, rotIndexMap }) => {
+    const [showAll, setShowAll] = useState(false);
+    const visibles = showAll ? ids : ids.slice(0, PAGE_SIZE);
+
+    return (
+        <ProductList>
+            {ids.length === 0 ? (
+                <EmptyClass>Sin productos en esta clase</EmptyClass>
+            ) : (
+                <>
+                    {visibles.map(id => {
+                        const nombre = nombreMap.get(id) ?? id.slice(0, 8) + '…';
+                        const rotIdx = rotIndexMap.get(id);
+                        return (
+                            <ProductRow key={id} $color={color}>
+                                <div className="icon"><FiPackage size={12} /></div>
+                                <div className="nombre">{nombre}</div>
+                                {rotIdx !== undefined && (
+                                    <div className="rotidx" title="Índice de rotación">
+                                        {rotIdx.toFixed(1)}×
+                                    </div>
+                                )}
+                            </ProductRow>
+                        );
+                    })}
+                    {ids.length > PAGE_SIZE && (
+                        <ShowMoreBtn
+                            $color={color}
+                            onClick={(e: React.MouseEvent) => { e.stopPropagation(); setShowAll(v => !v); }}
+                        >
+                            {showAll ? 'Ver menos' : `Ver ${ids.length - PAGE_SIZE} más…`}
+                        </ShowMoreBtn>
+                    )}
+                </>
+            )}
+        </ProductList>
+    );
+};
+
+// ── Props ──────────────────────────────────────────────────────────────────────
+interface Props {
+    /** Map id_producto → nombre proveniente del caché del padre (evita fetch duplicado) */
+    nombreMap: Map<string, string>;
+}
 
 // ── Panel principal ────────────────────────────────────────────────────────────
-export const RotacionABCPanel: React.FC = () => {
+export const RotacionABCPanel: React.FC<Props> = ({ nombreMap }) => {
     const [activeClass, setActiveClass] = useState<ClaseABC | null>(null);
 
-    const { data: rotData,    isLoading: loadingRot,    refetch: refetchRot }    = useInventoryRotation();
-    const { data: detData,    isLoading: loadingDet,    refetch: refetchDet }    = useInventoryRotacionDetalle();
-    const { data: items = [],                           refetch: refetchItems }  = usePremiumInventory();
+    const { data: rotData, isLoading: loadingRot, refetch: refetchRot } = useInventoryRotation();
+    const { data: detData, isLoading: loadingDet, refetch: refetchDet } = useInventoryRotacionDetalle();
 
     const isLoading = loadingRot || loadingDet;
 
-    // Mapas de nombres: id_producto → nombre
-    const nombreMap = useMemo(() => {
-        const map = new Map<string, string>();
-        items.forEach(i => map.set(i.id_producto, i.nombre));
-        // También desde rotacionDetalle si trae nombre
+    // Fusiona nombres del prop con los que traiga detData (si el backend los incluye)
+    const resolvedNombreMap = useMemo(() => {
+        const map = new Map(nombreMap);
         (detData?.data ?? []).forEach(d => {
-            if (d.nombre) map.set(d.id_producto, d.nombre);
+            if (d.nombre && !map.has(d.id_producto)) map.set(d.id_producto, d.nombre);
         });
         return map;
-    }, [items, detData]);
+    }, [nombreMap, detData]);
 
     // Mapa de índice de rotación por producto
     const rotIndexMap = useMemo(() => {
@@ -74,23 +101,21 @@ export const RotacionABCPanel: React.FC = () => {
     }, [detData]);
 
     const abcData = rotData?.data;
-    const clases: ClaseABC[] = ['A', 'B', 'C'];
 
-    const counts = {
-        A: abcData?.A?.length ?? 0,
-        B: abcData?.B?.length ?? 0,
-        C: abcData?.C?.length ?? 0,
-    };
-    const total = counts.A + counts.B + counts.C;
+    const { counts, total } = useMemo(() => {
+        const c = {
+            A: abcData?.A?.length ?? 0,
+            B: abcData?.B?.length ?? 0,
+            C: abcData?.C?.length ?? 0,
+        };
+        return { counts: c, total: c.A + c.B + c.C };
+    }, [abcData]);
 
-    // Porcentaje real de productos en cada clase
-    const realPct = (c: ClaseABC) => total > 0 ? Math.round((counts[c] / total) * 100) : 0;
+    // Porcentaje real — parseFloat+toFixed evita 99% por redondeo acumulado
+    const realPct = (c: ClaseABC) =>
+        total > 0 ? parseFloat(((counts[c] / total) * 100).toFixed(1)) : 0;
 
-    const handleRefetch = () => {
-        refetchRot();
-        refetchDet();
-        refetchItems();
-    };
+    const handleRefetch = () => { refetchRot(); refetchDet(); };
 
     return (
         <PanelWrapper>
@@ -109,7 +134,7 @@ export const RotacionABCPanel: React.FC = () => {
                 <ParetoSection>
                     <div className="title">Distribución de productos por clase</div>
                     <ParetoBar>
-                        {clases.map(c => {
+                        {CLASES.map(c => {
                             const pct = realPct(c);
                             const cfg = ABC_CONFIG[c];
                             return (
@@ -127,7 +152,7 @@ export const RotacionABCPanel: React.FC = () => {
                         })}
                     </ParetoBar>
                     <ParetoLegend>
-                        {clases.map(c => (
+                        {CLASES.map(c => (
                             <LegendItem key={c} $color={ABC_CONFIG[c].color}>
                                 <div className="dot" />
                                 <span>{ABC_CONFIG[c].label}: {counts[c]} productos ({realPct(c)}%)</span>
@@ -148,7 +173,7 @@ export const RotacionABCPanel: React.FC = () => {
                 </EmptyState>
             ) : (
                 <ClassGrid>
-                    {clases.map(c => {
+                    {CLASES.map(c => {
                         const cfg = ABC_CONFIG[c];
                         const ids = abcData[c] ?? [];
                         const isFiltered = activeClass !== null && activeClass !== c;
@@ -162,7 +187,6 @@ export const RotacionABCPanel: React.FC = () => {
                                 $dimmed={isFiltered}
                                 onClick={() => setActiveClass(activeClass === c ? null : c)}
                             >
-                                {/* Cabecera de clase */}
                                 <ClassHeader $color={cfg.color}>
                                     <div className="badge">{c}</div>
                                     <div className="info">
@@ -174,30 +198,12 @@ export const RotacionABCPanel: React.FC = () => {
 
                                 <ClassRule $color={cfg.color}>{cfg.regla}</ClassRule>
 
-                                {/* Lista de productos */}
-                                <ProductList>
-                                    {ids.length === 0 ? (
-                                        <EmptyClass>Sin productos en esta clase</EmptyClass>
-                                    ) : (
-                                        ids.map(id => {
-                                            const nombre = nombreMap.get(id) ?? id.slice(0, 8) + '…';
-                                            const rotIdx = rotIndexMap.get(id);
-                                            return (
-                                                <ProductRow key={id} $color={cfg.color}>
-                                                    <div className="icon">
-                                                        <FiPackage size={12} />
-                                                    </div>
-                                                    <div className="nombre">{nombre}</div>
-                                                    {rotIdx !== undefined && (
-                                                        <div className="rotidx" title="Índice de rotación">
-                                                            {rotIdx.toFixed(1)}×
-                                                        </div>
-                                                    )}
-                                                </ProductRow>
-                                            );
-                                        })
-                                    )}
-                                </ProductList>
+                                <ClassProductList
+                                    ids={ids}
+                                    color={cfg.color}
+                                    nombreMap={resolvedNombreMap}
+                                    rotIndexMap={rotIndexMap}
+                                />
                             </ClassColumn>
                         );
                     })}
@@ -206,278 +212,3 @@ export const RotacionABCPanel: React.FC = () => {
         </PanelWrapper>
     );
 };
-
-// ── Estilos ────────────────────────────────────────────────────────────────────
-const PanelWrapper = styled.div`
-    display: flex;
-    flex-direction: column;
-    gap: 24px;
-`;
-
-const PanelHeader = styled.div`
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-
-    h2 { margin: 0; font-size: 1.1rem; font-weight: 700; }
-    p  { margin: 4px 0 0; opacity: 0.5; font-size: 0.82rem; }
-`;
-
-const RefreshBtn = styled.button`
-    background: transparent;
-    border: 1px solid ${({ theme }) => theme.bg3}33;
-    border-radius: 8px;
-    padding: 8px;
-    cursor: pointer;
-    color: ${({ theme }) => theme.text};
-    opacity: 0.6;
-    transition: opacity 0.15s ease;
-    display: flex;
-    align-items: center;
-
-    &:hover { opacity: 1; }
-`;
-
-const ParetoSection = styled.div`
-    background: ${({ theme }) => theme.bg};
-    border: 1px solid ${({ theme }) => theme.bg3}22;
-    border-radius: 14px;
-    padding: 20px 24px;
-
-    .title {
-        font-size: 0.75rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.06em;
-        opacity: 0.5;
-        margin-bottom: 14px;
-    }
-`;
-
-const ParetoBar = styled.div`
-    display: flex;
-    height: 36px;
-    border-radius: 10px;
-    overflow: hidden;
-    gap: 2px;
-    margin-bottom: 12px;
-`;
-
-const ParetoSegment = styled.div<{ $color: string; $pct: number; $active: boolean }>`
-    flex: ${({ $pct }) => $pct};
-    background: ${({ $color, $active }) => $active ? $color : `${$color}80`};
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
-    transition: flex 0.4s cubic-bezier(0.4, 0, 0.2, 1), background 0.2s ease;
-    min-width: 0;
-    border-radius: 6px;
-
-    span {
-        font-size: 0.7rem;
-        font-weight: 800;
-        color: white;
-        white-space: nowrap;
-        text-shadow: 0 1px 2px rgba(0,0,0,0.3);
-        letter-spacing: 0.04em;
-    }
-
-    &:hover {
-        background: ${({ $color }) => $color};
-        flex: ${({ $pct }) => Math.max($pct + 2, $pct * 1.1)};
-    }
-`;
-
-const ParetoLegend = styled.div`
-    display: flex;
-    gap: 20px;
-    flex-wrap: wrap;
-`;
-
-const LegendItem = styled.div<{ $color: string }>`
-    display: flex;
-    align-items: center;
-    gap: 6px;
-
-    .dot {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: ${({ $color }) => $color};
-        flex-shrink: 0;
-    }
-
-    span {
-        font-size: 0.75rem;
-        opacity: 0.65;
-        font-weight: 500;
-    }
-`;
-
-const ClassGrid = styled.div`
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-    align-items: start;
-
-    @media (max-width: 900px) {
-        grid-template-columns: 1fr;
-    }
-`;
-
-const ClassColumn = styled.div<{
-    $color: string; $bgColor: string; $borderColor: string; $dimmed: boolean;
-}>`
-    background: ${({ $bgColor }) => $bgColor};
-    border: 1px solid ${({ $borderColor }) => $borderColor};
-    border-radius: 14px;
-    overflow: hidden;
-    cursor: pointer;
-    transition: opacity 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
-    opacity: ${({ $dimmed }) => $dimmed ? 0.35 : 1};
-
-    &:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.06);
-        opacity: 1;
-    }
-`;
-
-const ClassHeader = styled.div<{ $color: string }>`
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 16px 20px;
-    border-bottom: 1px solid ${({ $color }) => $color}20;
-
-    .badge {
-        width: 36px;
-        height: 36px;
-        border-radius: 10px;
-        background: ${({ $color }) => $color}25;
-        color: ${({ $color }) => $color};
-        font-size: 1.1rem;
-        font-weight: 900;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-shrink: 0;
-    }
-
-    .info { flex: 1; min-width: 0; }
-
-    .label {
-        font-size: 0.85rem;
-        font-weight: 700;
-        color: ${({ $color }) => $color};
-    }
-
-    .desc {
-        font-size: 0.72rem;
-        opacity: 0.55;
-        margin-top: 2px;
-    }
-
-    .count {
-        font-size: 1.4rem;
-        font-weight: 900;
-        color: ${({ $color }) => $color};
-        opacity: 0.7;
-        font-variant-numeric: tabular-nums;
-    }
-`;
-
-const ClassRule = styled.div<{ $color: string }>`
-    padding: 8px 20px;
-    font-size: 0.72rem;
-    color: ${({ $color }) => $color};
-    opacity: 0.75;
-    font-weight: 600;
-    border-bottom: 1px solid ${({ $color }) => $color}15;
-`;
-
-const ProductList = styled.div`
-    max-height: 320px;
-    overflow-y: auto;
-    padding: 8px 0;
-
-    &::-webkit-scrollbar { width: 3px; }
-    &::-webkit-scrollbar-thumb {
-        background: rgba(150,150,150,0.2);
-        border-radius: 3px;
-    }
-`;
-
-const ProductRow = styled.div<{ $color: string }>`
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 7px 20px;
-    transition: background 0.12s ease;
-
-    &:hover { background: ${({ $color }) => $color}08; }
-
-    .icon {
-        color: ${({ $color }) => $color};
-        opacity: 0.5;
-        flex-shrink: 0;
-        display: flex;
-    }
-
-    .nombre {
-        flex: 1;
-        font-size: 0.8rem;
-        font-weight: 500;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        opacity: 0.8;
-    }
-
-    .rotidx {
-        font-size: 0.7rem;
-        font-weight: 700;
-        color: ${({ $color }) => $color};
-        opacity: 0.65;
-        font-variant-numeric: tabular-nums;
-        flex-shrink: 0;
-    }
-`;
-
-const EmptyClass = styled.div`
-    padding: 20px;
-    font-size: 0.78rem;
-    opacity: 0.35;
-    text-align: center;
-`;
-
-const LoaderGrid = styled.div`
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 16px;
-`;
-
-const CardSkeleton = styled.div`
-    height: 300px;
-    border-radius: 14px;
-    background: rgba(255,255,255,0.04);
-    animation: shimmer 1.5s ease infinite;
-
-    @keyframes shimmer {
-        0%, 100% { opacity: 0.4; }
-        50%       { opacity: 0.7; }
-    }
-`;
-
-const EmptyState = styled.div`
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    gap: 12px;
-    padding: 60px 20px;
-    opacity: 0.4;
-
-    p { margin: 0; font-size: 0.85rem; }
-`;

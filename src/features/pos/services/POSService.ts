@@ -10,6 +10,12 @@ export interface POSEstadoResponse {
     fecha_inicio: string;
 }
 
+export interface OpenPOSDTO {
+    id_estacion: string;
+    fondo_base: number;
+    id_user_pos: string;
+}
+
 export const POSService = {
     /**
      * Obtiene el estado actual de una terminal POS (estación, caja y periodo)
@@ -21,8 +27,9 @@ export const POSService = {
 
     /**
      * Apertura de caja (Fondo Base)
+     * Backend expects: { id_estacion: string, fondo_base: number, id_user_pos: string }
      */
-    abrir: async (payload: { id_estacion: string; monto_base: number }): Promise<any> => {
+    abrir: async (payload: OpenPOSDTO): Promise<any> => {
         const { data } = await axiosClient.post(ENDPOINTS.pos.abrir, payload);
         return data.data || data;
     },

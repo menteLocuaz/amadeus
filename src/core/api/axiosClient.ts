@@ -1,41 +1,53 @@
 import axios from 'axios';
 import { useAuthStore } from '../../features/auth/store/useAuthStore';
 
-// PATRÓN SINGLETON: Instancia única para la API PRUNUS
+/**
+ * Singleton Pattern: Unique instance for PRUNUS API.
+ * Centralizes configuration for all HTTP requests.
+ */
 const axiosClient = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL, // URL de la API PRUNUS desde variables de entorno
+  baseURL: import.meta.env.VITE_API_BASE_URL,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Interceptor de Peticiones: Añade el token Bearer automáticamente
+/**
+ * Request Interceptor: Automatically injects the Bearer token.
+ * Retrieves the latest token from the persisted Zustand store.
+ */
 axiosClient.interceptors.request.use((config) => {
-  const { token } = useAuthStore.getState(); // Recupera el token del store persistido
+  const { token } = useAuthStore.getState();
   if (token) {
     config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
 
-// Interceptor de Respuestas: Manejo centralizado de errores
+/**
+ * Response Interceptor: Centralized error handling.
+ * Specifically manages 401 (Unauthorized) and 403 (Forbidden) statuses
+ * by clearing the local session and redirecting to the login page.
+ */
 axiosClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    // Si el error es 401 (No autorizado) o 403 (Prohibido)
-    if (error.response?.status === 401 || error.response?.status === 403) {
-      console.warn('Sesión expirada o no autorizada. Limpiando estado...');
+    const status = error.response?.status;
+
+    if (status === 401 || status === 403) {
+      console.warn(`Auth error (${status}). Clearing session and redirecting...`);
       
-      // Usamos clearSession (solo limpia estado local, sin llamada a la API)
-      // para evitar disparar otro request desde dentro del interceptor
       const { clearSession } = useAuthStore.getState();
       clearSession();
 
-      // Forzamos el salto al login si no estamos ya allí
-      if (window.location.pathname !== '/') {
+      // Use a soft redirect if already on login or home, otherwise force reload to home.
+      // This prevents infinite loops if the redirect itself fails or is intercepted.
+      const currentPath = window.location.pathname;
+      if (currentPath !== '/' && currentPath !== '/login') {
         window.location.href = '/'; 
       }
     }
+
     return Promise.reject(error);
   }
 );

@@ -14,64 +14,42 @@
  */
 
 import axiosClient from '../../../core/api/axiosClient';
+import { ENDPOINTS } from '../../../core/api/endpoints';
 
-// ── Interfaz de Dominio ────────────────────────────────────────────────────
+// ── Domain Interface ────────────────────────────────────────────────────
 
 /**
- * Representa un movimiento de inventario registrado en el Kardex.
- * Alineado con la tabla MOVIMIENTOS_INVENTARIO del esquema de base de datos.
- *
- * Campos de saldo:
- *  - `saldo_resultante` → calculado y persistido por el backend al registrar el movimiento.
- *  - `saldo_calculado`  → campo derivado que puede ser calculado en el frontend
- *                         si el backend no lo devuelve. El componente Kardex.tsx
- *                         usa el operador `??` para priorizar uno sobre el otro.
- *
- * Tipos de movimiento soportados (cubre todos los valores posibles del backend):
- *  - ENTRADA  → ingreso de mercancía (recepción, ajuste positivo)
- *  - SALIDA   → egreso de mercancía (despacho, ajuste negativo)
- *  - AJUSTE   → corrección manual de inventario
- *  - COMPRA   → entrada por orden de compra a proveedor
- *  - VENTA    → salida por venta al cliente
+ * Represents an inventory movement recorded in the Kardex.
+ * Aligned with the MOVIMIENTOS_INVENTARIO table in the database schema.
  */
 export interface MovimientoKardex {
-    id?: string;                  // Opcional: puede no estar presente en respuestas parciales
-    id_producto: string;          // FK → Producto al que pertenece el movimiento
-    id_sucursal?: string;         // FK → Sucursal donde ocurrió el movimiento (opcional en algunos endpoints)
-    fecha: string;                // Fecha del movimiento en formato ISO (puede diferir de created_at)
-    tipo: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'COMPRA' | 'VENTA'; // Todos los tipos posibles del backend
-    cantidad: number;             // Siempre positivo; el tipo determina si es entrada o salida
-    saldo_resultante?: number;    // Stock después del movimiento, calculado por el backend
-    saldo_calculado?: number;     // Alternativa calculada en frontend si el backend no lo provee
-    referencia?: string;          // Documento asociado: ID de factura, orden de pedido, etc.
-    id_usuario?: string;          // FK → Usuario que registró el movimiento (trazabilidad)
-    created_at?: string;          // Timestamp de inserción en BD; puede diferir de `fecha`
+    id_movimiento?: string;
+    id_producto: string;
+    id_sucursal: string;
+    fecha: string; // ISO Format
+    tipo_movimiento: 'ENTRADA' | 'SALIDA' | 'AJUSTE' | 'DEVOLUCION' | 'TRASLADO' | 'COMPRA' | 'VENTA';
+    cantidad: number;
+    stock_anterior?: number;
+    stock_posterior?: number;
+    saldo_resultante?: number; // Backend calculated field
+    saldo_calculado?: number;  // Frontend fallback field
+    referencia?: string;
+    id_usuario?: string;
+    created_at?: string;
 }
 
-// ── Servicio ───────────────────────────────────────────────────────────────
+// ── Service ───────────────────────────────────────────────────────────────
 
 export const KardexService = {
 
     /**
-     * Obtiene el historial de movimientos de inventario para un producto.
-     *
-     * @param idProducto  - ID del producto a consultar. Si es 'all' o vacío,
-     *                      consulta todos los movimientos sin filtrar por producto.
-     * @param fechaInicio - Fecha de inicio del rango (YYYY-MM-DD). Opcional.
-     * @param fechaFin    - Fecha de fin del rango (YYYY-MM-DD). Opcional.
-     *
-     * Construcción de la URL:
-     *  - Endpoint base: GET /inventario/movimientos/{id_producto}  (según api.md)
-     *  - Si idProducto es 'all' o vacío → omite el segmento de ID en la ruta.
-     *  - Los filtros de fecha se agregan como query params solo si están presentes,
-     *    evitando parámetros vacíos que podrían causar errores en el backend.
-     *
-     * Manejo de errores:
-     *  - A diferencia de otros servicios, este método captura el error internamente
-     *    y retorna { success: false, data: [] } en lugar de propagar la excepción.
-     *  - Esto permite que el hook useKardexData muestre la tabla vacía sin
-     *    necesidad de un boundary de error, ya que una consulta sin resultados
-     *    es un estado válido y esperado en esta vista.
+     * Fetches inventory movement history for a specific product.
+     * 
+     * @param idProducto  - The unique ID of the product.
+     * @param fechaInicio - Start date filter (YYYY-MM-DD).
+     * @param fechaFin    - End date filter (YYYY-MM-DD).
+     * 
+     * Backend Endpoint: GET /inventario/movimientos/{id_producto}
      */
     getMovimientos: async (
         idProducto: string,
@@ -79,30 +57,25 @@ export const KardexService = {
         fechaFin?: string
     ): Promise<{ status: string; data: MovimientoKardex[] }> => {
 
-        // Construye los query params solo con los filtros que tienen valor
+        // Validacion preventiva: el backend requiere un ID de producto para este endpoint.
+        // Si no hay ID o es 'all', retornamos vacio para evitar el error 400.
+        if (!idProducto || idProducto === 'all') {
+            return { status: 'success', data: [] };
+        }
+
         const params = new URLSearchParams();
         if (fechaInicio) params.append('startDate', fechaInicio);
-        if (fechaFin) params.append('endDate', fechaFin);
+        if (fechaFin)    params.append('endDate',   fechaFin);
 
-        // Agrega el query string solo si hay al menos un parámetro
         const queryString = params.toString() ? `?${params.toString()}` : '';
-
-        /**
-         * Determina el segmento de ID en la ruta:
-         *  - Con ID válido → /inventario/movimientos/{idProducto}
-         *  - Sin ID o 'all' → /inventario/movimientos  (todos los movimientos)
-         */
-        const path = (idProducto && idProducto !== 'all') ? `/${idProducto}` : '';
-        const url = `/inventario/movimientos${path}${queryString}`;
+        const url = `${ENDPOINTS.inventario.movimientosByProduct(idProducto)}${queryString}`;
 
         try {
             const { data } = await axiosClient.get(url);
             return data;
         } catch (error) {
-            // Log de advertencia (no error) porque una respuesta vacía es un estado válido.
-            // El hook consumidor (useKardexData) mostrará el estado "sin resultados"
-            // en lugar de lanzar una excepción al componente.
-            console.warn("Kardex endpoint error:", error);
+            console.error("Kardex fetch error:", error);
+            // Return empty data instead of crashing to allow the UI to handle it gracefully
             return { status: 'error', data: [] };
         }
     }

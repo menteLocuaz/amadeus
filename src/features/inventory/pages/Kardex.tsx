@@ -106,10 +106,11 @@ const Kardex: React.FC = () => {
 
         // Columna: Tipo de movimiento con Badge de color semántico
         // Verde → entradas/compras | Rojo → salidas/ventas | Amarillo → ajustes
-        columnHelper.accessor("tipo", {
+        columnHelper.accessor(row => row.tipo_movimiento || (row as any).tipo, {
+            id: 'tipo',
             header: "Tipo",
             cell: info => {
-                const tipo = info.getValue()?.toUpperCase();
+                const tipo = String(info.getValue() || '').toUpperCase();
                 switch (tipo) {
                     case 'ENTRADA':
                     case 'COMPRA':
@@ -118,10 +119,12 @@ const Kardex: React.FC = () => {
                     case 'VENTA':
                         return <Badge $color="#EF4444"><FiArrowUpRight /> {tipo === 'VENTA' ? 'Venta' : 'Salida'}</Badge>;
                     case 'AJUSTE':
-                        return <Badge $color="#FCA311"><FiRefreshCw /> Ajuste</Badge>;
+                    case 'DEVOLUCION':
+                    case 'TRASLADO':
+                        return <Badge $color="#FCA311"><FiRefreshCw /> {tipo.charAt(0) + tipo.slice(1).toLowerCase()}</Badge>;
                     default:
                         // Tipo desconocido: se muestra sin color especial
-                        return <Badge>{tipo}</Badge>;
+                        return <Badge>{tipo || 'N/A'}</Badge>;
                 }
             }
         }),
@@ -138,9 +141,9 @@ const Kardex: React.FC = () => {
         columnHelper.accessor("cantidad", {
             header: () => <div style={{ textAlign: "right" }}>Cantidad</div>,
             cell: info => {
-                const tipo = info.row.original.tipo?.toUpperCase();
-                const isPositive = tipo === 'ENTRADA' || tipo === 'COMPRA';
-                const isNegative = tipo === 'SALIDA' || tipo === 'VENTA';
+                const tipo = String(info.row.original.tipo_movimiento || (info.row.original as any).tipo || '').toUpperCase();
+                const isPositive = ['ENTRADA', 'COMPRA', 'DEVOLUCION'].includes(tipo);
+                const isNegative = ['SALIDA', 'VENTA'].includes(tipo);
                 return (
                     <div style={{ 
                         textAlign: "right", 
@@ -156,7 +159,7 @@ const Kardex: React.FC = () => {
         // Columna: Saldo resultante después del movimiento
         // Intenta `saldo_calculado` primero (campo derivado del frontend/backend);
         // si no existe, usa `saldo_resultante` del backend; como último recurso muestra '-'.
-        columnHelper.accessor(row => row.saldo_calculado ?? row.saldo_resultante ?? '-', {
+        columnHelper.accessor(row => row.saldo_resultante ?? row.saldo_calculado ?? row.stock_posterior ?? '-', {
             id: 'saldo',
             header: () => <div style={{ textAlign: "right" }}>Saldo Resultante</div>,
             cell: info => (
@@ -165,7 +168,7 @@ const Kardex: React.FC = () => {
                 </div>
             )
         })
-    ], [inventory]); // Se añade inventory como dependencia para resolver nombres de productos
+    ], [inventory]);
 
     // Instancia de la tabla con los datos y columnas definidos
     const table = useReactTable({
