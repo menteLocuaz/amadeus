@@ -42,7 +42,9 @@ export const Sidebar: React.FC = () => {
         { label: "Clientes", icon: <FiUsers />, to: ROUTES.CLIENTES },
         { label: "Facturación", icon: <FiFileText />, to: ROUTES.FACTURACION },
         { label: "Historial Ventas", icon: <MdOutlineAnalytics />, to: ROUTES.FACTURAS_HISTORIAL },
+        { label: "Formas de Pago", icon: <MdPointOfSale />, to: ROUTES.FORMAS_PAGO },
         { label: "Caja (POS)", icon: <MdPointOfSale />, to: ROUTES.POS },
+        { label: "Cierre de Caja", icon: <MdPointOfSale />, to: ROUTES.POS_CIERRE },
         { label: "Catálogo", icon: <FiShoppingBag />, to: ROUTES.CATALOGO },
         { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },
         { label: "Kardex", icon: <MdOutlineAnalytics />, to: ROUTES.KARDEX }

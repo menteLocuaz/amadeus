@@ -233,7 +233,7 @@ const KeyBtn = styled.button<{ $isOk?: boolean }>`
 const AperturaCajaProgressive: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { id_estacion, estacionNombre, setEstacion, clearEstacion, initialize, setPeriodo } = usePOSStore();
+  const { id_estacion, estacionNombre, setEstacion, setControlEstacion, clearEstacion, initialize, setPeriodo } = usePOSStore();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -293,6 +293,7 @@ const AperturaCajaProgressive: React.FC = () => {
         && resp.id_control_estacion !== NULL_UUID;
 
       if (isActive) {
+        setControlEstacion(resp.id_control_estacion);
         setBaseAmount(String(resp.fondo_base ?? 0));
         setState('READY_TO_SELL');
       } else {
@@ -358,7 +359,10 @@ const AperturaCajaProgressive: React.FC = () => {
         id_user_pos
       };
 
-      await POSService.abrir(payload);
+      const aperturaRes = await POSService.abrir(payload);
+      if (aperturaRes?.id_control_estacion) {
+        setControlEstacion(aperturaRes.id_control_estacion);
+      }
       setState('READY_TO_SELL');
     } catch (e: any) {
       // 400/409 often means session already active/open for this terminal

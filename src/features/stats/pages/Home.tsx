@@ -35,7 +35,7 @@ export default function Home() {
   if (isAuthLoading || isDashLoading) return <Loading>Cargando Dashboard PRUNUS...</Loading>;
 
   // --- Data Normalization (Safeguards against '.map' errors) ---
-  const safeMermas = Array.isArray(mermas) ? mermas : [];
+  const safeMermas = Array.isArray(mermas?.items) ? mermas.items : [];
   const safeDeuda = Array.isArray(deuda) ? deuda : [];
   const safeComposicion = Array.isArray(composicion) ? composicion : [];
   const safeVentasCompras = Array.isArray(resumen?.ventas_vs_compras) ? resumen.ventas_vs_compras : [];
@@ -156,26 +156,37 @@ export default function Home() {
 
       {/* Sección Inferior: Mermas */}
       <BottomSection>
-        <SectionTitle>Mermas y Caducidad Reciente</SectionTitle>
+        <SectionTitleRow>
+          <SectionTitle>Mermas y Caducidad Reciente</SectionTitle>
+          <TotalMermas>
+            Total: <strong>-${mermas.total_mermas.toLocaleString()}</strong> {mermas.moneda}
+          </TotalMermas>
+        </SectionTitleRow>
         <MermasTable>
           <thead>
             <tr>
               <th>Producto</th>
-              <th>Tipo</th>
-              <th>Monto Perdido</th>
+              <th>Código</th>
+              <th>Cantidad</th>
+              <th>Motivo</th>
+              <th>Fecha</th>
+              <th>Pérdida</th>
             </tr>
           </thead>
           <tbody>
             {safeMermas.map((m, i) => (
               <tr key={i}>
-                <td>{m.producto}</td>
-                <td><Badge $type={m.tipo}>{m.tipo}</Badge></td>
-                <td className="amount">-${m.monto.toLocaleString()}</td>
+                <td>{m.pro_nombre}</td>
+                <td style={{ opacity: 0.6, fontSize: "0.85rem" }}>{m.pro_codigo}</td>
+                <td>{m.cantidad_merma}</td>
+                <td><Badge $type={m.motivo}>{m.motivo}</Badge></td>
+                <td style={{ opacity: 0.6, fontSize: "0.85rem" }}>{new Date(m.fecha).toLocaleDateString()}</td>
+                <td className="amount">-${m.costo_total.toLocaleString()}</td>
               </tr>
             ))}
             {safeMermas.length === 0 && (
               <tr>
-                <td colSpan={3} style={{ textAlign: "center", padding: "40px", opacity: 0.5 }}>
+                <td colSpan={6} style={{ textAlign: "center", padding: "40px", opacity: 0.5 }}>
                   No se encontraron mermas registradas.
                 </td>
               </tr>
@@ -225,7 +236,16 @@ const BottomSection = styled.div`
   border-radius: 16px; border: 1px solid rgba(0,0,0,0.05);
 `;
 
-const SectionTitle = styled.h3` margin: 0 0 24px 0; font-size: 1.2rem; font-weight: 700; `;
+const SectionTitleRow = styled.div`
+  display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;
+`;
+
+const SectionTitle = styled.h3` margin: 0; font-size: 1.2rem; font-weight: 700; `;
+
+const TotalMermas = styled.span`
+  font-size: 0.95rem; color: ${({ theme }) => theme.textsecondary};
+  strong { color: ${({ theme }) => theme.danger}; }
+`;
 
 const MermasTable = styled.table`
   width: 100%; border-collapse: collapse;
@@ -236,6 +256,6 @@ const MermasTable = styled.table`
 
 const Badge = styled.span<{ $type: string }>`
   padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700;
-  background: ${props => props.$type === "MERMA" ? "#fee2e2" : "#fef3c7"};
-  color: ${props => props.$type === "MERMA" ? "#ef4444" : "#f59e0b"};
+  background: ${props => props.$type === "Vencimiento" ? "#fef3c7" : "#fee2e2"};
+  color: ${props => props.$type === "Vencimiento" ? "#f59e0b" : "#ef4444"};
 `;

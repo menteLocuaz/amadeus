@@ -47,6 +47,9 @@ const UsuarioPage = lazy(() => import("../features/usuario/pages/Usuariospage"))
 const FacturacionPage = lazy(() => import("../features/facturacion/pages/FacturacionPage"));
 const HistorialPage = lazy(() => import("../features/facturacion/pages/HistorialPage"));
 const FacturacionConfig = lazy(() => import("../features/facturacion/pages/ConfiguracionPage"));
+const FormasPagoPage = lazy(() => import("../features/formasPago/pages/FormasPagoPage"));
+const CheckoutPage = lazy(() => import("../features/pos/pages/CheckoutPage"));
+const CierreCajaPage = lazy(() => import("../features/pos/pages/CierreCajaPage"));
 
 /**
  * Sistema de Rutas Centralizado
@@ -95,6 +98,9 @@ export function MyRoutes() {
             <Route path={ROUTES.FACTURACION} element={<FacturacionPage />} />
             <Route path={ROUTES.FACTURAS_HISTORIAL} element={<HistorialPage />} />
             <Route path={ROUTES.FACTURAS_CONFIG} element={<FacturacionConfig />} />
+            <Route path={ROUTES.FORMAS_PAGO} element={<FormasPagoPage />} />
+            <Route path={ROUTES.POS_CHECKOUT} element={<CheckoutPage />} />
+            <Route path={ROUTES.POS_CIERRE} element={<CierreCajaPage />} />
           </Route>
 
           {/* Ruta de selección de sistema (Public/Private sin Sidebar) */}

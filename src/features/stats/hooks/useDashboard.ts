@@ -42,7 +42,7 @@ export const useDashboard = () => {
     },
     deuda: deudaQuery.data || [],
     composicion: composicionQuery.data || [],
-    mermas: mermasQuery.data || [],
+    mermas: mermasQuery.data || { total_mermas: 0, moneda: "USD", items: [] },
     isLoading:
       resumenQuery.isLoading ||
       deudaQuery.isLoading ||

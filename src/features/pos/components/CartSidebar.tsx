@@ -1,8 +1,10 @@
 import React, { memo } from "react";
 import { FiCornerUpLeft } from "react-icons/fi";
+import { useNavigate } from "react-router-dom";
 import { Card, IconButton, Divider, Input, Button } from "../../../shared/components/UI";
 import CartItem from "./CartItem";
 import type { useCart } from "../hooks/useCart";
+import { ROUTES } from "../../../core/constants/routes";
 
 interface CartSidebarProps {
   cart: ReturnType<typeof useCart>;
@@ -10,6 +12,21 @@ interface CartSidebarProps {
 }
 
 const CartSidebar: React.FC<CartSidebarProps> = ({ cart, onClear }) => {
+  const navigate = useNavigate();
+
+  const handleCobrar = () => {
+    if (cart.items.length === 0) return;
+    navigate(ROUTES.POS_CHECKOUT, {
+      state: {
+        items: cart.items,
+        subtotal: cart.subtotal,
+        tax: cart.tax,
+        total: cart.total,
+        note: cart.note,
+      },
+    });
+  };
+
   return (
     <Card style={{ display: "flex", flexDirection: "column", height: "100%", padding: "24px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
@@ -67,7 +84,7 @@ const CartSidebar: React.FC<CartSidebarProps> = ({ cart, onClear }) => {
           <Button $variant="secondary" onClick={onClear} style={{ color: "#EF4444", flex: 1, padding: "14px 0" }}>
             Cancelar
           </Button>
-          <Button $variant="primary" onClick={() => alert("Procesando...")} style={{ flex: 1, padding: "14px 0", fontSize: "1.05rem" }}>
+          <Button $variant="primary" onClick={handleCobrar} disabled={cart.items.length === 0} style={{ flex: 1, padding: "14px 0", fontSize: "1.05rem" }}>
             Cobrar
           </Button>
         </div>

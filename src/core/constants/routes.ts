@@ -36,6 +36,9 @@ export const ROUTES = {
     EMPRESAS: "/empresas",
     SUCURSALES: "/sucursales",
     USUARIOS: "/usuarios",
+    FORMAS_PAGO: "/facturacion/formas-pago",
+    POS_CHECKOUT: "/pos/checkout",
+    POS_CIERRE: "/pos/cierre",
 } as const;
 
 // Tipo opcional para usar ROUTES como tipo si fuera necesario
