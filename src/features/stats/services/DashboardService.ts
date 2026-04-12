@@ -43,12 +43,25 @@ export interface InventarioCategoria {
 }
 
 /**
- * Interface for Shrinkage/Expiration data.
+ * Interface for a single Shrinkage/Expiration item.
  */
-export interface MermaData {
-  producto: string;
-  monto: number;
-  tipo: "MERMA" | "CADUCADO";
+export interface MermaItem {
+  id_producto: string;
+  pro_nombre: string;
+  pro_codigo: string;
+  cantidad_merma: number;
+  motivo: string;
+  costo_total: number;
+  fecha: string;
+}
+
+/**
+ * Interface for the full Shrinkage/Expiration response.
+ */
+export interface MermasResponse {
+  total_mermas: number;
+  moneda: string;
+  items: MermaItem[];
 }
 
 /**
@@ -97,8 +110,13 @@ export const DashboardService = {
     return extractArray(response.data);
   },
 
-  getMermas: async (): Promise<MermaData[]> => {
+  getMermas: async (): Promise<MermasResponse> => {
     const response = await axiosClient.get(ENDPOINTS.dashboard.mermas);
-    return extractArray(response.data);
+    const data = response.data?.data || response.data || {};
+    return {
+      total_mermas: data.total_mermas ?? 0,
+      moneda: data.moneda ?? "USD",
+      items: extractArray({ data: data.items ?? data }),
+    };
   },
 };

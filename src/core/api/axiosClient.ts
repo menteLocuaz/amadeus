@@ -34,17 +34,18 @@ axiosClient.interceptors.response.use(
   (error) => {
     const status = error.response?.status;
 
-    if (status === 401 || status === 403) {
+    const url: string = error.config?.url ?? '';
+    const isLoginRequest = url.includes('/auth/login');
+
+    if ((status === 401 || status === 403) && !isLoginRequest) {
       console.warn(`Auth error (${status}). Clearing session and redirecting...`);
-      
+
       const { clearSession } = useAuthStore.getState();
       clearSession();
 
-      // Use a soft redirect if already on login or home, otherwise force reload to home.
-      // This prevents infinite loops if the redirect itself fails or is intercepted.
       const currentPath = window.location.pathname;
       if (currentPath !== '/' && currentPath !== '/login') {
-        window.location.href = '/'; 
+        window.location.href = '/';
       }
     }
 

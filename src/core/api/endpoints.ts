@@ -83,6 +83,10 @@ export const ENDPOINTS = {
     base: '/cajas',
     byEstacion: (id: string) => `/cajas/estacion/${id}`,
   },
+  cajaSesiones: {
+    byId: (id: string) => `/caja/sesiones/${id}`,
+    movimientos: '/caja/movimientos',
+  },
   periodos: {
     base: '/periodos',
     abrir: '/periodos/abrir',
