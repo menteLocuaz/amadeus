@@ -32,18 +32,6 @@ import {
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 
-const CODE_PALETTES: Record<string, { bg: string; text: string }> = {
-  EF: { bg: "rgba(16,185,129,0.12)",  text: "#10B981" },
-  TJ: { bg: "rgba(59,130,246,0.12)",  text: "#3B82F6" },
-  TR: { bg: "rgba(139,92,246,0.12)",  text: "#8B5CF6" },
-  CR: { bg: "rgba(252,163,17,0.12)",  text: "#FCA311" },
-  CH: { bg: "rgba(20,33,61,0.12)",    text: "#14213D"  },
-  QR: { bg: "rgba(236,72,153,0.12)",  text: "#EC4899" },
-};
-
-const getCodePalette = (code: string) =>
-  CODE_PALETTES[code] ?? { bg: "rgba(150,150,150,0.1)", text: "#969593" };
-
 const columnHelper = createColumnHelper<FormaPago>();
 
 // ─── Component ────────────────────────────────────────────────────────────────
@@ -73,11 +61,8 @@ const FormasPagoPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editing, setEditing] = useState<FormaPago | null>(null);
 
-  // Estatus generales (mdl_id -1): Activo / Inactivo
-  const statuses = useMemo(
-    () => statusList.filter((s) => s.mdl_id === -1),
-    [statusList]
-  );
+  // Estatus generales: todos los disponibles en el catálogo
+  const statuses = useMemo(() => statusList, [statusList]);
 
   // Handlers
   const handleCreate = () => {
@@ -106,26 +91,28 @@ const FormasPagoPage: React.FC = () => {
   // Columns
   const columns = useMemo(
     () => [
-      columnHelper.accessor("fmp_codigo", {
-        header: "Código",
-        cell: (info) => {
-          const code = info.getValue();
-          const palette = getCodePalette(code);
-          return (
-            <CodeChip $bg={palette.bg} $color={palette.text}>
-              {code}
-            </CodeChip>
-          );
-        },
-        size: 80,
-      }),
-      columnHelper.accessor("fmp_descripcion", {
-        header: "Descripción",
+      columnHelper.accessor("nombre", {
+        header: "Nombre",
         cell: (info) => (
           <DescCell>
             <strong>{info.getValue()}</strong>
           </DescCell>
         ),
+      }),
+      columnHelper.accessor("requiere_ref", {
+        header: "Requiere Ref.",
+        cell: (info) => {
+          const val = info.getValue();
+          return (
+            <Badge
+              $color={val ? `${theme.primary}22` : `${theme.bg3}22`}
+              style={{ color: val ? theme.primary : theme.texttertiary }}
+            >
+              {val ? "Sí" : "No"}
+            </Badge>
+          );
+        },
+        size: 110,
       }),
       columnHelper.accessor("id_status", {
         header: "Estado",
@@ -292,21 +279,6 @@ const FormasPagoPage: React.FC = () => {
 };
 
 // ─── Styled ───────────────────────────────────────────────────────────────────
-
-const CodeChip = styled.div<{ $bg: string; $color: string }>`
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 42px;
-  height: 30px;
-  border-radius: 6px;
-  background: ${({ $bg }) => $bg};
-  color: ${({ $color }) => $color};
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  font-family: "SF Mono", "Fira Code", monospace;
-`;
 
 const DescCell = styled.div`
   strong {

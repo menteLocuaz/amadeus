@@ -51,12 +51,12 @@ export const InitInventoryModal: React.FC<InitModalProps> = ({ item, onClose, on
     const [form, setForm] = useState({
         stock_actual:  0,
         stock_minimo:  0,
-        stock_maximo:  0,
         precio_compra: item.precio_compra,
         precio_venta:  item.precio_venta,
+        ubicacion:     '',
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm(prev => ({ ...prev, [e.target.name]: Number(e.target.value) }));
     };
 
@@ -67,9 +67,9 @@ export const InitInventoryModal: React.FC<InitModalProps> = ({ item, onClose, on
             id_sucursal:   sucursalId,
             stock_actual:  form.stock_actual,
             stock_minimo:  form.stock_minimo,
-            stock_maximo:  form.stock_maximo,
             precio_compra: form.precio_compra,
             precio_venta:  form.precio_venta,
+            ubicacion:     form.ubicacion || undefined,
         });
     };
 
@@ -86,23 +86,27 @@ export const InitInventoryModal: React.FC<InitModalProps> = ({ item, onClose, on
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <FormGroup>
                         <label>Stock Inicial</label>
-                        <input type="number" name="stock_actual" value={form.stock_actual} onChange={handleChange} min={0} />
+                        <input type="number" name="stock_actual" value={form.stock_actual} onChange={handleNumberChange} min={0} />
                     </FormGroup>
                     <FormGroup>
                         <label>Stock Mínimo</label>
-                        <input type="number" name="stock_minimo" value={form.stock_minimo} onChange={handleChange} min={0} />
-                    </FormGroup>
-                    <FormGroup>
-                        <label>Stock Máximo</label>
-                        <input type="number" name="stock_maximo" value={form.stock_maximo} onChange={handleChange} min={0} />
+                        <input type="number" name="stock_minimo" value={form.stock_minimo} onChange={handleNumberChange} min={0} />
                     </FormGroup>
                     <FormGroup>
                         <label>Precio Compra</label>
-                        <input type="number" name="precio_compra" value={form.precio_compra} onChange={handleChange} min={0} step="0.01" />
+                        <input type="number" name="precio_compra" value={form.precio_compra} onChange={handleNumberChange} min={0} step="0.01" />
+                    </FormGroup>
+                    <FormGroup>
+                        <label>Precio Venta</label>
+                        <input type="number" name="precio_venta" value={form.precio_venta} onChange={handleNumberChange} min={0} step="0.01" />
                     </FormGroup>
                     <FormGroup style={{ gridColumn: '1 / -1' }}>
-                        <label>Precio Venta</label>
-                        <input type="number" name="precio_venta" value={form.precio_venta} onChange={handleChange} min={0} step="0.01" />
+                        <label>Ubicación (Opcional)</label>
+                        <input
+                            type="text" name="ubicacion" value={form.ubicacion}
+                            onChange={e => setForm(prev => ({ ...prev, ubicacion: e.target.value }))}
+                            placeholder="Ej: Pasillo A - Estante 3"
+                        />
                     </FormGroup>
                 </div>
 
@@ -126,19 +130,27 @@ export const UpdateInventoryModal: React.FC<UpdateModalProps> = ({ item, onClose
     const [form, setForm] = useState({
         stock_actual:  item.stock_actual,
         stock_minimo:  item.stock_minimo,
-        stock_maximo:  item.stock_maximo,
         precio_compra: item.precio_compra,
         precio_venta:  item.precio_venta,
+        ubicacion:     item.ubicacion,
     });
 
-    const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         setForm(prev => ({ ...prev, [e.target.name]: Number(e.target.value) }));
     };
 
     const handleSave = () => {
-        // id_inventario debe existir porque este modal solo se abre para items inicializados
         if (!item.id_inventario) return;
-        onSave({ id: item.id_inventario, payload: form });
+        onSave({
+            id: item.id_inventario,
+            payload: {
+                stock_actual:  form.stock_actual,
+                stock_minimo:  form.stock_minimo,
+                precio_compra: form.precio_compra,
+                precio_venta:  form.precio_venta,
+                ubicacion:     form.ubicacion || undefined,
+            },
+        });
     };
 
     return (
@@ -154,23 +166,27 @@ export const UpdateInventoryModal: React.FC<UpdateModalProps> = ({ item, onClose
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
                     <FormGroup>
                         <label>Stock Actual</label>
-                        <input type="number" name="stock_actual" value={form.stock_actual} onChange={handleChange} min={0} />
+                        <input type="number" name="stock_actual" value={form.stock_actual} onChange={handleNumberChange} min={0} />
                     </FormGroup>
                     <FormGroup>
                         <label>Stock Mínimo</label>
-                        <input type="number" name="stock_minimo" value={form.stock_minimo} onChange={handleChange} min={0} />
-                    </FormGroup>
-                    <FormGroup>
-                        <label>Stock Máximo</label>
-                        <input type="number" name="stock_maximo" value={form.stock_maximo} onChange={handleChange} min={0} />
+                        <input type="number" name="stock_minimo" value={form.stock_minimo} onChange={handleNumberChange} min={0} />
                     </FormGroup>
                     <FormGroup>
                         <label>Precio Compra</label>
-                        <input type="number" name="precio_compra" value={form.precio_compra} onChange={handleChange} min={0} step="0.01" />
+                        <input type="number" name="precio_compra" value={form.precio_compra} onChange={handleNumberChange} min={0} step="0.01" />
+                    </FormGroup>
+                    <FormGroup>
+                        <label>Precio Venta</label>
+                        <input type="number" name="precio_venta" value={form.precio_venta} onChange={handleNumberChange} min={0} step="0.01" />
                     </FormGroup>
                     <FormGroup style={{ gridColumn: '1 / -1' }}>
-                        <label>Precio Venta</label>
-                        <input type="number" name="precio_venta" value={form.precio_venta} onChange={handleChange} min={0} step="0.01" />
+                        <label>Ubicación (Opcional)</label>
+                        <input
+                            type="text" name="ubicacion" value={form.ubicacion}
+                            onChange={e => setForm(prev => ({ ...prev, ubicacion: e.target.value }))}
+                            placeholder="Ej: Pasillo A - Estante 3"
+                        />
                     </FormGroup>
                 </div>
 
@@ -186,7 +202,6 @@ export const UpdateInventoryModal: React.FC<UpdateModalProps> = ({ item, onClose
 };
 
 // ── Modal 3: Registrar movimiento ─────────────────────────────────────────────
-// Tipos de movimiento válidos según el backend (ver doc/inventario_logica.md)
 const TIPOS_MOVIMIENTO: { value: TipoMovimiento; label: string }[] = [
     { value: 'ENTRADA',    label: '📥 ENTRADA — Ingreso de mercancía' },
     { value: 'SALIDA',     label: '📤 SALIDA — Egreso de mercancía' },
@@ -216,7 +231,6 @@ export const MovementModal: React.FC<MovementModalProps> = ({ item, onClose, onS
 
     const handleSave = () => {
         if (form.cantidad <= 0) {
-            // Usamos Swal directamente para mantener consistencia con el resto de la app
             import('sweetalert2').then(({ default: Swal }) =>
                 Swal.fire({ icon: 'warning', title: 'Cantidad inválida', text: 'La cantidad debe ser mayor a 0.', timer: 2000, showConfirmButton: false })
             );
@@ -239,7 +253,6 @@ export const MovementModal: React.FC<MovementModalProps> = ({ item, onClose, onS
                     <ActionBtn onClick={onClose}><FiX /></ActionBtn>
                 </ModalHeader>
 
-                {/* Info del producto con stock actual visible */}
                 <div style={{
                     marginBottom: 20, padding: '12px',
                     background: 'rgba(255,255,255,0.05)', borderRadius: '12px',
@@ -280,7 +293,6 @@ export const MovementModal: React.FC<MovementModalProps> = ({ item, onClose, onS
                     />
                 </FormGroup>
 
-                {/* Aviso de permanencia del registro */}
                 <div style={{
                     marginTop: 4, padding: '10px', borderRadius: '8px',
                     background: 'rgba(252,163,17,0.1)', border: '1px solid rgba(252,163,17,0.2)',

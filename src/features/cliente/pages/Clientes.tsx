@@ -66,17 +66,21 @@ const Clientes: React.FC = () => {
 
   // 4. Columns
   const columns = useMemo(() => [
-    columnHelper.accessor("empresa_cliente", {
-      header: "Empresa / Cliente",
+    columnHelper.accessor("nombre_completo", {
+      header: "Cliente",
       cell: info => (
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <strong style={{ color: theme.text }}>{info.getValue()}</strong>
-          <small style={{ opacity: 0.6 }}>{info.row.original.nombre}</small>
-        </div>
+        <strong style={{ color: theme.text }}>{info.getValue()}</strong>
       )
     }),
-    columnHelper.accessor("ruc", {
-      header: "RUC / ID",
+    columnHelper.display({
+      id: "documento",
+      header: "Documento",
+      cell: info => (
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+          <span>{info.row.original.documento}</span>
+          <small style={{ opacity: 0.5, fontSize: '0.75rem' }}>{info.row.original.tipo_documento}</small>
+        </div>
+      )
     }),
     columnHelper.accessor("email", {
       header: "Contacto",

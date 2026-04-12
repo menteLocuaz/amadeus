@@ -1,15 +1,24 @@
 import axiosClient from "../../../core/api/axiosClient";
 import { ENDPOINTS } from "../../../core/api/endpoints";
 
+export type TipoDocumento = "CEDULA" | "RUC" | "PASAPORTE";
+
+export interface ClienteMetadata {
+  categoria_fidelidad?: string;
+  fecha_nacimiento?: string;
+  limite_credito?: number;
+}
+
 export interface Cliente {
   id_cliente?: string;
-  empresa_cliente: string;
-  nombre: string;
-  ruc: string;
-  direccion: string;
-  telefono: string;
+  nombre_completo: string;
+  tipo_documento: TipoDocumento;
+  documento: string;
   email: string;
+  telefono: string;
+  direccion: string;
   id_status: string;
+  metadata?: ClienteMetadata;
   created_at?: string;
   updated_at?: string;
 }
@@ -23,11 +32,11 @@ export const ClienteService = {
     const response = await axiosClient.get(ENDPOINTS.clientes.byId(id));
     return response.data;
   },
-  create: async (payload: Cliente) => {
+  create: async (payload: Omit<Cliente, "id_cliente" | "created_at" | "updated_at">) => {
     const response = await axiosClient.post(ENDPOINTS.clientes.base, payload);
     return response.data;
   },
-  update: async (id: string, payload: Cliente) => {
+  update: async (id: string, payload: Omit<Cliente, "id_cliente" | "created_at" | "updated_at">) => {
     const response = await axiosClient.put(ENDPOINTS.clientes.byId(id), payload);
     return response.data;
   },

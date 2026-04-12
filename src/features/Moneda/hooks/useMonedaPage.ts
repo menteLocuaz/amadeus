@@ -5,6 +5,8 @@ import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 
 export interface MonedaFormData {
   nombre: string;
+  codigo_iso: string;
+  simbolo: string;
   id_sucursal: string;
   id_status: string;
 }
@@ -16,6 +18,8 @@ export interface MonedaFormData {
 const normalizeMoneda = (m: any): Moneda => ({
   id_moneda: String(m.id_moneda || m.id_divisa || m.id || ""),
   nombre: m.nombre || m.nombre_moneda || "S/N",
+  codigo_iso: m.codigo_iso || "",
+  simbolo: m.simbolo || "",
   id_sucursal: m.id_sucursal || "",
   id_status: m.id_status || m.status?.id_status || "",
   status: m.status,
@@ -32,8 +36,10 @@ export function useMonedaPage() {
   // ── Modal State ──
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingMoneda, setEditingMoneda] = useState<Moneda | null>(null);
-  const [formData, setFormData] = useState<MonedaFormData>({ 
-    nombre: "", 
+  const [formData, setFormData] = useState<MonedaFormData>({
+    nombre: "",
+    codigo_iso: "",
+    simbolo: "",
     id_sucursal: "",
     id_status: ""
   });
@@ -89,20 +95,23 @@ export function useMonedaPage() {
   const openModal = useCallback((moneda?: Moneda) => {
     if (moneda) {
       setEditingMoneda(moneda);
-      setFormData({ 
-        nombre: moneda.nombre || "", 
+      setFormData({
+        nombre: moneda.nombre || "",
+        codigo_iso: moneda.codigo_iso || "",
+        simbolo: moneda.simbolo || "",
         id_sucursal: moneda.id_sucursal || user?.id_sucursal || "",
         id_status: moneda.id_status || ""
       });
     } else {
-      // Find a default "Active" status for new entries
-      const activeStatus = statusList.find(s => 
+      const activeStatus = statusList.find(s =>
         s.std_descripcion.toLowerCase().includes("activ")
       )?.id_status || "";
 
       setEditingMoneda(null);
-      setFormData({ 
-        nombre: "", 
+      setFormData({
+        nombre: "",
+        codigo_iso: "",
+        simbolo: "",
         id_sucursal: user?.id_sucursal || "",
         id_status: activeStatus
       });
@@ -118,14 +127,20 @@ export function useMonedaPage() {
   // ── CRUD Operations ──
   const handleSave = async () => {
     const nombre = formData.nombre.trim();
+    const codigo_iso = formData.codigo_iso.trim().toUpperCase();
+    const simbolo = formData.simbolo.trim();
     if (!nombre) return alert("El nombre es obligatorio");
+    if (!codigo_iso || codigo_iso.length !== 3) return alert("El código ISO debe tener exactamente 3 caracteres (ej: USD)");
+    if (!simbolo) return alert("El símbolo es obligatorio");
     if (!formData.id_sucursal) return alert("La sucursal es obligatoria");
     if (!formData.id_status) return alert("El estado es obligatorio");
 
     setIsSaving(true);
     try {
-      const payload: CreateMonedaDTO = { 
-        nombre, 
+      const payload: CreateMonedaDTO = {
+        nombre,
+        codigo_iso,
+        simbolo,
         id_sucursal: formData.id_sucursal,
         id_status: formData.id_status
       };

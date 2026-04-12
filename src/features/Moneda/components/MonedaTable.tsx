@@ -148,15 +148,6 @@ export const MonedaTable: React.FC<Props> = memo(({
 }) => {
   const isBusy = isSaving || isDeletingId !== null;
 
-  const extractIso = (name: string) => {
-    const match = name.match(/\(([^)]+)\)/);
-    return match ? match[1] : null;
-  };
-
-  const cleanName = (name: string) => {
-    return name.replace(/\s*\([^)]*\)/, "").trim();
-  };
-
   return (
     <TableWrapper>
       <StyledTable>
@@ -181,16 +172,16 @@ export const MonedaTable: React.FC<Props> = memo(({
           ) : (
             monedas.map((moneda) => {
               const id = String(moneda.id_moneda);
-              const iso = extractIso(moneda.nombre);
-              const name = cleanName(moneda.nombre);
               const isDeleting = isDeletingId === id;
+              const isActive = moneda.status?.std_descripcion?.toLowerCase().includes("activ") ?? false;
 
               return (
                 <TableRow key={id}>
                   <td>
                     <AssetInfo>
-                      {iso && <span className="iso-badge">{iso}</span>}
-                      <span className="name">{name}</span>
+                      {moneda.codigo_iso && <span className="iso-badge">{moneda.codigo_iso}</span>}
+                      <span className="name">{moneda.nombre}</span>
+                      {moneda.simbolo && <span style={{ opacity: 0.5, fontSize: "0.85rem" }}>{moneda.simbolo}</span>}
                     </AssetInfo>
                   </td>
                   <td>
@@ -200,8 +191,8 @@ export const MonedaTable: React.FC<Props> = memo(({
                     </NodeLabel>
                   </td>
                   <td>
-                    <StatusIndicator $active={moneda.id_status === "activo"}>
-                      {moneda.id_status === "activo" ? "Activo" : "Inactivo"}
+                    <StatusIndicator $active={isActive}>
+                      {isActive ? "Activo" : "Inactivo"}
                     </StatusIndicator>
                   </td>
                   <td>

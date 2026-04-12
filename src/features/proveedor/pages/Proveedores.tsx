@@ -24,7 +24,7 @@ import {
     useUpdateProveedor,
     useDeleteProveedor
 } from "../hooks/useProveedoresQuery";
-import { useStatuses, useSucursales, useEmpresas } from "../hooks/useCommonQueries";
+import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 import { ProveedorModal } from "../components/ProveedorModal";
 import { validateProveedor } from "../validations";
 import { type Proveedor } from "../services/ProveedorService";
@@ -34,9 +34,9 @@ const columnHelper = createColumnHelper<Proveedor>();
 const Proveedores: React.FC = () => {
     // 1. Data Fetching
     const { data: items = [], isLoading, isFetching, refetch } = useProveedoresData();
-    const { data: statuses = [] } = useStatuses(2);
-    const { data: sucursales = [] } = useSucursales();
-    const { data: empresas = [] } = useEmpresas();
+    const { statusList: statuses, fetchCatalogs } = useCatalogStore();
+
+    React.useEffect(() => { fetchCatalogs(); }, [fetchCatalogs]);
 
     // 2. Mutations
     const createMutation = useCreateProveedor();
@@ -82,14 +82,13 @@ const Proveedores: React.FC = () => {
         setEditing(null);
         const activeStatus = statuses.find((s: any) => getStatusName(s).toLowerCase().includes("activ"));
         setForm({
-            nombre: "",
-            ruc: "",
+            razon_social: "",
+            nit_rut: "",
+            contacto_nombre: "",
             telefono: "",
             direccion: "",
             email: "",
             id_status: activeStatus?.id_status || statuses[0]?.id_status || "",
-            id_sucursal: sucursales[0]?.id || (sucursales[0] as any)?.id_sucursal || "",
-            id_empresa: empresas[0]?.id || (empresas[0] as any)?.id_empresa || "",
         });
         setErrors({});
         setOpen(true);
@@ -98,14 +97,13 @@ const Proveedores: React.FC = () => {
     const openEdit = (p: Proveedor) => {
         setEditing(p);
         setForm({
-            nombre: p.nombre,
-            ruc: p.ruc,
+            razon_social: p.razon_social,
+            nit_rut: p.nit_rut,
+            contacto_nombre: p.contacto_nombre || "",
             telefono: p.telefono || "",
             direccion: p.direccion || "",
             email: p.email || "",
             id_status: p.id_status,
-            id_sucursal: p.id_sucursal,
-            id_empresa: p.id_empresa,
         });
         setErrors({});
         setOpen(true);
@@ -118,8 +116,7 @@ const Proveedores: React.FC = () => {
 
         try {
             if (editing) {
-                const targetId = editing.id || editing.id_proveedor;
-                await updateMutation.mutateAsync({ id: targetId!, payload: form });
+                await updateMutation.mutateAsync({ id: editing.id_proveedor, payload: form });
             } else {
                 await createMutation.mutateAsync(form);
             }
@@ -148,7 +145,7 @@ const Proveedores: React.FC = () => {
 
     // 5. TanStack Table
     const columns = useMemo(() => [
-        columnHelper.accessor("nombre", {
+        columnHelper.accessor("razon_social", {
             header: "Proveedor",
             cell: info => (
                 <div>
@@ -157,8 +154,8 @@ const Proveedores: React.FC = () => {
                 </div>
             )
         }),
-        columnHelper.accessor("ruc", {
-            header: "RUC",
+        columnHelper.accessor("nit_rut", {
+            header: "NIT / RUT",
             cell: info => <Badge>{info.getValue()}</Badge>
         }),
         columnHelper.display({
@@ -166,18 +163,8 @@ const Proveedores: React.FC = () => {
             header: "Contacto",
             cell: info => (
                 <div style={{ fontSize: "0.9rem" }}>
-                    <div>{info.row.original.telefono || "-"}</div>
-                    <div style={{ fontSize: "0.8rem", opacity: 0.5 }}>{info.row.original.direccion || "Sin direcci\u00f3n"}</div>
-                </div>
-            )
-        }),
-        columnHelper.display({
-            id: "ubicacion",
-            header: "Sucursal / Empresa",
-            cell: info => (
-                <div style={{ fontSize: "0.9rem" }}>
-                    <div>{info.row.original.sucursal?.nombre || "N/A"}</div>
-                    <div style={{ fontSize: "0.8rem", opacity: 0.5 }}>{info.row.original.empresa?.nombre || "N/A"}</div>
+                    <div>{info.row.original.contacto_nombre || "-"}</div>
+                    <div style={{ fontSize: "0.8rem", opacity: 0.5 }}>{info.row.original.telefono || "Sin teléfono"}</div>
                 </div>
             )
         }),
@@ -191,7 +178,7 @@ const Proveedores: React.FC = () => {
                     ? "#22C55E"
                     : lower.includes("inactiv") || lower.includes("bloq")
                         ? "#EF4444"
-                        : "#888780"; // ← gris neutro si no se reconoce el estado
+                        : "#888780";
                 return <Badge $color={color}>{label}</Badge>;
             }
         }),
@@ -205,11 +192,11 @@ const Proveedores: React.FC = () => {
                     </ActionBtn>
                     <ActionBtn
                         $variant="delete"
-                        onClick={() => confirmDelete(info.row.original.id || info.row.original.id_proveedor!)}
+                        onClick={() => confirmDelete(info.row.original.id_proveedor)}
                         title="Eliminar"
                         disabled={deleteMutation.isPending}
                     >
-                        {deleteMutation.isPending && (deleteMutation.variables === info.row.original.id || deleteMutation.variables === info.row.original.id_proveedor) ? (
+                        {deleteMutation.isPending && deleteMutation.variables === info.row.original.id_proveedor ? (
                             <ClimbingBoxLoader color="#EF4444" size={5} />
                         ) : (
                             <FiTrash2 />
@@ -335,8 +322,6 @@ const Proveedores: React.FC = () => {
                 setForm={setForm}
                 errors={errors}
                 statuses={statuses}
-                sucursales={sucursales}
-                empresas={empresas}
                 saving={createMutation.isPending || updateMutation.isPending}
                 onClose={() => setOpen(false)}
                 onSave={handleSave}

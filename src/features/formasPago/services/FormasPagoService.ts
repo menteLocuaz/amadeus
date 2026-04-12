@@ -3,14 +3,18 @@ import { ENDPOINTS } from "../../../core/api/endpoints";
 
 export interface FormaPago {
   id_forma_pago: string;
-  fmp_codigo: string;
-  fmp_descripcion: string;
+  nombre: string;
+  requiere_ref: boolean;
   id_status: string;
+  status?: {
+    id_status: string;
+    std_descripcion: string;
+  };
 }
 
 export interface FormaPagoPayload {
-  fmp_codigo: string;
-  fmp_descripcion: string;
+  nombre: string;
+  requiere_ref: boolean;
   id_status: string;
 }
 

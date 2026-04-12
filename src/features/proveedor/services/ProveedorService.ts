@@ -2,42 +2,28 @@ import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface Proveedor {
-  id: string;
-  id_proveedor?: string;
-  nombre: string;
-  ruc: string;
+  id_proveedor: string;
+  razon_social: string;
+  nit_rut: string;
+  contacto_nombre?: string;
   telefono?: string;
   direccion?: string;
   email?: string;
   id_status: string;
-  id_sucursal: string;
-  id_empresa: string;
-  status?: { nombre: string };
-  sucursal?: { nombre: string };
-  empresa?: { nombre: string };
+  status?: { id_status: string; std_descripcion: string };
 }
 
 export interface ProveedorCreateRequest {
-  nombre: string;
-  ruc: string;
-  telefono: string;
-  direccion: string;
-  email: string;
+  razon_social: string;
+  nit_rut: string;
+  contacto_nombre?: string;
+  telefono?: string;
+  direccion?: string;
+  email?: string;
   id_status: string;
-  id_sucursal: string;
-  id_empresa: string;
 }
 
-export interface ProveedorUpdateRequest {
-  nombre: string;
-  ruc: string;
-  telefono: string;
-  direccion: string;
-  email: string;
-  id_status: string;
-  id_sucursal: string;
-  id_empresa: string;
-}
+export type ProveedorUpdateRequest = ProveedorCreateRequest;
 
 export const ProveedorService = {
   getAll: async (): Promise<{ success: boolean; data: Proveedor[] }> => {

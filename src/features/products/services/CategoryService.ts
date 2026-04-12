@@ -5,11 +5,17 @@ export interface Category {
   id_categoria: string;
   nombre: string;
   id_sucursal: string;
+  id_status: string;
+  status?: {
+    id_status: string;
+    std_descripcion: string;
+  };
 }
 
 export interface CreateCategoryDTO {
   nombre: string;
   id_sucursal: string;
+  id_status: string;
 }
 
 export const CategoryService = {
@@ -28,7 +34,7 @@ export const CategoryService = {
     return data;
   },
 
-  update: async (id: string, payload: Partial<CreateCategoryDTO>): Promise<{ status: string; data: Category }> => {
+  update: async (id: string, payload: CreateCategoryDTO): Promise<{ status: string; data: Category }> => {
     const { data } = await axiosClient.put(ENDPOINTS.categorias.byId(id), payload);
     return data;
   },

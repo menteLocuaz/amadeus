@@ -66,7 +66,7 @@ export interface MergedInventoryItem {
     // Del registro de inventario (con fallback al producto)
     stock_actual: number;
     stock_minimo: number;
-    stock_maximo: number;
+    ubicacion: string;
     precio_venta: number;
     precio_compra: number;
 }
@@ -120,7 +120,7 @@ export const usePremiumInventory = () => {
                     // Stock: inventario de sucursal > campo legacy del producto > 0
                     stock_actual:  inv?.stock_actual ?? p.stock ?? p.stock_actual ?? 0,
                     stock_minimo:  inv?.stock_minimo ?? 0,
-                    stock_maximo:  inv?.stock_maximo ?? 0,
+                    ubicacion:     inv?.ubicacion    ?? '',
                 };
             });
         },
