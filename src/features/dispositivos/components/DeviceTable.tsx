@@ -171,7 +171,7 @@ const DeviceTable: React.FC<DeviceTableProps> = ({
                     ) : dispositivos.map(d => {
 
                         // Resolución de metadatos visuales desde las constantes
-                        const tm = TIPO_META[d.tipo as TipoDispositivo]; // tipo → label, color, Icon
+                        const tm = TIPO_META[d.tipo_dispositivo as TipoDispositivo]; // tipo_dispositivo → label, color, Icon
                         const sm = ESTADO_META[d.estado];                // estado → icon, color, bg
 
                         // Resolución de relaciones en dos pasos (sin petición al backend)
@@ -214,7 +214,7 @@ const DeviceTable: React.FC<DeviceTableProps> = ({
                                 </td>
 
                                 {/* ── Dirección IP en fuente monoespaciada ── */}
-                                <td><IPChip>{d.ip}</IPChip></td>
+                                <td><IPChip>{d.ip ?? (d.configuracion?.ip as string) ?? "—"}</IPChip></td>
 
                                 {/* ── Estado de conexión (ONLINE / OFFLINE / DESCONOCIDO) ── */}
                                 <td>

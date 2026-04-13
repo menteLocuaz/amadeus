@@ -7,10 +7,11 @@ import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 export interface CategoryFormData {
   nombre: string;
   id_sucursal: string;
+  id_status: string;
 }
 
 export function useCategoriaPage() {
-  const { categories, sucursales, fetchCatalogs, isLoading } = useCatalogStore();
+  const { categories, sucursales, statusList, fetchCatalogs, isLoading } = useCatalogStore();
   const { user, setSucursalActiva } = useAuthStore();
 
   // Estados del UI
@@ -19,7 +20,7 @@ export function useCategoriaPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [isSaving, setIsSaving]           = useState(false);
   const [isDeletingId, setIsDeletingId]   = useState<string | null>(null);
-  const [formData, setFormData]           = useState<CategoryFormData>({ nombre: "", id_sucursal: "" });
+  const [formData, setFormData]           = useState<CategoryFormData>({ nombre: "", id_sucursal: "", id_status: "" });
 
   // Carga inicial del catálogo
   useEffect(() => {
@@ -32,6 +33,13 @@ export function useCategoriaPage() {
       sucursales.map((s: any) => [s.id_sucursal, s.nombre_sucursal])
     );
   }, [sucursales]);
+
+  // ID del estado "Activo" en el catálogo
+  const activeStatusId = useMemo(() => {
+    return statusList.find(s =>
+      s.std_descripcion.toLowerCase().includes("activ")
+    )?.id_status ?? "";
+  }, [statusList]);
 
   // Filtra por sucursal activa del usuario y por texto de búsqueda
   const filteredCategories = useMemo(() => {
@@ -48,6 +56,7 @@ export function useCategoriaPage() {
     setFormData({
       nombre:       cat?.nombre       ?? "",
       id_sucursal:  cat?.id_sucursal  ?? user?.id_sucursal ?? "",
+      id_status:    cat?.id_status    ?? activeStatusId,
     });
     setIsModalOpen(true);
   };
@@ -56,12 +65,19 @@ export function useCategoriaPage() {
 
   /** Guarda (crea o actualiza) una categoría */
   const handleSave = async () => {
-    if (!formData.nombre.trim())  return alert("El nombre es obligatorio");
-    if (!formData.id_sucursal)    return alert("Debe seleccionar una sucursal");
+    const nombre = formData.nombre.trim();
+    if (!nombre)                 return alert("El nombre es obligatorio");
+    if (nombre.length < 3)       return alert("El nombre debe tener al menos 3 caracteres");
+    if (!formData.id_sucursal)   return alert("Debe seleccionar una sucursal");
+    if (!formData.id_status)     return alert("Debe seleccionar un estado");
 
     setIsSaving(true);
     try {
-      const payload = { nombre: formData.nombre.trim(), id_sucursal: formData.id_sucursal };
+      const payload = {
+        nombre,
+        id_sucursal:  formData.id_sucursal,
+        id_status:    formData.id_status,
+      };
 
       if (editingCategory) {
         await CategoryService.update(editingCategory.id_categoria, payload);
@@ -71,10 +87,26 @@ export function useCategoriaPage() {
 
       await fetchCatalogs(true);
       setIsModalOpen(false);
-    } catch {
-      alert("Error al procesar la categoría");
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.response?.data?.error || err?.message || "Error al procesar la categoría";
+      alert(`Error: ${msg}`);
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  /** Cambia el estado de una categoría directamente desde la tabla */
+  const handleStatusChange = async (cat: Category, newStatusId: string) => {
+    try {
+      await CategoryService.update(cat.id_categoria, {
+        nombre:      cat.nombre,
+        id_sucursal: cat.id_sucursal,
+        id_status:   newStatusId,
+      });
+      await fetchCatalogs(true);
+    } catch (err: any) {
+      const msg = err?.response?.data?.message || err?.message || "Error al cambiar el estado";
+      alert(`Error: ${msg}`);
     }
   };
 
@@ -100,7 +132,7 @@ export function useCategoriaPage() {
 
   return {
     // Estado
-    user, sucursales, sucursalMap,
+    user, sucursales, sucursalMap, statusList,
     search, setSearch,
     isLoading, isSaving, isDeletingId,
     isModalOpen, editingCategory,
@@ -111,6 +143,7 @@ export function useCategoriaPage() {
     handleCloseModal,
     handleSave,
     handleDelete,
+    handleStatusChange,
     handleSelectSucursal,
   };
 }

@@ -9,6 +9,7 @@ import { PageContainer, PageHeader, HeaderTitle, Toolbar, SearchBox } from "../.
 // Hooks Especializados
 import { useDispositivosData } from "../hooks/useDispositivosData";
 import { useDispositivosUI } from "../hooks/useDispositivosUI";
+import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 
 // Sub-componentes
 import DeviceSummary from "../components/DeviceSummary";
@@ -19,12 +20,15 @@ import { ActionBtn, LoaderWrap } from "../../../features/usuario/styles/UserStyl
 
 const DispositivoPage: React.FC = () => {
     // 1. Hook de Datos (Capa de Red/Servidor)
-    const { 
-        dispositivos: raw, estaciones, isLoading, save, isSaving, remove, deletingId 
+    const {
+        dispositivos: raw, estaciones, isLoading, save, isSaving, remove, deletingId
     } = useDispositivosData();
 
     // 2. Hook de UI (Capa de Interfaz)
     const { methods, ui } = useDispositivosUI(raw, estaciones);
+
+    // 3. Catálogo de estados para el selector del modal
+    const statusList = useCatalogStore(state => state.statusList);
 
     if (isLoading) {
         return (
@@ -37,9 +41,16 @@ const DispositivoPage: React.FC = () => {
         );
     }
 
-    // Handler de guardado unificado
-    const onSave = async (data: any) => {
-        await save({ id: ui.editingItem?.id_dispositivo, data });
+    // Handler de guardado: transforma el form data al DTO que espera el backend
+    const onSave = async (formData: any) => {
+        const dto = {
+            nombre:           formData.nombre,
+            tipo_dispositivo: formData.tipo,
+            configuracion:    { ip: formData.ip },
+            id_estacion:      formData.id_estacion,
+            id_status:        formData.id_status,
+        };
+        await save({ id: ui.editingItem?.id_dispositivo, data: dto });
         ui.closeModal();
     };
 
@@ -96,6 +107,7 @@ const DispositivoPage: React.FC = () => {
                     editingItem={ui.editingItem}
                     isSaving={isSaving}
                     estaciones={estaciones}
+                    statusList={statusList}
                     onClose={ui.closeModal}
                     onSave={methods.handleSubmit(onSave)}
                 />

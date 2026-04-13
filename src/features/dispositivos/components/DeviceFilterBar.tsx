@@ -41,7 +41,7 @@ const DeviceFilterBar: React.FC<DeviceFilterBarProps> = ({
                     $color={TIPO_META[tipo].color}
                     onClick={() => onFilterChange(tipo)}
                 >
-                    {TIPO_META[tipo].label}s ({dispositivos.filter(d => d.tipo === tipo).length})
+                    {TIPO_META[tipo].label}s ({dispositivos.filter(d => d.tipo_dispositivo === tipo).length})
                 </FilterChip>
             ))}
         </FilterBar>

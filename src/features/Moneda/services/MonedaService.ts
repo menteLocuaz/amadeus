@@ -4,9 +4,10 @@ import { ENDPOINTS } from '../../../core/api/endpoints';
 export interface Moneda {
   id_moneda: string;
   nombre: string;
+  codigo_iso: string;
+  simbolo: string;
   id_sucursal: string;
   id_status: string;
-  // Metadata fields that may come from API
   status?: {
     id_status: string;
     std_descripcion: string;
@@ -15,6 +16,8 @@ export interface Moneda {
 
 export interface CreateMonedaDTO {
   nombre: string;
+  codigo_iso: string;
+  simbolo: string;
   id_sucursal: string;
   id_status: string;
 }

@@ -18,14 +18,14 @@ import { CategoriaModal } from "../components/CategoriaModal";
 export const Categoria: React.FC = () => {
   const theme = useTheme();
   const {
-    user, sucursales, sucursalMap,
+    user, sucursales, sucursalMap, statusList,
     search, setSearch,
     isLoading, isSaving, isDeletingId,
     isModalOpen, editingCategory,
     formData, setFormData,
     filteredCategories,
     handleOpenModal, handleCloseModal,
-    handleSave, handleDelete, handleSelectSucursal,
+    handleSave, handleDelete, handleStatusChange, handleSelectSucursal,
   } = useCategoriaPage();
 
   return (
@@ -95,9 +95,11 @@ export const Categoria: React.FC = () => {
         <CategoriaTable
           categories={filteredCategories}
           sucursalMap={sucursalMap}
+          statusList={statusList}
           isDeletingId={isDeletingId}
           onEdit={handleOpenModal}
           onDelete={handleDelete}
+          onStatusChange={handleStatusChange}
         />
       )}
 
@@ -107,6 +109,7 @@ export const Categoria: React.FC = () => {
           editingCategory={editingCategory}
           formData={formData}
           sucursales={sucursales}
+          statusList={statusList}
           isSaving={isSaving}
           onChange={setFormData}
           onSave={handleSave}

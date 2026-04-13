@@ -16,7 +16,7 @@ const ProtectedRoute: React.FC = () => {
     if (!token) return false;
 
     // Los administradores tienen acceso completo al frontend
-    if (user?.rol?.nombre_rol === 'Administrador') return true;
+    if (user?.rol?.nombre_rol === 'Administrador Global') return true;
 
     // Rutas base que siempre deberían estar permitidas si hay token
     const whitelist = [ROUTES.HOME, ROUTES.SELECT_SYSTEM, '/'];

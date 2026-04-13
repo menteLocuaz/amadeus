@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { EstatusService } from '../../auth/services/EstatusService';
 import { SucursalService } from '../services/SucursalService';
 import { EmpresaService } from '../services/EmpresaService';
-import { MonedaService } from '../../Moneda/services/MonedaService';
+import { MonedaService } from '../../moneda/services/MonedaService';
 import { ProductService } from '../../products/services/ProductService';
 import { extractData } from './useProveedoresQuery';
 
@@ -19,6 +19,27 @@ export const useStatuses = (modulo: number = 2) => {
         queryKey: commonKeys.statuses(modulo),
         queryFn: async () => {
             const res = await EstatusService.getByModulo(modulo);
+            return extractData(res);
+        },
+    });
+};
+
+export const useStatusesByTipo = (tipo: string) => {
+    return useQuery({
+        queryKey: ['statuses', 'tipo', tipo],
+        queryFn: async () => {
+            const res = await EstatusService.getByTipo(tipo);
+            return extractData(res);
+        },
+        enabled: !!tipo,
+    });
+};
+
+export const useAllStatuses = () => {
+    return useQuery({
+        queryKey: ['statuses', 'all'],
+        queryFn: async () => {
+            const res = await EstatusService.getAll();
             return extractData(res);
         },
     });

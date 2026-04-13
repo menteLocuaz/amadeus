@@ -2,68 +2,74 @@ import React, { useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
-import { ModalOverlay, ModalContent, FormGroup, Input, Select, Button } from "../../../shared/components/UI";
+import styled from "styled-components";
+import { ModalOverlay, ModalContent, FormGroup, Select, Button } from "../../../shared/components/UI";
 import { type FormaPago, type FormaPagoPayload } from "../services/FormasPagoService";
 import { type StatusItem } from "../../../shared/store/useCatalogStore";
 
 const schema = yup.object({
-  fmp_codigo: yup
+  nombre: yup
     .string()
-    .required("El código es requerido")
-    .max(5, "Máximo 5 caracteres")
-    .matches(/^[A-Za-z0-9-]+$/, "Solo letras, números y guión"),
-  fmp_descripcion: yup
-    .string()
-    .required("La descripción es requerida")
+    .required("El nombre es requerido")
     .min(2, "Mínimo 2 caracteres"),
+  requiere_ref: yup.boolean().required(),
   id_status: yup.string().required("El estado es requerido"),
 });
 
 interface FormasPagoModalProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSave: (data: FormaPagoPayload) => Promise<void>;
-  editing: FormaPago | null;
-  statuses: StatusItem[];
-  isSaving: boolean;
+  isOpen:    boolean;
+  onClose:   () => void;
+  onSave:    (data: FormaPagoPayload) => Promise<void>;
+  editing:   FormaPago | null;
+  statuses:  StatusItem[];
+  isSaving:  boolean;
 }
 
 export const FormasPagoModal: React.FC<FormasPagoModalProps> = ({
-  isOpen,
-  onClose,
-  onSave,
-  editing,
-  statuses,
-  isSaving,
+  isOpen, onClose, onSave, editing, statuses, isSaving,
 }) => {
   const {
     register,
     handleSubmit,
     reset,
     watch,
+    setValue,
     formState: { errors },
   } = useForm<FormaPagoPayload>({
     resolver: yupResolver(schema),
+    defaultValues: { nombre: "", requiere_ref: false, id_status: "" },
   });
 
-  const codigoValue = watch("fmp_codigo", "");
+  const requiereRef = watch("requiere_ref");
+
+  // Halla el id del estado "Activo" en la lista de estatus disponibles
+  const activeStatusId = statuses.find(s =>
+    s.std_descripcion.toLowerCase().includes("activ")
+  )?.id_status ?? statuses[0]?.id_status ?? "";
 
   useEffect(() => {
     if (!isOpen) return;
     if (editing) {
       reset({
-        fmp_codigo: editing.fmp_codigo,
-        fmp_descripcion: editing.fmp_descripcion,
-        id_status: editing.id_status,
+        nombre:       editing.nombre,
+        requiere_ref: editing.requiere_ref,
+        id_status:    editing.id_status,
       });
     } else {
       reset({
-        fmp_codigo: "",
-        fmp_descripcion: "",
-        id_status: statuses[0]?.id_status ?? "",
+        nombre:       "",
+        requiere_ref: false,
+        id_status:    activeStatusId,
       });
     }
-  }, [editing, isOpen, reset, statuses]);
+  }, [editing, isOpen, reset, activeStatusId]);
+
+  // Si los estatus cargan después de que el modal abrió, rellena el estado
+  useEffect(() => {
+    if (isOpen && !editing && activeStatusId) {
+      setValue("id_status", activeStatusId, { shouldValidate: false });
+    }
+  }, [activeStatusId, isOpen, editing, setValue]);
 
   if (!isOpen) return null;
 
@@ -74,28 +80,42 @@ export const FormasPagoModal: React.FC<FormasPagoModalProps> = ({
 
         <form onSubmit={handleSubmit(onSave)} noValidate>
           <FieldsGrid>
-            {/* Código */}
+            {/* Nombre */}
+            <FormGroup style={{ gridColumn: "1 / -1" }}>
+              <label>Nombre</label>
+              <UpperInput
+                {...register("nombre")}
+                placeholder="EFECTIVO, TARJETA DE CRÉDITO, TRANSFERENCIA…"
+                $hasError={!!errors.nombre}
+                disabled={isSaving}
+              />
+              {errors.nombre && <FieldError>{errors.nombre.message}</FieldError>}
+            </FormGroup>
+
+            {/* Requiere referencia */}
             <FormGroup style={{ gridColumn: "1" }}>
-              <label>Código</label>
-              <CodigoWrapper>
-                <CodigoPreview $empty={!codigoValue}>
-                  {codigoValue ? codigoValue.toUpperCase() : "??"}
-                </CodigoPreview>
-                <UpperInput
-                  {...register("fmp_codigo")}
-                  placeholder="EF, TJ, QR…"
-                  maxLength={5}
-                  $hasError={!!errors.fmp_codigo}
-                />
-              </CodigoWrapper>
-              {errors.fmp_codigo && <FieldError>{errors.fmp_codigo.message}</FieldError>}
-              <FieldHint>Máx. 5 caracteres. Se usará como identificador visual.</FieldHint>
+              <label>¿Requiere Referencia?</label>
+              <ToggleRow>
+                <ToggleSwitch
+                  $active={requiereRef}
+                  onClick={() => setValue("requiere_ref", !requiereRef, { shouldValidate: true })}
+                  type="button"
+                  disabled={isSaving}
+                >
+                  <ToggleKnob $active={requiereRef} />
+                </ToggleSwitch>
+                <ToggleLabel $active={requiereRef}>
+                  {requiereRef ? "Sí (pide número de comprobante)" : "No (como Efectivo)"}
+                </ToggleLabel>
+                <input type="hidden" {...register("requiere_ref")} />
+              </ToggleRow>
             </FormGroup>
 
             {/* Estado */}
             <FormGroup style={{ gridColumn: "2" }}>
               <label>Estado</label>
-              <Select {...register("id_status")}>
+              <Select {...register("id_status")} disabled={isSaving}>
+                <option value="">Seleccione estado…</option>
                 {statuses.map((s) => (
                   <option key={s.id_status} value={s.id_status}>
                     {s.std_descripcion}
@@ -103,17 +123,6 @@ export const FormasPagoModal: React.FC<FormasPagoModalProps> = ({
                 ))}
               </Select>
               {errors.id_status && <FieldError>{errors.id_status.message}</FieldError>}
-            </FormGroup>
-
-            {/* Descripción — ocupa ambas columnas */}
-            <FormGroup style={{ gridColumn: "1 / -1" }}>
-              <label>Descripción</label>
-              <UpperInput
-                {...register("fmp_descripcion")}
-                placeholder="EFECTIVO, TARJETA DE CRÉDITO, PAGO QR…"
-                $hasError={!!errors.fmp_descripcion}
-              />
-              {errors.fmp_descripcion && <FieldError>{errors.fmp_descripcion.message}</FieldError>}
             </FormGroup>
           </FieldsGrid>
 
@@ -131,8 +140,7 @@ export const FormasPagoModal: React.FC<FormasPagoModalProps> = ({
   );
 };
 
-// ─── Styled helpers (inline via styled-components import) ─────────────────────
-import styled from "styled-components";
+// ─── Styled ───────────────────────────────────────────────────────────────────
 
 const UpperInput = styled.input<{ $hasError?: boolean }>`
   width: 100%;
@@ -148,8 +156,7 @@ const UpperInput = styled.input<{ $hasError?: boolean }>`
   font-size: 0.875rem;
   transition: border-color 0.2s;
   &:focus {
-    border-color: ${({ $hasError, theme }) =>
-      $hasError ? theme.danger : theme.primary};
+    border-color: ${({ $hasError, theme }) => $hasError ? theme.danger : theme.primary};
   }
 `;
 
@@ -167,31 +174,39 @@ const FieldsGrid = styled.div`
   gap: 16px;
 `;
 
-const CodigoWrapper = styled.div`
+const ToggleRow = styled.div`
   display: flex;
-  gap: 10px;
   align-items: center;
+  gap: 12px;
+  padding: 10px 0;
 `;
 
-const CodigoPreview = styled.div<{ $empty: boolean }>`
-  min-width: 46px;
-  height: 40px;
-  border-radius: 8px;
-  background: ${({ $empty }) =>
-    $empty ? "rgba(150,150,150,0.08)" : "rgba(252,163,17,0.12)"};
-  color: ${({ $empty, theme }) => ($empty ? theme.texttertiary : theme.primary)};
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  font-family: "SF Mono", "Fira Code", monospace;
-  border: 1px solid
-    ${({ $empty }) =>
-      $empty ? "rgba(150,150,150,0.12)" : "rgba(252,163,17,0.2)"};
-  transition: all 0.15s ease;
+const ToggleSwitch = styled.button<{ $active: boolean }>`
+  all: unset;
+  width: 44px;
+  height: 24px;
+  border-radius: 12px;
+  background: ${({ $active, theme }) => $active ? theme.primary : `${theme.bg3}66`};
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
   flex-shrink: 0;
+`;
+
+const ToggleKnob = styled.div<{ $active: boolean }>`
+  position: absolute;
+  top: 3px;
+  left: ${({ $active }) => ($active ? "23px" : "3px")};
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: white;
+  transition: left 0.2s;
+`;
+
+const ToggleLabel = styled.span<{ $active: boolean }>`
+  font-size: 0.8rem;
+  color: ${({ $active, theme }) => $active ? theme.primary : theme.texttertiary};
 `;
 
 const FieldError = styled.small`
@@ -199,14 +214,6 @@ const FieldError = styled.small`
   font-size: 0.75rem;
   margin-top: 4px;
   display: block;
-`;
-
-const FieldHint = styled.small`
-  color: ${({ theme }) => theme.texttertiary};
-  font-size: 0.72rem;
-  margin-top: 3px;
-  display: block;
-  opacity: 0.75;
 `;
 
 const Actions = styled.div`

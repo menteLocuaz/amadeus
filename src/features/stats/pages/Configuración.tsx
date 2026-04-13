@@ -36,6 +36,7 @@ interface ConfigItem {
   Icon: IconType;
   path?: string;
   onClick?: () => void;
+  comingSoon?: boolean;
 }
 
 /* ------------------------------ Styled UI ------------------------------- */
@@ -147,7 +148,7 @@ const Grid = styled.div`
   gap: 16px;
 `;
 
-const ModuleCard = styled.button`
+const ModuleCard = styled.button<{ $disabled?: boolean }>`
   all: unset;
   display: flex;
   align-items: center;
@@ -156,16 +157,17 @@ const ModuleCard = styled.button`
   background: ${({ theme }) => theme.bg};
   border: 1px solid ${({ theme }) => theme.bg3}33;
   border-radius: 16px;
-  cursor: pointer;
+  cursor: ${({ $disabled }) => ($disabled ? "not-allowed" : "pointer")};
   transition: all 0.2s ease;
   position: relative;
   overflow: hidden;
+  opacity: ${({ $disabled }) => ($disabled ? 0.5 : 1)};
 
   &:hover {
-    background: ${({ theme }) => theme.bg2};
-    border-color: ${({ theme }) => theme.bg4}88;
-    transform: translateY(-2px);
-    
+    background: ${({ $disabled, theme }) => ($disabled ? theme.bg : theme.bg2)};
+    border-color: ${({ $disabled, theme }) => ($disabled ? `${theme.bg3}33` : `${theme.bg4}88`)};
+    transform: ${({ $disabled }) => ($disabled ? "none" : "translateY(-2px)")};
+
     .arrow-icon {
       transform: translateX(4px);
       opacity: 1;
@@ -173,8 +175,22 @@ const ModuleCard = styled.button`
   }
 
   &:active {
-    transform: translateY(0);
+    transform: ${({ $disabled }) => ($disabled ? "none" : "translateY(0)")};
   }
+`;
+
+const ComingSoonBadge = styled.span`
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 20px;
+  background: ${({ theme }) => theme.bg3}44;
+  color: ${({ theme }) => theme.texttertiary};
 `;
 
 const IconBox = styled.div`
@@ -240,19 +256,19 @@ export const Configuración: React.FC = () => {
   const items: ConfigItem[] = useMemo(
     () => [
       // --- Ventas ---
-      { id: "printers", category: "Ventas", title: "Impresoras", description: "Configuración de tickets y comandas", Icon: FiPrinter, onClick: () => alert("Módulo de Impresoras") },
-      { id: "payments", category: "Ventas", title: "Métodos de Pago", description: "Cajas y pasarelas de pago", Icon: FiCreditCard, onClick: () => alert("Módulo de Pagos") },
-      { id: "dispositivos", category: "Ventas", title: "Dispositivos POS", description: "Datáfonos y periféricos", Icon: FiCpu, path: ROUTES.DISPOSITIVOS },
-      { id: "estaciones", category: "Ventas", title: "Estaciones POS", description: "Terminales físicos por sucursal", Icon: FiMonitor, path: ROUTES.ESTACIONES },
-      { id: "tickets", category: "Ventas", title: "Diseño Tickets", description: "Personalización de comprobantes", Icon: FiBookmark, onClick: () => alert("Módulo de Tickets") },
-      { id: "invoices", category: "Ventas", title: "Facturación", description: "Parámetros de ley y correlativos", Icon: FiSettings, onClick: () => alert("Módulo de Facturación") },
+      { id: "printers",    category: "Ventas", title: "Impresoras",      description: "Configuración de tickets y comandas",   Icon: FiPrinter,  comingSoon: true },
+      { id: "payments",    category: "Ventas", title: "Métodos de Pago", description: "Cajas y pasarelas de pago",             Icon: FiCreditCard, comingSoon: true },
+      { id: "dispositivos",category: "Ventas", title: "Dispositivos POS",description: "Datáfonos y periféricos",               Icon: FiCpu,      path: ROUTES.DISPOSITIVOS },
+      { id: "estaciones",  category: "Ventas", title: "Estaciones POS",  description: "Terminales físicos por sucursal",       Icon: FiMonitor,  path: ROUTES.ESTACIONES },
+      { id: "tickets",     category: "Ventas", title: "Diseño Tickets",  description: "Personalización de comprobantes",       Icon: FiBookmark, comingSoon: true },
+      { id: "invoices",    category: "Ventas", title: "Facturación",     description: "Parámetros de ley y correlativos",      Icon: FiSettings, path: ROUTES.FACTURAS_CONFIG },
 
       // --- Inventario ---
       { id: "products", category: "Inventario", title: "Productos", description: "Gestión centralizada de stock", Icon: FiBox, path: ROUTES.PRODUCTOS },
       { id: "categories", category: "Inventario", title: "Categorías", description: "Organización jerárquica", Icon: FiTag, path: ROUTES.CATEGORIAS },
       { id: "catalogo", category: "Inventario", title: "Catálogo General", description: "Vista rápida de precios y stock", Icon: FiShoppingBag, path: ROUTES.INVENTARIO },
       { id: "medidas", category: "Inventario", title: "Unidades", description: "Kilos, metros, unidades y más", Icon: FiSliders, path: ROUTES.MEDIDAS },
-      { id: "warehouse", category: "Inventario", title: "Almacenes", description: "Control de bodegas y transferencias", Icon: FiMapPin, onClick: () => alert("Módulo de Almacén") },
+      { id: "warehouse", category: "Inventario", title: "Almacenes", description: "Control de bodegas y transferencias", Icon: FiMapPin, comingSoon: true },
 
       // --- Inventario (compras) ---
       { id: "compras", category: "Inventario", title: "Compras", description: "Órdenes de compra y recepciones", Icon: FiShoppingCart, path: ROUTES.COMPRAS },
@@ -293,6 +309,7 @@ export const Configuración: React.FC = () => {
   }, [filtered]);
 
   const handleAction = (item: ConfigItem) => {
+    if (item.comingSoon) return;
     if (item.path) navigate(item.path);
     else if (item.onClick) item.onClick();
   };
@@ -325,7 +342,8 @@ export const Configuración: React.FC = () => {
               </SectionHeader>
               <Grid>
                 {modules.map((item) => (
-                  <ModuleCard key={item.id} onClick={() => handleAction(item)}>
+                  <ModuleCard key={item.id} $disabled={item.comingSoon} onClick={() => handleAction(item)}>
+                    {item.comingSoon && <ComingSoonBadge>Próximamente</ComingSoonBadge>}
                     <IconBox>
                       <item.Icon />
                     </IconBox>
@@ -333,7 +351,7 @@ export const Configuración: React.FC = () => {
                       <h4>{item.title}</h4>
                       <p>{item.description}</p>
                     </Content>
-                    <ArrowIcon className="arrow-icon" />
+                    {!item.comingSoon && <ArrowIcon className="arrow-icon" />}
                   </ModuleCard>
                 ))}
               </Grid>

@@ -35,19 +35,32 @@ export const Sidebar: React.FC = () => {
 
     // Datos de Configuración
     const primaryLinks: NavLinkItem[] = [
-        { label: "Home", icon: <AiOutlineHome />, to: ROUTES.HOME },
-        { label: "Empresas", icon: <MdBusiness />, to: ROUTES.EMPRESAS },
-        { label: "Sucursales", icon: <FiMapPin />, to: ROUTES.SUCURSALES },
-        { label: "Usuarios", icon: <FiUsers />, to: ROUTES.USUARIOS },
-        { label: "Clientes", icon: <FiUsers />, to: ROUTES.CLIENTES },
-        { label: "Facturación", icon: <FiFileText />, to: ROUTES.FACTURACION },
-        { label: "Historial Ventas", icon: <MdOutlineAnalytics />, to: ROUTES.FACTURAS_HISTORIAL },
-        { label: "Formas de Pago", icon: <MdPointOfSale />, to: ROUTES.FORMAS_PAGO },
-        { label: "Caja (POS)", icon: <MdPointOfSale />, to: ROUTES.POS },
-        { label: "Cierre de Caja", icon: <MdPointOfSale />, to: ROUTES.POS_CIERRE },
-        { label: "Catálogo", icon: <FiShoppingBag />, to: ROUTES.CATALOGO },
-        { label: "Productos", icon: <AiOutlineApartment />, to: ROUTES.PRODUCTOS },
-        { label: "Kardex", icon: <MdOutlineAnalytics />, to: ROUTES.KARDEX }
+        { label: "Home",             icon: <AiOutlineHome />,       to: ROUTES.HOME },
+        // --- Ventas ---
+        { label: "Caja (POS)",       icon: <MdPointOfSale />,       to: ROUTES.POS },
+        { label: "Cierre de Caja",   icon: <MdPointOfSale />,       to: ROUTES.POS_CIERRE },
+        { label: "Facturación",      icon: <FiFileText />,          to: ROUTES.FACTURACION },
+        { label: "Historial Ventas", icon: <MdOutlineAnalytics />,  to: ROUTES.FACTURAS_HISTORIAL },
+        { label: "Formas de Pago",   icon: <MdPointOfSale />,       to: ROUTES.FORMAS_PAGO },
+        // --- Inventario ---
+        { label: "Productos",        icon: <AiOutlineApartment />,  to: ROUTES.PRODUCTOS },
+        { label: "Inventario",       icon: <FiShoppingBag />,       to: ROUTES.INVENTARIO },
+        { label: "Catálogo",         icon: <FiShoppingBag />,       to: ROUTES.CATALOGO },
+        { label: "Compras",          icon: <FiShoppingBag />,       to: ROUTES.COMPRAS },
+        { label: "Proveedores",      icon: <FiShoppingBag />,       to: ROUTES.PROVEEDORES },
+        { label: "Kardex",           icon: <MdOutlineAnalytics />,  to: ROUTES.KARDEX },
+        // --- Entidades ---
+        { label: "Clientes",         icon: <FiUsers />,             to: ROUTES.CLIENTES },
+        { label: "Empresas",         icon: <MdBusiness />,          to: ROUTES.EMPRESAS },
+        { label: "Sucursales",       icon: <FiMapPin />,            to: ROUTES.SUCURSALES },
+        { label: "Usuarios",         icon: <FiUsers />,             to: ROUTES.USUARIOS },
+        // --- Sistema ---
+        { label: "Roles",            icon: <FiUsers />,             to: ROUTES.ROLES },
+        { label: "Categorías",       icon: <AiOutlineApartment />,  to: ROUTES.CATEGORIAS },
+        { label: "Monedas",          icon: <MdOutlineAnalytics />,  to: ROUTES.MONEDAS },
+        { label: "Estatus",          icon: <AiOutlineSetting />,    to: ROUTES.ESTATUS },
+        { label: "Estaciones POS",   icon: <MdPointOfSale />,       to: ROUTES.ESTACIONES },
+        { label: "Dispositivos",     icon: <AiOutlineSetting />,    to: ROUTES.DISPOSITIVOS },
     ];
 
     const secondaryLinks: NavLinkItem[] = [
@@ -75,7 +88,7 @@ export const Sidebar: React.FC = () => {
                 <NavSection
                   links={primaryLinks.filter(link => {
                     // Administradores ven todo
-                    if (user?.rol?.nombre_rol === 'Administrador') return true;
+                    if (user?.rol?.nombre_rol === 'Administrador Global') return true;
                     // Si el backend no envía permisos, mostramos todo (fallback)
                     if (!user?.permisos || !Array.isArray(user.permisos) || user.permisos.length === 0) return true;
                     return user.permisos.includes(link.to);

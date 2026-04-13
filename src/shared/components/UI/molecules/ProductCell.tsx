@@ -59,15 +59,27 @@ export const PriceText = styled.div`
 /**
  * Functional Component for a standard Product Cell
  */
-export const ProductCell = ({ 
-    nombre, 
-    sku, 
-    imagen, 
-    placeholderIcon: Icon = FiImage 
-}: { 
-    nombre: string; 
-    sku: string | number; 
-    imagen?: string; 
+export const ProductCodigo = styled.div`
+    font-size: 0.7rem;
+    font-weight: 500;
+    color: ${({ theme }) => theme.texttertiary};
+    font-family: 'JetBrains Mono', 'Space Mono', monospace;
+    margin-top: 2px;
+    opacity: 0.7;
+    letter-spacing: 0.04em;
+`;
+
+export const ProductCell = ({
+    nombre,
+    sku,
+    imagen,
+    codigo,
+    placeholderIcon: Icon = FiImage
+}: {
+    nombre: string;
+    sku: string | number;
+    imagen?: string;
+    codigo?: string;
     placeholderIcon?: React.ElementType;
 }) => (
     <ProductCellContainer>
@@ -78,7 +90,8 @@ export const ProductCell = ({
         )}
         <div>
             <ProductName>{nombre}</ProductName>
-            <ProductSku>{sku || "ID: ---"}</ProductSku>
+            {sku && <ProductSku>{sku}</ProductSku>}
+            {codigo && <ProductCodigo>{codigo}</ProductCodigo>}
         </div>
     </ProductCellContainer>
 );

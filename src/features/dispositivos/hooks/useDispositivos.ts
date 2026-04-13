@@ -50,8 +50,15 @@ export const useDispositivos = () => {
     const [pingResults, setPingResults] = useState<Record<string, EstadoConexion>>({});
 
     // --- Catálogos (Zustand) ---
-    const sucursales = useCatalogStore(state => state.sucursales);
+    const sucursales   = useCatalogStore(state => state.sucursales);
+    const statusList   = useCatalogStore(state => state.statusList);
     const fetchCatalogs = useCatalogStore(state => state.fetchCatalogs);
+
+    // ID del estatus "Activo" para asignarlo al crear/editar
+    const activoStatusId = useMemo(
+        () => statusList.find(s => s.std_descripcion?.toLowerCase() === "activo")?.id_status ?? "",
+        [statusList]
+    );
 
     // Debounce manual para la búsqueda
     useEffect(() => {
@@ -118,8 +125,8 @@ export const useDispositivos = () => {
             setEditingItem(item);
             reset({
                 nombre: item.nombre,
-                tipo: item.tipo as TipoDispositivo,
-                ip: item.ip,
+                tipo: item.tipo_dispositivo as TipoDispositivo,
+                ip: (item.ip ?? (item.configuracion?.ip as string) ?? ""),
                 id_estacion: item.id_estacion
             });
         } else {
@@ -154,8 +161,9 @@ export const useDispositivos = () => {
     const filtered = useMemo(() => {
         const q = debouncedSearch.toLowerCase().trim();
         return dispositivos.filter(d => {
-            const matchSearch = d.nombre.toLowerCase().includes(q) || d.ip.includes(q);
-            const matchTipo = filterTipo === "TODOS" || d.tipo === filterTipo;
+            const ip = d.ip ?? (d.configuracion?.ip as string) ?? "";
+            const matchSearch = d.nombre.toLowerCase().includes(q) || ip.includes(q);
+            const matchTipo = filterTipo === "TODOS" || d.tipo_dispositivo === filterTipo;
             return matchSearch && matchTipo;
         });
     }, [dispositivos, debouncedSearch, filterTipo]);
@@ -163,8 +171,8 @@ export const useDispositivos = () => {
     const statsPerTipo = useMemo(() => {
         return (Object.keys(TIPO_META) as TipoDispositivo[]).map(tipo => ({
             tipo,
-            count: dispositivos.filter(d => d.tipo === tipo).length,
-            online: dispositivos.filter(d => d.tipo === tipo && d.estado === "ONLINE").length,
+            count: dispositivos.filter(d => d.tipo_dispositivo === tipo).length,
+            online: dispositivos.filter(d => d.tipo_dispositivo === tipo && d.estado === "ONLINE").length,
             ...TIPO_META[tipo],
         }));
     }, [dispositivos]);
@@ -210,7 +218,13 @@ export const useDispositivos = () => {
         handleCloseModal,
         handleDelete: deleteMutation.mutate,
         handlePing,
-        onSubmit: (data: DispositivoForm) => saveMutation.mutate(data),
+        onSubmit: (data: DispositivoForm) => saveMutation.mutate({
+            nombre:           data.nombre,
+            tipo_dispositivo: data.tipo as TipoDispositivo,
+            configuracion:    { ip: data.ip, puerto: 9100 },
+            id_estacion:      data.id_estacion,
+            id_status:        activoStatusId,
+        }),
 
         // Form
         register,

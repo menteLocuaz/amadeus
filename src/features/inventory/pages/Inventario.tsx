@@ -49,7 +49,8 @@ const Inventario: React.FC = () => {
 
     // 4. TanStack Table Configuration
     const columns = useMemo(() => [
-        columnHelper.accessor("producto.nombre", {
+        columnHelper.accessor(row => row.producto?.nombre, {
+            id: "producto_nombre",
             header: "Producto",
             cell: info => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -67,7 +68,8 @@ const Inventario: React.FC = () => {
                 </div>
             )
         }),
-        columnHelper.accessor("producto.categoria.nombre", {
+        columnHelper.accessor(row => row.producto?.categoria?.nombre, {
+            id: "producto_categoria_nombre",
             header: "Categoría",
             cell: info => info.getValue() || "General"
         }),
@@ -78,7 +80,7 @@ const Inventario: React.FC = () => {
                     <StockIndicator 
                         actual={info.getValue()} 
                         min={info.row.original.stock_minimo} 
-                        max={info.row.original.stock_maximo} 
+                        max={info.row.original.stock_minimo * 3 || 100}
                         unit={info.row.original.producto?.unidad?.nombre}
                     />
                 </div>
@@ -250,7 +252,6 @@ const AdjustModal = ({ item, saving, onClose, onSave }: any) => {
     const [formData, setFormData] = useState({
         stock_actual: item.stock_actual,
         stock_minimo: item.stock_minimo,
-        stock_maximo: item.stock_maximo,
         motivo: ""
     });
 
@@ -291,11 +292,6 @@ const AdjustModal = ({ item, saving, onClose, onSave }: any) => {
                         <input name="stock_minimo" type="number" value={formData.stock_minimo} onChange={handleChange} />
                     </FormGroup>
                 </Grid>
-
-                <FormGroup>
-                    <label>Stock Máximo</label>
-                    <input name="stock_maximo" type="number" value={formData.stock_maximo} onChange={handleChange} />
-                </FormGroup>
 
                 <FormGroup>
                     <label>Motivo del Ajuste (Opcional)</label>

@@ -76,8 +76,11 @@ export const ENDPOINTS = {
   facturas: {
     base: '/facturas',
     completa: '/facturas/completa',
-    impuestos: '/facturas/impuestos',
     formasPago: '/facturas/formas-pago',
+    impuestos: {
+      base: '/facturas/impuestos',
+      byId: (id: string) => `/facturas/impuestos/${id}`,
+    },
   },
   cajas: {
     base: '/cajas',

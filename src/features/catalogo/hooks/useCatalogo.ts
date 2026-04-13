@@ -84,7 +84,7 @@ export const useCatalogo = () => {
      */
     const filtered = useMemo(() => {
         return products.filter(p => {
-            const matchesSearch = p.nombre.toLowerCase().includes(search.toLowerCase()) ||
+            const matchesSearch = (p.nombre || "").toLowerCase().includes(search.toLowerCase()) ||
                 (p.id_producto || "").toLowerCase().includes(search.toLowerCase());
             
             const matchesCat = selectedCat === "all" || p.id_categoria === selectedCat;

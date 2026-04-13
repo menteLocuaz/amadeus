@@ -23,10 +23,9 @@ export interface InventoryItem {
     id_sucursal: string;
     stock_actual: number;
     stock_minimo: number;
-    stock_maximo: number;
     precio_compra: number;
     precio_venta: number;
-    ubicacion?: string;
+    ubicacion: string;
     created_at: string;
     updated_at: string;
 }
@@ -81,9 +80,9 @@ export interface InventoryCreateDTO {
     id_sucursal: string;
     stock_actual: number;
     stock_minimo: number;
-    stock_maximo: number;
     precio_compra: number;
     precio_venta: number;
+    ubicacion?: string;
 }
 
 /**
@@ -94,9 +93,9 @@ export interface InventoryCreateDTO {
 export interface InventoryUpdateDTO {
     stock_actual: number;
     stock_minimo: number;
-    stock_maximo: number;
     precio_compra: number;
     precio_venta: number;
+    ubicacion?: string;
 }
 
 /** Body para POST /inventario/movimientos — movimiento individual. */

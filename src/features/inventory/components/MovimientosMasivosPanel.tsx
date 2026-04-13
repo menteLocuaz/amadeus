@@ -69,7 +69,7 @@ export const MovimientosMasivosPanel: React.FC = () => {
         if (!busqueda.trim()) return [];
         const q = busqueda.toLowerCase();
         return productosConInventario
-            .filter(p => !idsEnLineas.has(p.id_producto) && p.nombre.toLowerCase().includes(q))
+            .filter(p => !idsEnLineas.has(p.id_producto) && (p.nombre ?? '').toLowerCase().includes(q))
             .slice(0, 8);
     }, [busqueda, productosConInventario, idsEnLineas]);
 

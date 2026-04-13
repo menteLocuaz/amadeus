@@ -1,34 +1,29 @@
 import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
 
-/* ──────────────────────────────────────────────
-   Respuesta exacta del modelo Go:
-   IDDispositivo uuid.UUID  `json:"id_dispositivo"`
-   Nombre        string     `json:"nombre"`
-   Tipo          string     `json:"tipo"`
-   IP            string     `json:"ip"`
-   IDEstacion    uuid.UUID  `json:"id_estacion"`
-   CreatedAt     time.Time  `json:"created_at"`
-   UpdatedAt     time.Time  `json:"updated_at"`
-   DeletedAt     *time.Time `json:"deleted_at,omitempty"`
-────────────────────────────────────────────── */
+export type TipoDispositivoEnum = "IMPRESORA" | "DATAFONO" | "KIOSKO" | "MONITOR" | "SCANNER" | "BASCULA" | "VISOR";
+
 export interface DispositivoAPI {
-    id_dispositivo: string;
-    nombre:         string;
-    tipo:           string;
-    ip:             string;
-    id_estacion:    string;
-    created_at:     string;
-    updated_at?:    string;
-    deleted_at?:    string | null;
+    id_dispositivo:  string;
+    nombre:          string;
+    tipo_dispositivo: string;
+    /** ip extraída de configuracion para conveniencia en la UI */
+    ip?:             string;
+    configuracion?:  Record<string, unknown>;
+    id_estacion:     string;
+    id_status:       string;
+    created_at:      string;
+    updated_at?:     string;
+    deleted_at?:     string | null;
 }
 
-/** DTO para crear o actualizar — solo los campos que acepta la API */
+/** DTO para crear o actualizar — campos que acepta POST/PUT /api/v1/dispositivos-pos */
 export interface CreateDispositivoDTO {
-    nombre:      string;
-    tipo:        "IMPRESORA" | "DATAFONO" | "KIOSKO" | "MONITOR" | "SCANNER" | "BASCULA" | "VISOR";
-    ip:          string;
-    id_estacion: string;
+    nombre:           string;
+    tipo_dispositivo: TipoDispositivoEnum;
+    configuracion:    Record<string, unknown>;
+    id_estacion:      string;
+    id_status:        string;
 }
 
 export type UpdateDispositivoDTO = Partial<CreateDispositivoDTO>;

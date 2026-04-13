@@ -1,6 +1,6 @@
 import React, { memo } from "react";
 import styled from "styled-components";
-import { FiX, FiCheckCircle, FiTerminal, FiGlobe, FiInfo } from "react-icons/fi";
+import { FiX, FiCheckCircle, FiTerminal, FiGlobe, FiInfo, FiHash, FiDollarSign } from "react-icons/fi";
 import { BeatLoader } from "react-spinners";
 import { type Moneda } from "../services/MonedaService";
 import { type MonedaFormData } from "../hooks/useMonedaPage";
@@ -171,6 +171,18 @@ const MintBtn = styled.button<{ $primary?: boolean }>`
   }
 `;
 
+/* ------------------------------- Types ---------------------------------- */
+interface Props {
+  editingMoneda: import("../services/MonedaService").Moneda | null;
+  formData: import("../hooks/useMonedaPage").MonedaFormData;
+  sucursales: any[];
+  isSaving: boolean;
+  isDeletingId: string | null;
+  onChange: (data: import("../hooks/useMonedaPage").MonedaFormData) => void;
+  onSave: () => void;
+  onClose: () => void;
+}
+
 /* ------------------------------- Component ------------------------------- */
 export const MonedaModal: React.FC<Props> = memo(({
   editingMoneda, formData, sucursales,
@@ -197,7 +209,7 @@ export const MonedaModal: React.FC<Props> = memo(({
           <TechFormGroup>
             <label><FiTerminal size={12} /> Asset_Identifier</label>
             <input
-              placeholder="Ej: Dólar Estadounidense (USD)"
+              placeholder="Ej: Dólar Estadounidense"
               value={formData.nombre}
               onChange={(e) => onChange({ ...formData, nombre: e.target.value })}
               disabled={isBusy}
@@ -205,6 +217,31 @@ export const MonedaModal: React.FC<Props> = memo(({
               required
             />
           </TechFormGroup>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "16px" }}>
+            <TechFormGroup>
+              <label><FiHash size={12} /> ISO_Code</label>
+              <input
+                placeholder="USD"
+                maxLength={3}
+                value={formData.codigo_iso}
+                onChange={(e) => onChange({ ...formData, codigo_iso: e.target.value.toUpperCase() })}
+                disabled={isBusy}
+                required
+              />
+            </TechFormGroup>
+            <TechFormGroup>
+              <label><FiDollarSign size={12} /> Símbolo</label>
+              <input
+                placeholder="$"
+                maxLength={5}
+                value={formData.simbolo}
+                onChange={(e) => onChange({ ...formData, simbolo: e.target.value })}
+                disabled={isBusy}
+                required
+              />
+            </TechFormGroup>
+          </div>
 
           <TechFormGroup>
             <label><FiGlobe size={12} /> Network_Node_Assignment</label>

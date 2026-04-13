@@ -4,30 +4,30 @@ const accent = (p: any) => p.theme?.primary || "#FCA311";
 const text = (p: any) => p.theme?.text || "#F8FAFC";
 const borderColor = (p: any) => p.theme?.bg3 ? `${p.theme.bg3}33` : "rgba(255,255,255,0.05)";
 
-export const Input = styled.input`
+export const Input = styled.input<{ $error?: boolean }>`
   width: 100%;
   padding: 12px 14px;
   border-radius: 12px;
-  border: 1px solid ${borderColor};
+  border: 1px solid ${p => p.$error ? (p.theme?.danger || "#e74c3c") : borderColor(p)};
   background: ${p => p.theme?.bg2 || "transparent"};
   color: ${text};
   outline: none;
   transition: all 0.2s;
   &:focus {
-    border-color: ${accent};
+    border-color: ${p => p.$error ? (p.theme?.danger || "#e74c3c") : accent(p)};
   }
 `;
 
-export const Select = styled.select`
+export const Select = styled.select<{ $error?: boolean }>`
   width: 100%;
   padding: 12px 16px;
   border-radius: 12px;
-  border: 1px solid ${borderColor};
+  border: 1px solid ${p => p.$error ? (p.theme?.danger || "#e74c3c") : borderColor(p)};
   background: ${p => p.theme?.bg2 || "transparent"};
   outline: none;
   color: ${text};
   transition: border-color 0.12s;
-  &:focus { border-color: ${accent}; }
+  &:focus { border-color: ${p => p.$error ? (p.theme?.danger || "#e74c3c") : accent(p)}; }
   &:disabled { opacity: 0.6; cursor: not-allowed; }
 `;
 

@@ -192,15 +192,15 @@ export const useEstaciones = () => {
      * El comentario interno indica que el filtro puede relajarse si el backend
      * introduce nuevos tipos de estado para terminales.
      */
-    const activeStatusList = useMemo(() =>
-        statusList.filter(s =>
+    const activeStatusList = useMemo(() => {
+        const filtered = statusList.filter(s =>
             s.mdl_id === 8 ||
-            (s as any).std_tipo_estado === "ACTIVO" ||
-            (s as any).std_tipo_estado === "INACTIVO" ||
-            (s as any).std_tipo_estado === "TERMINAL"
-        ),
-        [statusList]
-    );
+            s.std_tipo_estado === "ACTIVO" ||
+            s.std_tipo_estado === "INACTIVO" ||
+            s.std_tipo_estado === "TERMINAL"
+        );
+        return filtered.length > 0 ? filtered : statusList;
+    }, [statusList]);
 
     /**
      * Mapa de id_sucursal → nombre para resolución rápida en la tabla.

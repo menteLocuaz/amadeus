@@ -152,30 +152,29 @@ export const ProductModal: React.FC<Props> = ({
         if (!formData.id_sucursal)    return alert("Debe seleccionar una sucursal.");
         if (!formData.id_categoria)   return alert("Debe seleccionar una categoría.");
         if (!formData.id_unidad)      return alert("Debe seleccionar una unidad de medida.");
+        if (!formData.id_status)      return alert("Debe seleccionar un estado para el producto.");
 
-        // Construct payload: cleanup empty strings and format numbers/dates
+        // Construct payload with field names the backend expects
         const payload: any = {
-            nombre:        formData.nombre.trim(),
-            descripcion:   formData.descripcion.trim(),
+            pro_nombre:    formData.nombre.trim(),
+            pro_descripcion: formData.descripcion.trim(),
             precio_compra: Number(formData.precio_compra),
             precio_venta:  Number(formData.precio_venta),
             stock:         Number(formData.stock),
             id_categoria:  formData.id_categoria,
-            id_moneda:     formData.id_moneda,
             id_unidad:     formData.id_unidad,
             id_status:     formData.id_status,
             id_sucursal:   formData.id_sucursal,
         };
 
+        // Only include id_moneda if it has a valid value
+        if (formData.id_moneda) payload.id_moneda = formData.id_moneda;
+
         // Add optional fields only if they have a value
-        if (formData.codigo_barras.trim()) payload.codigo_barras = formData.codigo_barras.trim();
+        if (formData.codigo_barras.trim()) payload.pro_codigo = formData.codigo_barras.trim();
         if (formData.sku.trim())           payload.sku = formData.sku.trim();
         if (formData.imagen.trim())        payload.imagen = formData.imagen.trim();
-        
-        // Fix: Send YYYY-MM-DD instead of full ISO string to avoid 400 errors on strict backends
-        if (formData.fecha_vencimiento) {
-            payload.fecha_vencimiento = formData.fecha_vencimiento; 
-        }
+        if (formData.fecha_vencimiento)    payload.fecha_vencimiento = formData.fecha_vencimiento;
 
         const options = {
             onSuccess: () => { 

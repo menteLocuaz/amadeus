@@ -5,16 +5,15 @@ import {
     ModalOverlay, ModalContent, ModalHeader, ActionBtn, FormGroup,
     Button, Divider, Grid
 } from "../../../shared/components/UI";
+import { type ProveedorCreateRequest } from "../services/ProveedorService";
 
 interface ProveedorModalProps {
     open: boolean;
     editing: any;
-    form: any;
+    form: Partial<ProveedorCreateRequest>;
     setForm: (val: any) => void;
     errors: Record<string, string>;
     statuses: any[];
-    sucursales: any[];
-    empresas: any[];
     saving: boolean;
     onClose: () => void;
     onSave: () => void;
@@ -22,18 +21,8 @@ interface ProveedorModalProps {
 }
 
 export const ProveedorModal: React.FC<ProveedorModalProps> = ({
-    open,
-    editing,
-    form,
-    setForm,
-    errors,
-    statuses,
-    sucursales,
-    empresas,
-    saving,
-    onClose,
-    onSave,
-    getStatusName
+    open, editing, form, setForm, errors,
+    statuses, saving, onClose, onSave, getStatusName
 }) => {
     if (!open) return null;
 
@@ -47,40 +36,40 @@ export const ProveedorModal: React.FC<ProveedorModalProps> = ({
 
                 <Grid>
                     <FormGroup style={{ gridColumn: "1 / 3" }}>
-                        <label>Nombre del Proveedor</label>
+                        <label>Razón Social</label>
                         <input
-                            value={form.nombre ?? ""}
-                            onChange={(e) => setForm((s: any) => ({ ...s, nombre: e.target.value }))}
-                            placeholder="Ej: Distribuciones ACME"
+                            value={form.razon_social ?? ""}
+                            onChange={(e) => setForm((s: any) => ({ ...s, razon_social: e.target.value }))}
+                            placeholder="Ej: Distribuciones ACME S.A."
                         />
-                        {errors.nombre && <small style={{ color: "#EF4444" }}>{errors.nombre}</small>}
+                        {errors.razon_social && <small style={{ color: "#EF4444" }}>{errors.razon_social}</small>}
                     </FormGroup>
 
                     <FormGroup>
-                        <label>RUC / Documento</label>
+                        <label>NIT / RUT</label>
                         <input
-                            value={form.ruc ?? ""}
-                            onChange={(e) => setForm((s: any) => ({ ...s, ruc: e.target.value }))}
-                            placeholder="203040..."
+                            value={form.nit_rut ?? ""}
+                            onChange={(e) => setForm((s: any) => ({ ...s, nit_rut: e.target.value }))}
+                            placeholder="900.123.456-7"
                         />
-                        {errors.ruc && <small style={{ color: "#EF4444" }}>{errors.ruc}</small>}
+                        {errors.nit_rut && <small style={{ color: "#EF4444" }}>{errors.nit_rut}</small>}
                     </FormGroup>
 
                     <FormGroup>
-                        <label>Telefono</label>
+                        <label>Contacto</label>
+                        <input
+                            value={form.contacto_nombre ?? ""}
+                            onChange={(e) => setForm((s: any) => ({ ...s, contacto_nombre: e.target.value }))}
+                            placeholder="Nombre de la persona de contacto"
+                        />
+                    </FormGroup>
+
+                    <FormGroup>
+                        <label>Teléfono</label>
                         <input
                             value={form.telefono ?? ""}
                             onChange={(e) => setForm((s: any) => ({ ...s, telefono: e.target.value }))}
-                            placeholder="999..."
-                        />
-                    </FormGroup>
-
-                    <FormGroup style={{ gridColumn: "1 / 3" }}>
-                        <label>Direccion Fiscal</label>
-                        <input
-                            value={form.direccion ?? ""}
-                            onChange={(e) => setForm((s: any) => ({ ...s, direccion: e.target.value }))}
-                            placeholder="Av. Principal 123..."
+                            placeholder="+57 300 123 4567"
                         />
                     </FormGroup>
 
@@ -93,6 +82,15 @@ export const ProveedorModal: React.FC<ProveedorModalProps> = ({
                             placeholder="proveedor@empresa.com"
                         />
                         {errors.email && <small style={{ color: "#EF4444" }}>{errors.email}</small>}
+                    </FormGroup>
+
+                    <FormGroup style={{ gridColumn: "1 / 3" }}>
+                        <label>Dirección Fiscal</label>
+                        <input
+                            value={form.direccion ?? ""}
+                            onChange={(e) => setForm((s: any) => ({ ...s, direccion: e.target.value }))}
+                            placeholder="Av. Principal 123..."
+                        />
                     </FormGroup>
 
                     <FormGroup>
@@ -109,36 +107,6 @@ export const ProveedorModal: React.FC<ProveedorModalProps> = ({
                             ))}
                         </select>
                         {errors.id_status && <small style={{ color: "#EF4444" }}>{errors.id_status}</small>}
-                    </FormGroup>
-
-                    <FormGroup>
-                        <label>Sucursal</label>
-                        <select
-                            value={form.id_sucursal ?? ""}
-                            onChange={(e) => setForm((s: any) => ({ ...s, id_sucursal: e.target.value }))}
-                        >
-                            <option value="">Seleccione Sucursal</option>
-                            {sucursales.map((s: any) => {
-                                const sid = s.id || s.id_sucursal;
-                                return <option key={sid} value={sid}>{s.nombre || s.nombre_sucursal}</option>;
-                            })}
-                        </select>
-                        {errors.id_sucursal && <small style={{ color: "#EF4444" }}>{errors.id_sucursal}</small>}
-                    </FormGroup>
-
-                    <FormGroup>
-                        <label>Empresa</label>
-                        <select
-                            value={form.id_empresa ?? ""}
-                            onChange={(e) => setForm((s: any) => ({ ...s, id_empresa: e.target.value }))}
-                        >
-                            <option value="">Seleccione Empresa</option>
-                            {empresas.map((e: any) => {
-                                const eid = e.id || e.id_empresa;
-                                return <option key={eid} value={eid}>{e.nombre || e.nombre_empresa}</option>;
-                            })}
-                        </select>
-                        {errors.id_empresa && <small style={{ color: "#EF4444" }}>{errors.id_empresa}</small>}
                     </FormGroup>
                 </Grid>
 

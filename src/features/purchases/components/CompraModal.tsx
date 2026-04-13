@@ -16,7 +16,7 @@ import {
 import { type Product } from "../../products/services/ProductService";
 import { type Proveedor } from "../../proveedor/services/ProveedorService";
 import { type Sucursal } from "../../proveedor/services/SucursalService";
-import { type Moneda } from "../../Moneda/services/MonedaService";
+import { type Moneda } from "../../moneda/services/MonedaService";
 
 // ─────────────────────────────────────────────
 // CONSTANTES
@@ -114,8 +114,9 @@ const OrderItemRow = ({
                 <select {...register(`detalles.${index}.id_producto`)} disabled={saving}>
                     <option value="">Producto...</option>
                     {products.map((p: any) => {
-                        const pid = resolveId(p, "id", "id_producto");
-                        return <option key={pid} value={pid}>{p.nombre}</option>;
+                        const pid = resolveId(p, "id_producto", "id");
+                        const label = resolveName(p, "pro_nombre", "nombre", "pro_descripcion");
+                        return <option key={pid} value={pid}>{label}</option>;
                     })}
                 </select>
             </FormGroup>
@@ -176,11 +177,14 @@ export const CompraModal: React.FC<CompraModalProps> = ({
     open, suppliers, products, sucursales,
     monedas, statuses, saving, defaultSucursalId, onClose, onSave,
 }) => {
-    // Busca el status inicial "solicitado" para pre-seleccionarlo
-    const defaultStatusId = useMemo(
-        () => statuses.find(s => s.nombre?.toLowerCase().includes("solic"))?.id_status ?? "",
-        [statuses]
-    );
+    // Busca el status "PENDIENTE" para pre-seleccionarlo al abrir el modal
+    const defaultStatusId = useMemo(() => {
+        const match = statuses.find(s => {
+            const label = (s.descripcion || s.std_descripcion || s.nombre || "").toLowerCase();
+            return label.includes("pend") || label.includes("solic");
+        });
+        return match?.id_status ?? statuses[0]?.id_status ?? "";
+    }, [statuses]);
 
     // Primer moneda disponible como valor por defecto
     const defaultMonedaId = useMemo(
@@ -298,9 +302,10 @@ export const CompraModal: React.FC<CompraModalProps> = ({
                         <FormGroup>
                             <label>Estado Inicial *</label>
                             <select {...register("id_status")} disabled={saving}>
+                                <option value="">Seleccione Estado</option>
                                 {statuses.map(s => (
                                     <option key={s.id_status} value={s.id_status}>
-                                        {resolveName(s, "nombre", "std_descripcion")}
+                                        {resolveName(s, "descripcion", "std_descripcion", "nombre")}
                                     </option>
                                 ))}
                             </select>

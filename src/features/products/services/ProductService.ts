@@ -1,18 +1,23 @@
 import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
 
+// Shape returned by the API (GET responses)
 export interface Product {
   id_producto?: string;
   id?: string;
-  nombre: string;
-  descripcion: string;
+  // Backend uses pro_nombre / pro_descripcion / pro_codigo in GET responses too
+  pro_nombre?: string;
+  pro_descripcion?: string;
+  pro_codigo?: string;
+  // Legacy / fallback aliases kept for list rendering compatibility
+  nombre?: string;
+  descripcion?: string;
   codigo_barras?: string;
   sku?: string;
   precio_compra: number;
   precio_venta: number;
   stock: number;
   stock_actual?: number;
-
   fecha_vencimiento?: string;
   imagen?: string;
   id_status: string;
@@ -26,10 +31,11 @@ export interface Product {
   status?: { std_descripcion: string };
 }
 
+// Payload shape expected by POST /api/v1/productos and PUT /api/v1/productos/:id
 export interface CreateProductDTO {
-  nombre: string;
-  descripcion: string;
-  codigo_barras?: string;
+  pro_nombre: string;
+  pro_descripcion: string;
+  pro_codigo?: string;
   sku?: string;
   precio_compra: number;
   precio_venta: number;
@@ -39,7 +45,7 @@ export interface CreateProductDTO {
   id_status: string;
   id_sucursal: string;
   id_categoria: string;
-  id_moneda: string;
+  id_moneda?: string;
   id_unidad: string;
 }
 

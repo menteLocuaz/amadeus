@@ -180,7 +180,7 @@ const InventarioPremium: React.FC = () => {
                         </div>
                         <ProgressBar>
                             <ProgressFill
-                                $percent={Math.min((val / (info.row.original.stock_maximo || 100)) * 100, 100)}
+                                $percent={Math.min((val / (info.row.original.stock_minimo * 3 || 100)) * 100, 100)}
                                 $status={isOut ? "critical" : isLow ? "warning" : "success"}
                             />
                         </ProgressBar>
