@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { dispositivoSchema, type DispositivoForm } from "../constants/validations";
-import { TIPO_META } from "../constants/dispositivos";
+import { TIPO_META, type TipoDispositivo } from "../constants/dispositivos";
 import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 
 /**
@@ -31,17 +31,24 @@ export const useDispositivosUI = (dispositivosRaw: any[], estaciones: any[]) => 
     // --- Formulario (Configuración base) ---
     const methods = useForm<DispositivoForm>({
         resolver: yupResolver(dispositivoSchema),
-        defaultValues: { tipo: "IMPRESORA" }
+        defaultValues: { tipo: "IMPRESORA", id_status: "" }
     });
 
     // --- Handlers ---
     const openModal = (item?: any) => {
         if (item) {
             setEditingItem(item);
-            methods.reset({ ...item });
+            // Al editar, mapea tipo_dispositivo → tipo para que coincida con el campo del form
+            methods.reset({
+                nombre:      item.nombre,
+                tipo:        item.tipo_dispositivo,
+                ip:          item.ip ?? (item.configuracion?.ip as string) ?? "",
+                id_estacion: item.id_estacion,
+                id_status:   item.id_status,
+            });
         } else {
             setEditingItem(null);
-            methods.reset({ nombre: "", tipo: "IMPRESORA", ip: "", id_estacion: "" });
+            methods.reset({ nombre: "", tipo: "IMPRESORA", ip: "", id_estacion: "", id_status: "" });
         }
         setIsModalOpen(true);
     };
@@ -67,17 +74,18 @@ export const useDispositivosUI = (dispositivosRaw: any[], estaciones: any[]) => 
     const filtered = useMemo(() => {
         const q = debouncedSearch.toLowerCase().trim();
         return dispositivos.filter(d => {
-            const matchSearch = d.nombre.toLowerCase().includes(q) || d.ip.includes(q);
-            const matchTipo = filterTipo === "TODOS" || d.tipo === filterTipo;
+            const ip = d.ip ?? (d.configuracion?.ip as string) ?? "";
+            const matchSearch = d.nombre.toLowerCase().includes(q) || ip.includes(q);
+            const matchTipo = filterTipo === "TODOS" || d.tipo_dispositivo === filterTipo;
             return matchSearch && matchTipo;
         });
     }, [dispositivos, debouncedSearch, filterTipo]);
 
-    const stats = useMemo(() => 
-        (Object.keys(TIPO_META) as any[]).map(tipo => ({
+    const stats = useMemo(() =>
+        (Object.keys(TIPO_META) as TipoDispositivo[]).map(tipo => ({
             tipo,
-            count: dispositivos.filter(d => d.tipo === tipo).length,
-            ...TIPO_META[tipo],
+            count: dispositivos.filter((d: any) => d.tipo_dispositivo === tipo).length,
+            ...TIPO_META[tipo as TipoDispositivo],
         })), [dispositivos]
     );
 

@@ -109,7 +109,7 @@ export const usePremiumInventory = () => {
                 return {
                     id_inventario:    inv?.id_inventario,
                     id_producto:      pId,
-                    nombre:           p.nombre,
+                    nombre:           p.pro_nombre || p.nombre || 'Sin nombre',
                     categoria_nombre: p.categoria?.nombre ?? 'Sin Categoría',
                     unidad_nombre:    p.unidad?.nombre     ?? 'Unid.',
                     imagen:           p.imagen,

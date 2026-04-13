@@ -49,7 +49,8 @@ const Inventario: React.FC = () => {
 
     // 4. TanStack Table Configuration
     const columns = useMemo(() => [
-        columnHelper.accessor("producto.nombre", {
+        columnHelper.accessor(row => row.producto?.nombre, {
+            id: "producto_nombre",
             header: "Producto",
             cell: info => (
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -67,7 +68,8 @@ const Inventario: React.FC = () => {
                 </div>
             )
         }),
-        columnHelper.accessor("producto.categoria.nombre", {
+        columnHelper.accessor(row => row.producto?.categoria?.nombre, {
+            id: "producto_categoria_nombre",
             header: "Categoría",
             cell: info => info.getValue() || "General"
         }),

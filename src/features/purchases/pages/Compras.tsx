@@ -27,7 +27,7 @@ import {
     useReceiveOrder
 } from "../hooks/useComprasQuery";
 import {
-    useStatuses,
+    useAllStatuses,
     useSucursales,
     useMonedas,
     useProducts
@@ -219,7 +219,7 @@ const Compras: React.FC = () => {
     const { data: products = [] } = useProducts();
     const { data: sucursales = [] } = useSucursales();
     const { data: monedas = [] } = useMonedas();
-    const { data: statuses = [] } = useStatuses(6); // Modulo Compras (ID 6)
+    const { data: statuses = [] } = useAllStatuses();
     const navigate = useNavigate();
 
     // 2. Mutations
@@ -233,17 +233,17 @@ const Compras: React.FC = () => {
 
     // 4. Helpers
     const getStatusLabel = (order: Compra) => {
-        const nestedStatus = (order.status as any)?.std_descripcion || order.status?.nombre;
+        const nestedStatus = (order.status as any)?.descripcion || (order.status as any)?.std_descripcion || order.status?.nombre;
         if (nestedStatus) return nestedStatus;
 
         const found = statuses.find((s: any) => String(s.id_status) === String(order.id_status));
-        return found?.std_descripcion || found?.nombre || String(order.id_status || "N/A");
+        return (found as any)?.descripcion || found?.std_descripcion || found?.nombre || String(order.id_status || "N/A");
     };
 
     const getProviderName = (order: Compra) => {
         if (order.proveedor?.nombre) return order.proveedor.nombre;
         const found = suppliers.find((s: any) => (s.id || s.id_proveedor) === order.id_proveedor);
-        return found?.nombre || (found as any)?.nombre_proveedor || "Desconocido";
+        return (found as any)?.razon_social || (found as any)?.nombre || (found as any)?.nombre_proveedor || "Desconocido";
     };
 
     const getSucursalName = (order: Compra) => {
@@ -285,11 +285,11 @@ const Compras: React.FC = () => {
     // 5. Stats Calculation
     const stats = useMemo(() => {
         const total = orders.length;
-        const pending = orders.filter(o => {
+        const pending = orders.filter((o: Compra) => {
             const l = getStatusLabel(o).toLowerCase();
             return l.includes("solic") || l.includes("pend");
         }).length;
-        const totalValue = orders.reduce((acc, curr) => acc + (curr.total || 0), 0);
+        const totalValue = orders.reduce((acc: number, curr: Compra) => acc + (curr.total || 0), 0);
 
         return [
             { label: "Órdenes Totales", value: total, icon: FiShoppingBag },

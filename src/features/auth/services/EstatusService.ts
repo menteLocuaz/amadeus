@@ -3,10 +3,12 @@ import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface Estatus {
   id_status: string;
-  nombre: string;
-  tipo: string;
+  nombre?: string;
+  descripcion?: string;     // API returns this field (e.g. "PENDIENTE", "RECIBIDO")
+  tipo?: string;
+  tipo_estado?: string;     // e.g. "COMPRA"
   std_descripcion?: string; // Friendly description
-  stp_tipo_estado?: string; // State type (e.g. STOCK)
+  stp_tipo_estado?: string; // State type (e.g. "STOCK")
   mdl_id?: number;          // Module ID
   moduloID?: number;        // Legacy field
 }

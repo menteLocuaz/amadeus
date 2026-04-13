@@ -24,12 +24,13 @@ interface DeviceModalProps {
     isSaving: boolean;
     apiError?: string | null;
     estaciones: any[];
+    statusList: any[];
     onClose: () => void;
     onSave: (data: any) => void; // Este onSave ya viene envuelto en handleSubmit
 }
 
 const DeviceModal: React.FC<DeviceModalProps> = ({
-    isOpen, editingItem, isSaving, apiError, estaciones, onClose, onSave,
+    isOpen, editingItem, isSaving, apiError, estaciones, statusList, onClose, onSave,
 }) => {
     // Obtenemos las herramientas de RHF desde el contexto
     const { register, formState: { errors } } = useFormContext<DispositivoForm>();
@@ -117,10 +118,17 @@ const DeviceModal: React.FC<DeviceModalProps> = ({
 
                         <FormGroup>
                             <label>Estado Operativo</label>
-                            <select disabled={isSaving}>
-                                <option value="ACTIVO">✅ En servicio</option>
-                                <option value="INACTIVO">⛔ Fuera de servicio</option>
+                            <select {...register("id_status")} disabled={isSaving}>
+                                <option value="">Seleccione estado...</option>
+                                {statusList.map(s => (
+                                    <option key={s.id_status} value={s.id_status}>
+                                        {s.std_descripcion || s.nombre || 'Estatus desconocido'}
+                                    </option>
+                                ))}
                             </select>
+                            {errors.id_status && (
+                                <ErrorText><FiAlertCircle /> {errors.id_status.message}</ErrorText>
+                            )}
                         </FormGroup>
                     </FormGrid>
 

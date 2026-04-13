@@ -16,6 +16,8 @@ export const dispositivoSchema = yup.object({
         .matches(/^(\d{1,3}\.){3}\d{1,3}$/, "Formato de IP inválido (ej: 192.168.1.50)"),
     id_estacion: yup.string()
         .required("Vínculo con Estación POS requerido"),
+    id_status: yup.string()
+        .required("Selecciona un estado operativo"),
 });
 
 export type DispositivoForm = yup.InferType<typeof dispositivoSchema>;

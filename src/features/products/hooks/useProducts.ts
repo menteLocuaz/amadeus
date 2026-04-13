@@ -19,11 +19,11 @@ export const useProducts = () => {
   const sucursalMap = useCatalogStore(selectSucursalMap);
   const statusMap = useCatalogStore(selectStatusMap);
 
-  // Solo estatus del módulo 4 (Productos)
-  const productStatuses = useMemo(
-    () => statusList.filter(s => s.mdl_id === 4),
-    [statusList]
-  );
+  // Estatus del módulo 4 (Productos); si no hay, usar todos los estatus disponibles
+  const productStatuses = useMemo(() => {
+    const filtered = statusList.filter(s => s.mdl_id === 4);
+    return filtered.length > 0 ? filtered : statusList;
+  }, [statusList]);
 
   // --- Query de Productos (React Query) ---
   const { data: products = [], isLoading: isProdLoading, refetch } = useProductQueries();

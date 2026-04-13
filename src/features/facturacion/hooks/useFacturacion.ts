@@ -1,100 +1,97 @@
 import { useState, useMemo, useEffect } from 'react';
 import { usePOSStore } from '../../pos/store/usePOSStore';
+import { useAuthStore } from '../../auth/store/useAuthStore';
 import { FacturaService } from '../services/FacturaService';
 import { ClienteService, type Cliente } from '../../cliente/services/ClienteService';
 import { ProductService, type Product } from '../../products/services/ProductService';
-import { 
-  Impuesto, FormaPago, FacturaDetalle, FacturaPago, FacturaCabecera 
+import type {
+  Impuesto, FormaPago, FacturaDetalle, FacturaPago, FacturaCabecera
 } from '../types';
 import { extractData } from '../../proveedor/hooks/useProveedoresQuery';
 import Swal from 'sweetalert2';
 
 export const useFacturacion = () => {
   const { id_estacion, activePeriodo } = usePOSStore();
-  
+  const { user } = useAuthStore();
+
   // Data lists
-  const [clientes, setClientes] = useState<Cliente[]>([]);
-  const [productos, setProducts] = useState<Product[]>([]);
-  const [impuestos, setImpuestos] = useState<Impuesto[]>([]);
-  const [formasPago, setFormasPago] = useState<FormaPago[]>([]);
-  
+  const [clientes, setClientes]       = useState<Cliente[]>([]);
+  const [productos, setProducts]      = useState<Product[]>([]);
+  const [impuestos, setImpuestos]     = useState<Impuesto[]>([]);
+  const [formasPago, setFormasPago]   = useState<FormaPago[]>([]);
+
   // Selection state
   const [selectedCliente, setSelectedCliente] = useState<string>('');
-  const [cart, setCart] = useState<FacturaDetalle[]>([]);
-  const [payments, setPayments] = useState<FacturaPago[]>([]);
+  const [cart, setCart]               = useState<FacturaDetalle[]>([]);
+  const [payments, setPayments]       = useState<FacturaPago[]>([]);
   const [observacion, setObservacion] = useState('');
-  
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading]         = useState(false);
 
+  // Load catalog data independently — one 500 won't block the rest
   useEffect(() => {
     const loadInitialData = async () => {
       setLoading(true);
-      try {
-        const [cRes, pRes, iRes, fRes] = await Promise.all([
-          ClienteService.getAll(),
-          ProductService.getAll(),
-          FacturaService.getImpuestos(),
-          FacturaService.getFormasPago()
-        ]);
-        setClientes(extractData(cRes));
-        setProducts(extractData(pRes));
-        setImpuestos(extractData(iRes));
-        setFormasPago(extractData(fRes));
-      } catch (error) {
-        console.error('Error loading facturacion data', error);
-      } finally {
-        setLoading(false);
-      }
+      const [cRes, pRes, iRes, fRes] = await Promise.allSettled([
+        ClienteService.getAll(),
+        ProductService.getAll(),
+        FacturaService.getImpuestos(),
+        FacturaService.getFormasPago(),
+      ]);
+
+      if (cRes.status === 'fulfilled') setClientes(extractData(cRes.value));
+      if (pRes.status === 'fulfilled') setProducts(extractData(pRes.value));
+      if (iRes.status === 'fulfilled') setImpuestos(extractData(iRes.value));
+      if (fRes.status === 'fulfilled') setFormasPago(extractData(fRes.value));
+
+      setLoading(false);
     };
     loadInitialData();
   }, []);
 
   const subtotal = useMemo(() => cart.reduce((acc, item) => acc + item.subtotal, 0), [cart]);
-  
-  // For simplicity, we assume one primary tax (IVA) for now, but the API supports more complex mapping
+
+  // API returns porcentaje as an integer (e.g. 19), convert to decimal rate for math
   const activeTax = useMemo(() => {
     if (!Array.isArray(impuestos) || impuestos.length === 0) return null;
-    return impuestos.find(i => i.nombre?.toUpperCase().includes('IVA')) || impuestos[0];
+    return impuestos.find(i => i.nombre?.toUpperCase().includes('IVA')) ?? impuestos[0];
   }, [impuestos]);
-  
-  const taxValue = useMemo(() => {
-    if (!activeTax) return 0;
-    return subtotal * activeTax.valor;
-  }, [subtotal, activeTax]);
 
-  const total = useMemo(() => subtotal + taxValue, [subtotal, taxValue]);
+  const taxRate   = useMemo(() => (activeTax?.porcentaje ?? 0) / 100, [activeTax]);
+  const taxValue  = useMemo(() => subtotal * taxRate, [subtotal, taxRate]);
+  const total     = useMemo(() => subtotal + taxValue, [subtotal, taxValue]);
 
-  const totalPaid = useMemo(() => payments.reduce((acc, p) => acc + p.valor_billete, 0), [payments]);
+  // payments now use FacturaPago shape: { metodo_pago, monto, referencia }
+  const totalPaid     = useMemo(() => payments.reduce((acc, p) => acc + p.monto, 0), [payments]);
   const pendingAmount = useMemo(() => Math.max(0, total - totalPaid), [total, totalPaid]);
 
   const addToCart = (product: Product, quantity: number = 1) => {
-    const price = product.precio_venta || 0;
-    const taxRate = activeTax?.valor || 0;
-    
+    const price        = product.precio_venta ?? 0;
     const itemSubtotal = price * quantity;
-    const itemTax = itemSubtotal * taxRate;
-    
+    const itemTax      = itemSubtotal * taxRate;
+
     const newDetail: FacturaDetalle = {
-      id_producto: product.id_producto || (product as any).id,
-      nombre_producto: product.nombre,
-      cantidad: quantity,
-      precio: price,
-      subtotal: itemSubtotal,
-      impuesto: itemTax,
-      total: itemSubtotal + itemTax
+      id_producto:      product.id_producto ?? (product as any).id,
+      nombre_producto:  product.pro_nombre ?? product.nombre,
+      cantidad:         quantity,
+      precio_unitario:  price,       // API field name
+      subtotal:         itemSubtotal,
+      impuesto:         itemTax,
+      total:            itemSubtotal + itemTax,
     };
 
     setCart(prev => {
       const existing = prev.find(i => i.id_producto === newDetail.id_producto);
       if (existing) {
-        return prev.map(i => i.id_producto === newDetail.id_producto 
-          ? { ...i, 
-              cantidad: i.cantidad + quantity, 
-              subtotal: (i.cantidad + quantity) * price,
-              impuesto: (i.cantidad + quantity) * price * taxRate,
-              total: (i.cantidad + quantity) * price * (1 + taxRate)
-            } 
-          : i);
+        return prev.map(i => i.id_producto === newDetail.id_producto
+          ? {
+              ...i,
+              cantidad:        i.cantidad + quantity,
+              subtotal:        (i.cantidad + quantity) * price,
+              impuesto:        (i.cantidad + quantity) * price * taxRate,
+              total:           (i.cantidad + quantity) * price * (1 + taxRate),
+            }
+          : i
+        );
       }
       return [...prev, newDetail];
     });
@@ -104,13 +101,10 @@ export const useFacturacion = () => {
     setCart(prev => prev.filter(i => i.id_producto !== productId));
   };
 
-  const addPayment = (id_forma_pago: string, amount: number) => {
+  // metodo_pago is the string type (e.g. "EFECTIVO"), not the UUID
+  const addPayment = (metodo_pago: string, amount: number, referencia?: string) => {
     if (amount <= 0) return;
-    const newPayment: FacturaPago = {
-      id_forma_pago,
-      valor_billete: amount,
-      total_pagar: total // This field in API seems to be the invoice total linked to this payment
-    };
+    const newPayment: FacturaPago = { metodo_pago, monto: amount, referencia };
     setPayments(prev => [...prev, newPayment]);
   };
 
@@ -143,32 +137,31 @@ export const useFacturacion = () => {
       return;
     }
 
+    const id_sucursal = user?.id_sucursal ?? user?.sucursal?.id_sucursal ?? '';
+
     setLoading(true);
     try {
       const cabecera: FacturaCabecera = {
-        fac_numero: `FAC-${Date.now()}`, // Fallback if server doesn't generate
+        fac_numero:         'AUTO',
         subtotal,
-        iva: taxValue,
+        impuesto:           taxValue,
         total,
         observacion,
         id_estacion,
-        id_cliente: selectedCliente,
-        id_periodo: activePeriodo.id_periodo,
-        base_impuesto: subtotal,
-        impuesto: activeTax?.valor || 0,
-        valor_impuesto: taxValue
+        id_sucursal,
+        id_cliente:         selectedCliente,
+        id_periodo:         activePeriodo.id_periodo,
+        id_control_estacion: undefined,
+        base_impuesto:      subtotal,
+        valor_impuesto:     taxValue,
       };
 
-      await FacturaService.crearFacturaCompleta({
-        cabecera,
-        detalles: cart,
-        pagos: payments
-      });
+      await FacturaService.crearFacturaCompleta({ cabecera, detalles: cart, pagos: payments });
 
       Swal.fire('Éxito', 'Factura generada correctamente.', 'success');
       resetForm();
     } catch (error: any) {
-      Swal.fire('Error', error.response?.data?.message || 'Error al crear factura', 'error');
+      Swal.fire('Error', error.response?.data?.message ?? 'Error al crear factura', 'error');
     } finally {
       setLoading(false);
     }
@@ -196,6 +189,6 @@ export const useFacturacion = () => {
     pendingAmount,
     loading,
     handleCreateInvoice,
-    activeTax
+    activeTax,
   };
 };

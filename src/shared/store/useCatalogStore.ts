@@ -71,8 +71,8 @@ const flattenStatuses = (data: Record<string, any>): StatusItem[] => {
             seen.add(id);
             result.push({
                 id_status:       id,
-                std_descripcion: item.std_descripcion || item.nombre || "",
-                std_tipo_estado: item.std_tipo_estado || "GENERAL",
+                std_descripcion: item.std_descripcion || item.descripcion || item.nombre || "",
+                std_tipo_estado: item.stp_tipo_estado || item.std_tipo_estado || item.tipo || "GENERAL",
                 mdl_id:          Number(item.mdl_id || key),
                 is_active:       Boolean(item.is_active ?? true),
                 created_at:      item.created_at,
@@ -143,11 +143,15 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
 // ─── Selectores ────────────────────────────────────────────────────────────────
 
-export const selectUserStatusList = (state: CatalogState) =>
-    state.statusList.filter(s => s.mdl_id === 3);
+export const selectUserStatusList = (state: CatalogState) => {
+    const filtered = state.statusList.filter(s => s.mdl_id === 3);
+    return filtered.length > 0 ? filtered : state.statusList;
+};
 
-export const selectProductStatusList = (state: CatalogState) =>
-    state.statusList.filter(s => s.mdl_id === 4);
+export const selectProductStatusList = (state: CatalogState) => {
+    const filtered = state.statusList.filter(s => s.mdl_id === 4);
+    return filtered.length > 0 ? filtered : state.statusList;
+};
 
 /**
  * Selectors for Maps (Stable References)

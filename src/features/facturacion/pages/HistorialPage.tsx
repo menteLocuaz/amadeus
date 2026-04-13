@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from "react";
 import styled from "styled-components";
-import { FiSearch, FiEye, FiDownload, FiCalendar, FiClock, FiUser } from "react-icons/fi";
+import { FiSearch, FiEye, FiDownload, FiCalendar, FiClock, FiUser, FiAlertTriangle } from "react-icons/fi";
 import { FacturaService } from "../services/FacturaService";
-import { FacturaResponse } from "../types";
-import { 
-  PageContainer, Card, Table, Badge, Button, Toolbar, SearchBox, Divider 
+import type { FacturaResponse } from "../types";
+import {
+  PageContainer, Card, Table, Badge, Button, Toolbar, SearchBox
 } from "../../../shared/components/UI";
 import { ClimbingBoxLoader } from "react-spinners";
 import { formatDate } from "../../../utils/dateUtils";
@@ -23,6 +23,7 @@ const LedgerTable = styled(Table)`
 const HistorialPage: React.FC = () => {
   const [invoices, setInvoices] = useState<FacturaResponse[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [query, setQuery] = useState("");
 
   useEffect(() => {
@@ -31,8 +32,13 @@ const HistorialPage: React.FC = () => {
       try {
         const data = await FacturaService.getFacturas();
         setInvoices(extractData(data));
-      } catch (error) {
-        console.error("Error fetching history", error);
+        setError(null);
+      } catch (err: any) {
+        const status = err?.response?.status;
+        setError(status === 500
+          ? "Error interno del servidor (500). Revisa los logs del backend."
+          : (err?.message ?? "Error al cargar facturas.")
+        );
       } finally {
         setLoading(false);
       }
@@ -40,10 +46,11 @@ const HistorialPage: React.FC = () => {
     fetchInvoices();
   }, []);
 
-  const filtered = Array.isArray(invoices) ? invoices.filter(inv => 
-    inv.fac_numero.toLowerCase().includes(query.toLowerCase()) ||
-    inv.cliente?.nombre.toLowerCase().includes(query.toLowerCase())
-  ) : [];
+  const filtered = Array.isArray(invoices) ? invoices.filter(inv => {
+    const q = query.toLowerCase();
+    return (inv.fac_numero ?? '').toLowerCase().includes(q)
+        || (inv.cliente?.nombre ?? '').toLowerCase().includes(q);
+  }) : [];
 
   return (
     <PageContainer>
@@ -72,6 +79,11 @@ const HistorialPage: React.FC = () => {
           <div style={{ padding: 100, display: 'flex', justifyContent: 'center' }}>
             <ClimbingBoxLoader color="#FCA311" />
           </div>
+        ) : error ? (
+          <div style={{ padding: 60, textAlign: 'center', color: '#EF4444', opacity: 0.8 }}>
+            <FiAlertTriangle size={32} style={{ marginBottom: 12 }} />
+            <p style={{ fontWeight: 600 }}>{error}</p>
+          </div>
         ) : (
           <LedgerTable>
             <thead>
@@ -90,9 +102,9 @@ const HistorialPage: React.FC = () => {
                   <td className="invoice-num">{inv.fac_numero}</td>
                   <td>
                     <div style={{ display: 'flex', flexDirection: 'column' }}>
-                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{formatDate(inv.fecha)}</span>
+                      <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{formatDate(inv.fecha_operacion)}</span>
                       <span style={{ fontSize: '0.75rem', opacity: 0.5 }}>
-                        <FiClock size={10} /> {new Date(inv.fecha).toLocaleTimeString()}
+                        <FiClock size={10} /> {new Date(inv.fecha_operacion).toLocaleTimeString()}
                       </span>
                     </div>
                   </td>

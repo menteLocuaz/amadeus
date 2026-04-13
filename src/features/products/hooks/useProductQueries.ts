@@ -2,7 +2,7 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { ProductService, type Product } from "../services/ProductService";
 import { CategoryService } from "../services/CategoryService";
 import { MedidaService } from "../services/MedidaService";
-import { MonedaService } from "../../Moneda/services/MonedaService";
+import { MonedaService } from "../../moneda/services/MonedaService";
 import { EstatusService } from "../../auth/services/EstatusService";
 import { InventoryService } from "../../inventory/services/InventoryService";
 import { useAuthStore } from "../../auth/store/useAuthStore";
@@ -60,9 +60,13 @@ export const useProductQueries = () => {
         // Prioridad: 1. Stock de Inventario por sucursal, 2. Stock base del producto, 3. Cero
         const currentStock = inv?.stock_actual ?? p.stock ?? p.stock_actual ?? 0;
 
-        return { 
-          ...p, 
+        // Normalize backend field names (pro_nombre → nombre, etc.)
+        return {
+          ...p,
           id_producto: pId,
+          nombre:        p.nombre        ?? p.pro_nombre        ?? "",
+          descripcion:   p.descripcion   ?? p.pro_descripcion   ?? "",
+          codigo_barras: p.codigo_barras ?? p.pro_codigo        ?? "",
           stock: currentStock,
           stock_actual: currentStock,
           precio_compra: p.precio_compra ?? inv?.precio_compra ?? 0,
