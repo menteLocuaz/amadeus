@@ -160,15 +160,15 @@ const ConfiguracionPage: React.FC = () => {
             <FormGroup>
               <label>Correlativo Siguiente</label>
               <input type="text" defaultValue="FAC-0001" />
-            </label>
+            </FormGroup>
             <FormGroup>
               <label>Prefijo de Factura</label>
               <input type="text" defaultValue="FAC" />
-            </label>
+            </FormGroup>
             <FormGroup>
               <label>Resolución Fiscal</label>
               <input type="text" placeholder="Número de resolución..." />
-            </label>
+            </FormGroup>
           </Grid>
           <div style={{ marginTop: 32, display: 'flex', justifyContent: 'flex-end' }}>
             <Button $variant="primary" style={{ padding: '12px 48px' }}>Guardar Cambios</Button>

@@ -33,6 +33,7 @@ export interface FacturaCabecera {
   id_control_estacion?: string;
   base_impuesto: number;
   valor_impuesto: number;
+  id_status?: string;      // Módulo 5 — must match factura module, not estaciones
   metadata?: any;
 }
 

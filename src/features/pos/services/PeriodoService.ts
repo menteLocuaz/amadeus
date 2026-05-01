@@ -12,8 +12,8 @@ export const PeriodoService = {
     /**
      * Abrir un nuevo periodo (turno) global
      */
-    abrir: async (): Promise<ActivePeriodo> => {
-        const { data } = await axiosClient.post(ENDPOINTS.periodos.abrir);
+    abrir: async (motivo?: string): Promise<ActivePeriodo> => {
+        const { data } = await axiosClient.post(ENDPOINTS.periodos.abrir, { motivo: motivo ?? '' });
         return data.data || data;
     },
 

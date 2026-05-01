@@ -13,9 +13,26 @@ export interface CierreResult {
   mensaje: string;
 }
 
+export interface AbrirSesionDTO {
+    id_caja: string;
+    id_usuario: string;
+    monto_apertura: number;
+}
+
+export interface AbrirSesionResult {
+    id_control_estacion: string;
+    id_caja: string;
+    monto_apertura: number;
+}
+
 export const CajaSesionService = {
+  abrir: async (payload: AbrirSesionDTO): Promise<AbrirSesionResult> => {
+    const { data } = await axiosClient.post(ENDPOINTS.cajaSesiones.abrir, payload);
+    return data.data || data;
+  },
+
   cerrar: async (id_sesion: string, payload: CierrePayload): Promise<CierreResult> => {
-    const { data } = await axiosClient.put(ENDPOINTS.cajaSesiones.byId(id_sesion), payload);
+    const { data } = await axiosClient.post(ENDPOINTS.cajaSesiones.cerrar(id_sesion), payload);
     return data.data || data;
   },
 };

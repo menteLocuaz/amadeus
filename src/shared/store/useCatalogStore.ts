@@ -102,7 +102,7 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
 
         set({ isLoading: true, error: null });
         try {
-            const [resCats, resUnits, resCurrs, resStatus, resSuc] = await Promise.all([
+            const [resCats, resUnits, resCurrs, resStatus, resSuc] = await Promise.allSettled([
                 CategoryService.getAll(),
                 MedidaService.getAll(),
                 MonedaService.getAll(),
@@ -110,24 +110,40 @@ export const useCatalogStore = create<CatalogState>((set, get) => ({
                 SucursalService.getAll()
             ]);
 
-            // Normalización de Estatus
-            const resSt  = resStatus as any;
-            const isOk   = resSt.status === 'success' || resSt.success === true;
-            const stData = resSt.data || {};
-            const statusList = isOk ? flattenStatuses(stData) : (Array.isArray(resStatus) ? resStatus : []);
+            // Normalización de Estatus (puede fallar sin bloquear el resto)
+            let statusList: StatusItem[] = [];
+            if (resStatus.status === 'fulfilled') {
+                const resSt = resStatus.value as any;
+                const isOk  = resSt.status === 'success' || resSt.success === true;
+                const stData = resSt.data || {};
+                statusList = isOk ? flattenStatuses(stData) : (Array.isArray(resStatus.value) ? resStatus.value : []);
+            }
 
             // Normalización de Sucursales
-            const rawSuc = resSuc.data || (Array.isArray(resSuc) ? resSuc : []);
-            const sucursales = rawSuc.map((s: any) => ({
-                ...s,
-                id_sucursal:     s.id_sucursal     || s.id,
-                nombre_sucursal: s.nombre_sucursal || s.nombre
-            }));
+            let sucursales: any[] = [];
+            if (resSuc.status === 'fulfilled') {
+                const rawSuc = resSuc.value.data || (Array.isArray(resSuc.value) ? resSuc.value : []);
+                sucursales = rawSuc.map((s: any) => ({
+                    ...s,
+                    id_sucursal:     s.id_sucursal     || s.id,
+                    nombre_sucursal: s.nombre_sucursal || s.nombre
+                }));
+            }
+
+            const categories = resCats.status === 'fulfilled'
+                ? (resCats.value.data || (Array.isArray(resCats.value) ? resCats.value : []))
+                : [];
+            const units = resUnits.status === 'fulfilled'
+                ? (resUnits.value.data || []).map((u: any) => ({ ...u, id_unidad: u.id_unidad || u.id }))
+                : [];
+            const currencies = resCurrs.status === 'fulfilled'
+                ? (resCurrs.value.data || []).map((c: any) => ({ ...c, id_moneda: c.id_moneda || c.id }))
+                : [];
 
             set({
-                categories:    resCats.data || (Array.isArray(resCats) ? resCats : []),
-                units:         (resUnits.data || []).map((u: any) => ({ ...u, id_unidad: u.id_unidad || u.id })),
-                currencies:    (resCurrs.data || []).map((c: any) => ({ ...c, id_moneda: c.id_moneda || c.id })),
+                categories,
+                units,
+                currencies,
                 statusList,
                 sucursales,
                 statusMap:     createMap(statusList, "id_status", "std_descripcion"),

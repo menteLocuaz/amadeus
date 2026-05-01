@@ -2,22 +2,23 @@ import React, { useEffect, useState } from "react";
 import styled, { keyframes } from "styled-components";
 import { useNavigate } from "react-router-dom";
 import { ClimbingBoxLoader } from "react-spinners";
-import { FiMonitor, FiCheckCircle, FiDollarSign, FiCalendar } from "react-icons/fi";
+import { FiMonitor, FiDollarSign, FiCalendar } from "react-icons/fi";
 import { useAuthStore } from "../../auth/store/useAuthStore";
 import { usePOSStore } from "../store/usePOSStore";
 import { EstacionService, type EstacionAPI } from "../../estacion/services/EstacionService";
 import { PeriodoService } from "../services/PeriodoService";
 import { POSService } from "../services/POSService";
+import { CajaService } from "../services/CajaService";
+import { CajaSesionService } from "../services/CajaSesionService";
 import { AuthService } from "../../auth/services/AuthService";
 
 /* ═══════════════════════════════════════════════════════════
    TYPES & ENUMS
 ═══════════════════════════════════════════════════════════ */
-type OperativeState = 
-  | 'INIT' 
-  | 'CAJA_SELECTED' 
-  | 'PERIODO_ABIERTO' 
-  | 'BASE_ASIGNADA' 
+type OperativeState =
+  | 'INIT'
+  | 'CAJA_SELECTED'
+  | 'PERIODO_ABIERTO'
   | 'READY_TO_SELL';
 
 /* ═══════════════════════════════════════════════════════════
@@ -148,84 +149,6 @@ const ModalBox = styled.div`
   text-align: center;
 `;
 
-/* MaxPoint Styles */
-const MaxPointContainer = styled.div`
-  background: #2B3A4A;
-  border-radius: 10px;
-  padding: 24px;
-  min-height: 480px;
-  display: flex;
-  flex-direction: column;
-  box-shadow: 0 20px 50px rgba(0,0,0,0.5);
-  position: relative;
-`;
-const MaxTitle = styled.h1`
-  font-size: 2.2rem;
-  color: #10B981;
-  font-weight: 300;
-  text-align: center;
-  margin: 0;
-  letter-spacing: 2px;
-  span { color: #3B82F6; }
-`;
-const MaxVersion = styled.p`
-  text-align: center;
-  color: white;
-  font-size: 0.65rem;
-  font-weight: bold;
-  letter-spacing: 1px;
-  margin-top: 5px;
-  margin-bottom: 30px;
-`;
-const MaxGrid = styled.div`
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 30px;
-`;
-const MaxLeft = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: 15px;
-`;
-const MaxCajaLabel = styled.div`
-  background: #0078D7;
-  color: white;
-  padding: 12px;
-  font-size: 0.9rem;
-  font-weight: bold;
-  text-align: center;
-`;
-const MaxInput = styled.input`
-  width: 100%;
-  padding: 12px;
-  font-size: 1rem;
-  border: none;
-  background: white;
-`;
-const UserInfoBlock = styled.div`
-  margin-top: 20px;
-  h4 { color: white; margin: 0 0 10px; font-weight: normal; font-size: 1rem; }
-  h2 { color: white; margin: 0 0 5px; font-size: 1.4rem; }
-  p { color: #A0AAB5; margin: 0; font-size: 0.8rem; }
-`;
-const Keypad = styled.div`
-  display: grid;
-  grid-template-columns: repeat(3, 1fr) 1.2fr;
-  gap: 8px;
-`;
-const KeyBtn = styled.button<{ $isOk?: boolean }>`
-  background: ${({ $isOk }) => $isOk ? '#22C55E' : '#FFFFFF'};
-  color: ${({ $isOk }) => $isOk ? '#FFF' : '#333'};
-  border: none;
-  font-size: 1.4rem;
-  font-weight: bold;
-  padding: 15px 0;
-  cursor: pointer;
-  border-radius: 2px;
-  grid-row: ${({ $isOk }) => $isOk ? '1 / span 4' : 'auto'};
-  grid-column: ${({ $isOk }) => $isOk ? '4' : 'auto'};
-  &:hover { opacity: 0.9; }
-`;
 
 /* ═══════════════════════════════════════════════════════════
    COMPONENT
@@ -233,7 +156,7 @@ const KeyBtn = styled.button<{ $isOk?: boolean }>`
 const AperturaCajaProgressive: React.FC = () => {
   const navigate = useNavigate();
   const { user } = useAuthStore();
-  const { id_estacion, estacionNombre, setEstacion, setControlEstacion, clearEstacion, initialize, setPeriodo } = usePOSStore();
+  const { id_estacion, estacionNombre, id_caja, setEstacion, setCaja, setControlEstacion, clearEstacion, initialize, setPeriodo } = usePOSStore();
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -248,7 +171,6 @@ const AperturaCajaProgressive: React.FC = () => {
 
   const [baseAmount, setBaseAmount] = useState<string>("0");
 
-  const [pinEntry, setPinEntry] = useState("");
 
   useEffect(() => {
     initialize();
@@ -280,29 +202,32 @@ const AperturaCajaProgressive: React.FC = () => {
     setSubmitting(true);
     try {
       const resp = await POSService.getEstado(estacionId);
-      const NULL_UUID = "00000000-0000-0000-0000-000000000000";
 
       setCajaInfo({
-        id: resp.id_control_estacion !== NULL_UUID ? resp.id_control_estacion : estacionId,
+        id: resp.id_control_estacion || estacionId,
         nombre: resp.nombre_estacion,
         estado: resp.status_descripcion,
         fondo_base: resp.fondo_base,
       });
 
-      const isActive = resp.status_descripcion?.toLowerCase() !== 'cerrada'
-        && resp.id_control_estacion !== NULL_UUID;
+      const isActive = !!resp.id_control_estacion &&
+                      resp.status_descripcion?.toLowerCase() !== 'cerrada';
 
-      if (isActive) {
+      if (isActive && resp.id_control_estacion) {
         setControlEstacion(resp.id_control_estacion);
-        setBaseAmount(String(resp.fondo_base ?? 0));
-        setState('READY_TO_SELL');
+        const fondoBase = resp.fondo_base ?? 0;
+        setBaseAmount(String(fondoBase));
+        // Si el fondo aún no fue asignado, pasar por CAJA_SELECTED para abrir el periodo primero
+        if (fondoBase === 0) {
+          setState('CAJA_SELECTED');
+        } else {
+          setState('READY_TO_SELL');
+        }
       } else {
         setState('CAJA_SELECTED');
       }
     } catch (e: any) {
-      if (e.response?.status === 404) {
-        alert("Esa estación no tiene una caja vinculada o está inválida.");
-      }
+      alert(e.message || "Error al verificar el estado de la estación");
       clearEstacion();
       setState('INIT');
     } finally {
@@ -313,10 +238,54 @@ const AperturaCajaProgressive: React.FC = () => {
   const handleSelectSystem = async () => {
     if (!selectedEstacion) return alert("Selecciona la Estación / Caja");
     const est = estaciones.find(e => e.id_estacion === selectedEstacion);
-    if(est) {
-      setEstacion(est.id_estacion, est.nombre);
-      await checkEstacionStatus(est.id_estacion);
+    if (!est) return;
+
+    setEstacion(est.id_estacion, est.nombre);
+
+    // Resolver id_caja: buscar caja existente o crear una nueva para la sucursal
+    let cajaId = id_caja;
+    if (!cajaId) {
+      setSubmitting(true);
+      try {
+        const cajaExistente = await CajaService.getByEstacion(est.id_estacion);
+        if (cajaExistente) {
+          cajaId = cajaExistente.id_caja;
+        } else {
+          try {
+            const nuevaCaja = await CajaService.crear({
+              nombre: est.nombre,
+              id_sucursal: est.id_sucursal,
+              estado: 1,
+            });
+            cajaId = nuevaCaja.id_caja;
+          } catch (createErr: any) {
+            // Duplicado — la caja ya existe, intentar recuperarla de nuevo
+            const status = createErr.response?.status;
+            if (status === 409 || status === 400) {
+              const retry = await CajaService.getByEstacion(est.id_estacion);
+              if (retry) {
+                cajaId = retry.id_caja;
+              } else {
+                alert("La caja ya existe pero no se pudo recuperar. Contacte al administrador.");
+                setSubmitting(false);
+                return;
+              }
+            } else {
+              throw createErr;
+            }
+          }
+        }
+        setCaja(cajaId);
+      } catch (e: any) {
+        alert(e.response?.data?.message || "Error al resolver la caja");
+        setSubmitting(false);
+        return;
+      } finally {
+        setSubmitting(false);
+      }
     }
+
+    await checkEstacionStatus(est.id_estacion);
   };
 
   const handleOpenPeriodo = async () => {
@@ -337,41 +306,36 @@ const AperturaCajaProgressive: React.FC = () => {
     }
   };
 
-  const handleBaseAsignada = () => {
-    if (isNaN(Number(baseAmount)) || Number(baseAmount) < 0) {
-      return alert("Ingresa un monto válido");
-    }
-    setState('BASE_ASIGNADA');
-  };
-
   const handleConfirmarFondos = async () => {
     if (!id_estacion) return alert("No se ha seleccionado una estación");
-    
-    // User ID is required by the backend to track who opened the POS session
-    const id_user_pos = user?.id || (user as any)?.id_usuario || "";
+    if (isNaN(Number(baseAmount)) || Number(baseAmount) < 0) return alert("Ingresa un monto válido");
+
+    const id_user_pos = user?.id_usuario || "";
     if (!id_user_pos) return alert("No se pudo identificar al usuario actual");
+
+    if (!id_caja) return alert("No se pudo resolver la caja para esta estación");
 
     setSubmitting(true);
     try {
-      const payload = { 
-        id_estacion, 
-        fondo_base: Number(baseAmount),
-        id_user_pos
-      };
-
-      const aperturaRes = await POSService.abrir(payload);
+      const aperturaRes = await CajaSesionService.abrir({
+        id_caja,
+        id_usuario: id_user_pos,
+        monto_apertura: Number(baseAmount),
+      });
       if (aperturaRes?.id_control_estacion) {
         setControlEstacion(aperturaRes.id_control_estacion);
       }
       setState('READY_TO_SELL');
     } catch (e: any) {
-      // 400/409 often means session already active/open for this terminal
-      if (e.response?.status === 400 || e.response?.status === 409) {
+      const status = e.response?.status;
+      const msg: string = e.response?.data?.message || e.response?.data?.error || '';
+      const isAlreadyOpen = status === 409 ||
+        (status === 400 && /ya (está|esta|existe|abierta|activa|asignada)|already|duplicate|exists/i.test(msg));
+      if (isAlreadyOpen) {
         setState('READY_TO_SELL');
         return;
       }
-      const errorMsg = e.response?.data?.message || "Error al asignar fondo a la caja";
-      alert(errorMsg);
+      alert(msg || "Error al asignar fondo a la caja");
     } finally {
       setSubmitting(false);
     }
@@ -383,24 +347,6 @@ const AperturaCajaProgressive: React.FC = () => {
     setBaseAmount("0");
   };
 
-  const onPadPress = (key: string) => {
-    if (key === '<=') {
-      setPinEntry(prev => prev.slice(0, -1));
-    } else if (key === 'Borrar') {
-      setPinEntry("");
-    } else {
-      setPinEntry(prev => prev + key);
-    }
-  };
-
-  const handleLoginPos = () => {
-    if (pinEntry.length > 0) {
-      // Si validamos pin internamente, se haría aquí.
-      navigate("/pos");
-    } else {
-      navigate("/pos");
-    }
-  };
 
   if (loading) {
     return <MainWrap><ClimbingBoxLoader color="#10B981" /></MainWrap>;
@@ -528,60 +474,23 @@ const AperturaCajaProgressive: React.FC = () => {
             <FiDollarSign size={50} color="#10B981" style={{ margin: '0 auto 20px' }} />
             <h2 style={{ margin: '0 0 10px', color: '#fff' }}>Fondo Inicial</h2>
             <p style={{ color: '#94A3B8', marginBottom: '25px' }}>
-              Asigna la base de caja (efectivo inicial) para <strong>{cajaInfo?.nombre}</strong>
+              Asigna la base de caja (efectivo inicial) para <strong>{cajaInfo?.nombre || estacionNombre}</strong>
             </p>
-            <InputNumber 
-              type="number" 
-              value={baseAmount} 
+            <InputNumber
+              type="number"
+              value={baseAmount}
               onChange={e => setBaseAmount(e.target.value)}
               min="0"
               step="0.01"
             />
             <div style={{ display: 'flex', gap: '15px' }}>
               <Btn $variant="outline" onClick={() => { clearEstacion(); setState('INIT'); }}>❌ Cancelar</Btn>
-              <Btn $variant="success" onClick={handleBaseAsignada}>✅ Confirmar base</Btn>
+              <Btn $variant="success" onClick={handleConfirmarFondos} disabled={submitting}>
+                {submitting ? "Guardando..." : "✅ Confirmar base"}
+              </Btn>
             </div>
           </ModalBox>
         </ModalOverlay>
-      )}
-
-      {/* 
-        =============================================
-        PANEL: CONFIRMACIÓN CAJERO
-        =============================================
-      */}
-      {state === 'BASE_ASIGNADA' && (
-        <TerminalCard>
-          <FiCheckCircle size={46} color="#10B981" style={{ display: 'block', margin: '0 auto 15px' }} />
-          <Title>Confirmación de Fondos</Title>
-          <Subtitle>Confirma que el fondo inicial es correcto antes de comenzar.</Subtitle>
-
-          <PanelData>
-             <RowItem>
-               <span>Nombre de la caja</span>
-               <strong>{cajaInfo?.nombre || estacionNombre}</strong>
-             </RowItem>
-             <RowItem>
-               <span>Fecha de periodo</span>
-               <strong>{new Date().toLocaleDateString('es-ES', { dateStyle: 'long' })}</strong>
-             </RowItem>
-             <RowItem>
-               <span>Cajero Asignado</span>
-               <strong>{user?.usu_nombre || "Cajero actual"}</strong>
-             </RowItem>
-             <RowItem>
-               <span>Monto Asignado</span>
-               <strong style={{ color: '#10B981', fontSize: '1.2rem' }}>${Number(baseAmount).toFixed(2)}</strong>
-             </RowItem>
-          </PanelData>
-
-          <div style={{ display: 'flex', gap: '15px' }}>
-            <Btn $variant="outline" onClick={() => setState('PERIODO_ABIERTO')}>❌ Rechazar</Btn>
-            <Btn $variant="success" onClick={handleConfirmarFondos} disabled={submitting}>
-              {submitting ? "Guardando..." : "✅ Confirmar fondos"}
-            </Btn>
-          </div>
-        </TerminalCard>
       )}
       
     </MainWrap>

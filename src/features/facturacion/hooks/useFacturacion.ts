@@ -2,6 +2,7 @@ import { useState, useMemo, useEffect } from 'react';
 import { usePOSStore } from '../../pos/store/usePOSStore';
 import { useAuthStore } from '../../auth/store/useAuthStore';
 import { FacturaService } from '../services/FacturaService';
+import { EstatusService } from '../../auth/services/EstatusService';
 import { ClienteService, type Cliente } from '../../cliente/services/ClienteService';
 import { ProductService, type Product } from '../../products/services/ProductService';
 import type {
@@ -19,6 +20,7 @@ export const useFacturacion = () => {
   const [productos, setProducts]      = useState<Product[]>([]);
   const [impuestos, setImpuestos]     = useState<Impuesto[]>([]);
   const [formasPago, setFormasPago]   = useState<FormaPago[]>([]);
+  const [statusPagadaId, setStatusPagadaId] = useState<string>('');
 
   // Selection state
   const [selectedCliente, setSelectedCliente] = useState<string>('');
@@ -31,17 +33,23 @@ export const useFacturacion = () => {
   useEffect(() => {
     const loadInitialData = async () => {
       setLoading(true);
-      const [cRes, pRes, iRes, fRes] = await Promise.allSettled([
+      const [cRes, pRes, iRes, fRes, sRes] = await Promise.allSettled([
         ClienteService.getAll(),
         ProductService.getAll(),
         FacturaService.getImpuestos(),
         FacturaService.getFormasPago(),
+        EstatusService.getByModulo(5),
       ]);
 
       if (cRes.status === 'fulfilled') setClientes(extractData(cRes.value));
       if (pRes.status === 'fulfilled') setProducts(extractData(pRes.value));
       if (iRes.status === 'fulfilled') setImpuestos(extractData(iRes.value));
       if (fRes.status === 'fulfilled') setFormasPago(extractData(fRes.value));
+      if (sRes.status === 'fulfilled') {
+        const items: any[] = Array.isArray(sRes.value?.data) ? sRes.value.data : [];
+        const pagada = items.find((s) => s.std_descripcion === 'Pagada');
+        if (pagada) setStatusPagadaId(pagada.id_status);
+      }
 
       setLoading(false);
     };
@@ -154,6 +162,7 @@ export const useFacturacion = () => {
         id_control_estacion: undefined,
         base_impuesto:      subtotal,
         valor_impuesto:     taxValue,
+        id_status:          statusPagadaId,
       };
 
       await FacturaService.crearFacturaCompleta({ cabecera, detalles: cart, pagos: payments });

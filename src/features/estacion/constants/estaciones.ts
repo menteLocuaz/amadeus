@@ -11,7 +11,7 @@ export const estacionSchema = yup.object({
                     .required("La dirección IP es requerida")
                     .matches(/^(\d{1,3}\.){3}\d{1,3}$/, "Formato inválido (ej: 192.168.1.10)"),
     id_sucursal: yup.string().required("Selecciona una sucursal"),
-    id_status:   yup.string().required("Selecciona un estatus operativo"),
+    id_status:   yup.string().required("Selecciona un estado"),
 });
 
 export type EstacionForm = yup.InferType<typeof estacionSchema>;

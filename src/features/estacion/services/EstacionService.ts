@@ -18,7 +18,7 @@ export interface CreateEstacionDTO {
     nombre: string;
     ip: string;
     id_sucursal: string;
-    id_status: string;
+    id_status?: string;
 }
 
 export const EstacionService = {
@@ -29,7 +29,9 @@ export const EstacionService = {
     },
 
     create: async (dto: CreateEstacionDTO): Promise<EstacionAPI> => {
-        const { data } = await axiosClient.post(ENDPOINTS.estacionesPos.base, dto);
+        const payload: Partial<CreateEstacionDTO> = { ...dto };
+        if (!payload.id_status) delete payload.id_status;
+        const { data } = await axiosClient.post(ENDPOINTS.estacionesPos.base, payload);
         return data.data ?? data;
     },
 

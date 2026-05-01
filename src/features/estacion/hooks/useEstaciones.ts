@@ -18,6 +18,7 @@ import { useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import { useCatalogStore } from "../../../shared/store/useCatalogStore";
 import { EstacionService, type EstacionAPI } from "../services/EstacionService";
+import { EstatusService } from "../../auth/services/EstatusService";
 import { estacionSchema, type EstacionForm } from "../constants/estaciones";
 
 export const useEstaciones = () => {
@@ -30,9 +31,10 @@ export const useEstaciones = () => {
     const fetchCatalogs = useCatalogStore(state => state.fetchCatalogs);
 
     // ── Estado Local ───────────────────────────────────────────────────────
-    const [isLoading, setIsLoading] = useState(true);       // Carga inicial de datos
-    const [isSaving, setIsSaving] = useState(false);        // Operación de guardado en curso
+    const [isLoading, setIsLoading] = useState(true);
+    const [isSaving, setIsSaving] = useState(false);
     const [estaciones, setEstaciones] = useState<EstacionAPI[]>([]);
+    const [posStatusList, setPosStatusList] = useState<{ id_status: string; std_descripcion: string }[]>([]);
     const [searchTerm, setSearchTerm] = useState("");           // Valor en tiempo real del input
     const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(""); // Valor estabilizado para filtrar
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,10 +69,20 @@ export const useEstaciones = () => {
         setIsLoading(true);
         setApiError(null);
         try {
-            // fetchCatalogs es idempotente: no refetch si los datos ya están en el store
-            await fetchCatalogs();
-            const list = await EstacionService.getAll();
-            setEstaciones(list);
+            const [, listResult, statusResult] = await Promise.allSettled([
+                fetchCatalogs(),
+                EstacionService.getAll(),
+                EstatusService.getByModulo(8),
+            ]);
+            if (listResult.status === 'fulfilled') setEstaciones(listResult.value);
+            if (statusResult.status === 'fulfilled') {
+                const raw = statusResult.value?.data;
+                const items = Array.isArray(raw) ? raw : [];
+                setPosStatusList(items.map((s: any) => ({
+                    id_status: String(s.id_status || s.id || ""),
+                    std_descripcion: s.std_descripcion || s.descripcion || s.nombre || "",
+                })).filter((s: { id_status: string; std_descripcion: string }) => s.id_status));
+            }
         } catch {
             setApiError("Error al sincronizar con el servidor.");
         } finally {
@@ -101,7 +113,7 @@ export const useEstaciones = () => {
             });
         } else {
             setEditingItem(null);
-            reset({ codigo: "", nombre: "", ip: "", id_sucursal: "", id_status: "" });
+            reset({ codigo: "", nombre: "", ip: "", id_sucursal: "", id_status: "59039503-85cf-e511-80c1-000c29c9e0e0" });
         }
         setIsModalOpen(true);
     };
@@ -146,9 +158,14 @@ export const useEstaciones = () => {
             }
             handleCloseModal();
         } catch (err) {
-            // Extrae el mensaje del backend si está disponible; de lo contrario usa mensaje genérico
-            const error = err as { response?: { data?: { message?: string } } };
-            setApiError(error.response?.data?.message || "Error al procesar la operación.");
+            const error = err as { response?: { status?: number; data?: { message?: string } } };
+            const raw = error.response?.data?.message || "";
+            const isDuplicate = error.response?.status === 409 ||
+                /duplicate key|unique constraint|estaciones_pos_codigo/i.test(raw);
+            setApiError(isDuplicate
+                ? `El código ya está registrado. Si es la misma terminal, búscala en la lista y edítala. Si es una nueva, usa un código distinto (ej: POS-002).`
+                : raw || "Error al procesar la operación."
+            );
         } finally {
             setIsSaving(false);
         }
@@ -192,15 +209,7 @@ export const useEstaciones = () => {
      * El comentario interno indica que el filtro puede relajarse si el backend
      * introduce nuevos tipos de estado para terminales.
      */
-    const activeStatusList = useMemo(() => {
-        const filtered = statusList.filter(s =>
-            s.mdl_id === 8 ||
-            s.std_tipo_estado === "ACTIVO" ||
-            s.std_tipo_estado === "INACTIVO" ||
-            s.std_tipo_estado === "TERMINAL"
-        );
-        return filtered.length > 0 ? filtered : statusList;
-    }, [statusList]);
+    const activeStatusList = posStatusList;
 
     /**
      * Mapa de id_sucursal → nombre para resolución rápida en la tabla.

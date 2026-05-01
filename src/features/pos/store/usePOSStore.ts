@@ -12,15 +12,17 @@ export interface ActivePeriodo {
 interface POSState {
     id_estacion: string | null;
     estacionNombre: string | null;
+    id_caja: string | null;
     id_control_estacion: string | null;
     activePeriodo: ActivePeriodo | null;
     isLoading: boolean;
 
     setEstacion: (id: string, nombre: string) => void;
+    setCaja: (id: string) => void;
     setControlEstacion: (id: string) => void;
     clearEstacion: () => void;
     setPeriodo: (periodo: ActivePeriodo | null) => void;
-    initialize: () => void; // Mantener para compatibilidad, aunque persist lo maneja
+    initialize: () => void;
 }
 
 export const usePOSStore = create<POSState>()(
@@ -28,6 +30,7 @@ export const usePOSStore = create<POSState>()(
         (set) => ({
             id_estacion: null,
             estacionNombre: null,
+            id_caja: null,
             id_control_estacion: null,
             activePeriodo: null,
             isLoading: false,
@@ -36,12 +39,16 @@ export const usePOSStore = create<POSState>()(
                 set({ id_estacion: id, estacionNombre: nombre });
             },
 
+            setCaja: (id) => {
+                set({ id_caja: id });
+            },
+
             setControlEstacion: (id) => {
                 set({ id_control_estacion: id });
             },
 
             clearEstacion: () => {
-                set({ id_estacion: null, estacionNombre: null, id_control_estacion: null, activePeriodo: null });
+                set({ id_estacion: null, estacionNombre: null, id_caja: null, id_control_estacion: null, activePeriodo: null });
             },
 
             setPeriodo: (periodo) => {
@@ -58,6 +65,7 @@ export const usePOSStore = create<POSState>()(
             partialize: (state) => ({
                 id_estacion: state.id_estacion,
                 estacionNombre: state.estacionNombre,
+                id_caja: state.id_caja,
                 id_control_estacion: state.id_control_estacion,
                 activePeriodo: state.activePeriodo
             }),

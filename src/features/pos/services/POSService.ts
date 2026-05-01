@@ -2,18 +2,18 @@ import axiosClient from '../../../core/api/axiosClient';
 import { ENDPOINTS } from '../../../core/api/endpoints';
 
 export interface POSEstadoResponse {
-    id_control_estacion: string;
+    id_control_estacion?: string; // UUID (opcional si está cerrada)
     nombre_estacion: string;
     fondo_base: number;
-    id_status: string;
-    status_descripcion: string;
-    fecha_inicio: string;
+    id_status?: string;          // UUID
+    status_descripcion: string;  // Ej: "Cerrada", "Fondo Asignado", "Abierta"
+    fecha_inicio?: string;       // ISO Date string
 }
 
 export interface OpenPOSDTO {
     id_estacion: string;
-    fondo_base: number;
     id_user_pos: string;
+    fondo_base: number;
 }
 
 export const POSService = {
@@ -21,8 +21,18 @@ export const POSService = {
      * Obtiene el estado actual de una terminal POS (estación, caja y periodo)
      */
     getEstado: async (id_estacion: string): Promise<POSEstadoResponse> => {
-        const { data } = await axiosClient.get(ENDPOINTS.pos.estado(id_estacion));
-        return data.data || data;
+        try {
+            const { data } = await axiosClient.get(ENDPOINTS.pos.estado(id_estacion));
+            return data.data || data;
+        } catch (error: any) {
+            if (error.response?.status === 404) {
+                throw new Error("La estación de trabajo no existe en el sistema.");
+            }
+            if (error.response?.status === 500) {
+                throw new Error("Error interno del servidor al consultar el estado de la caja.");
+            }
+            throw new Error(error.response?.data?.message || "Error al obtener el estado de la caja");
+        }
     },
 
     /**

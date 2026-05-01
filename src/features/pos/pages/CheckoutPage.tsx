@@ -5,8 +5,10 @@ import { FiArrowLeft, FiCheck, FiDelete } from "react-icons/fi";
 import { MdPayment } from "react-icons/md";
 import { ClimbingBoxLoader } from "react-spinners";
 import { usePOSStore } from "../store/usePOSStore";
+import { useAuthStore } from "../../auth/store/useAuthStore";
 import { useFormasPago } from "../../formasPago/hooks/useFormasPago";
 import { FacturaService } from "../../facturacion/services/FacturaService";
+import { EstatusService } from "../../auth/services/EstatusService";
 import { ClienteService } from "../../cliente/services/ClienteService";
 import { ROUTES } from "../../../core/constants/routes";
 import type { CartItem } from "../hooks/useCart";
@@ -38,6 +40,7 @@ const CheckoutPage: React.FC = () => {
   const location = useLocation();
   const theme = useTheme();
   const { id_estacion, id_control_estacion, activePeriodo } = usePOSStore();
+  const { user } = useAuthStore();
   const { formasPago } = useFormasPago();
 
   const state = location.state as LocationState | null;
@@ -59,9 +62,16 @@ const CheckoutPage: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [successData, setSuccessData] = useState<{ fac_numero: string } | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [statusPagadaId, setStatusPagadaId] = useState<string>('');
 
-  // Load consumidor final client
+  // Load module 5 statuses and consumidor final client in parallel
   useEffect(() => {
+    EstatusService.getByModulo(5).then((res) => {
+      const items: any[] = Array.isArray(res?.data) ? res.data : [];
+      const pagada = items.find((s) => s.std_descripcion === 'Pagada');
+      if (pagada) setStatusPagadaId(pagada.id_status);
+    }).catch(() => {});
+
     ClienteService.getAll().then((res) => {
       const clientes = res.data || (Array.isArray(res) ? res : []);
       const cf = clientes.find(
@@ -141,32 +151,35 @@ const CheckoutPage: React.FC = () => {
           ? [{ id_forma_pago: cashForma?.id_forma_pago ?? "", valor_billete: cashAmount, total_pagar: total }]
           : otherPayments.map((p) => ({ id_forma_pago: p.id_forma_pago, valor_billete: p.amount, total_pagar: p.amount }));
 
+      const id_sucursal = user?.id_sucursal ?? user?.sucursal?.id_sucursal ?? '';
+
       const payload: FacturaCompletaRequest = {
         cabecera: {
-          fac_numero: `POS-${Date.now()}`,
+          fac_numero:          'AUTO',
           subtotal,
-          iva: tax,
+          impuesto:            tax,
           total,
-          observacion: note || undefined,
+          observacion:         note || undefined,
           id_estacion,
+          id_sucursal,
           id_control_estacion: id_control_estacion ?? undefined,
-          id_cliente: clienteId,
-          id_periodo: activePeriodo.id_periodo,
-          base_impuesto: subtotal,
-          impuesto: 0.19,
-          valor_impuesto: tax,
+          id_cliente:          clienteId,
+          id_periodo:          activePeriodo.id_periodo,
+          base_impuesto:       subtotal,
+          valor_impuesto:      tax,
+          id_status:           statusPagadaId,
         },
         detalles: items.map((it) => {
-          const precio = Number(it.product.precio_venta ?? 0);
-          const st = precio * it.qty;
+          const precio_unitario = Number(it.product.precio_venta ?? 0);
+          const st = precio_unitario * it.qty;
           return {
-            id_producto: it.product.id_producto || it.product.id || "",
-            cantidad: it.qty,
-            precio,
-            subtotal: st,
-            impuesto: 0.19,
-            total: st * 1.19,
-            nombre_producto: it.product.nombre,
+            id_producto:     it.product.id_producto || it.product.id || "",
+            cantidad:        it.qty,
+            precio_unitario,
+            subtotal:        st,
+            impuesto:        st * (tax / subtotal || 0),
+            total:           st + st * (tax / subtotal || 0),
+            nombre_producto: it.product.pro_nombre ?? it.product.nombre,
           };
         }),
         pagos,
